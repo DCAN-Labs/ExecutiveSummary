@@ -44,17 +44,41 @@ def rename_image(img_path):
 
         os.rename(img_path, new_file_path)
 
+        return new_file_path
 
-def get_epi_count(path):
 
-    pass
+def rename_structural(path_to_summary):
+
+    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+
+    new_imgs = []
+
+    for img_label in structural_imgs:
+
+        filename = os.path.join(path_to_summary, img_label, '.png')
+
+        new_file = rename_image(filename)
+
+        new_imgs.append(new_file)
+
+    return new_imgs
+
+
+def structural_montage(path_in, path_out):
+
+    cmd = 'montage '
+
+    for png in rename_structural(path_in):
+
+        input_file = os.path.join(png)
+
+        cmd += '-label %t %s ' % input_file
+
+    cmd += '-tile 3x2 -geometry 200x250>+2+2 Structural.png'
     
+    print cmd
 
-def rename_structural_images(path):
-
-    if len(os.listdir(path)) < 6:
-        print 'Structural summary requires 6 images.'
-        quit()
+    return cmd
 
 
 def main():
