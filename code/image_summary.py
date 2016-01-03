@@ -7,6 +7,13 @@ import os
 import argparse
 from os import path
 import logging
+import time
+import glob
+from reportlab.lib.enums import TA_JUSTIFY
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 
 # describes existing set of structural images... may need adjustments to other locations / names
@@ -32,6 +39,8 @@ images_dict = {
     }
 
 
+
+
 def rename_image(img_path):
 
     filename, file_extension = path.splitext(path.basename(img_path))
@@ -45,9 +54,23 @@ def rename_image(img_path):
         os.rename(img_path, new_file_path)
 
 
-def get_epi_count(path):
+def get_epi_info(path_to_raw):
+    """takes: path to raw EPI data storage
+        :returns dict of params for each EPI acquisition"""
 
-    pass
+    epi_info = {}
+
+    epi_files = []
+
+    raw_files = os.listdir(path_to_raw)
+
+    rs_pattern = '%(code)s_REST%(acq_num)d' % {'code': subcode, 'acq_num': series_num}
+
+    for file in raw_files:
+        if file == glob.glob1(path_to_raw, rs_pattern):
+            epi_files.append(file)
+
+    return epi_info
     
 
 def rename_structural_images(path):
@@ -58,6 +81,8 @@ def rename_structural_images(path):
 
 
 def main():
+
+    formatted_time = time.ctime()
 
     _log = logging.getLogger('my_log.log')
 
