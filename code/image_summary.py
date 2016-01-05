@@ -7,6 +7,13 @@ import os
 import argparse
 from os import path
 import logging
+import time
+import glob
+from reportlab.lib.enums import TA_JUSTIFY
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 
 # describes existing set of structural images... may need adjustments to other locations / names
@@ -31,8 +38,22 @@ images_dict = {
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
     }
 
+# for example
+project_root = os.path.join('/remote_home/bucklesh/Projects/ExecutiveSummary/TestData/')
+
+
+def get_subject_code(path_to_data_file):
+
+    filename = os.path.basename(path_to_data_file)
+
+    subject_code = filename.split('_')[0]
+
+    return subject_code
+
 
 def rename_image(img_path):
+    """:arg img_path should be full-path to any image file
+        :returns renamed, full-path to new image filename"""
 
     filename, file_extension = path.splitext(path.basename(img_path))
 
@@ -45,6 +66,30 @@ def rename_image(img_path):
         os.rename(img_path, new_file_path)
 
         return new_file_path
+
+
+def get_epi_info(path_to_raw):
+    """:arg path to raw EPI data storage
+        :returns dict of params for each EPI acquisition with format:
+            REST#: (x,y,z,TE,TR,etc)"""
+
+    # need this?
+    subcode = get_subject_code(path_to_raw)
+
+    epi_info = {}
+
+    epi_files = []
+
+    raw_files = os.listdir(path_to_raw)
+
+    # for example...
+    rs_pattern = '%(code)s_REST%(acq_num)d' % {'code': subcode, 'acq_num': series_num}
+
+    for file in raw_files:
+        if file == glob.glob1(path_to_raw, rs_pattern):
+            epi_files.append(file)
+
+    return epi_info
 
 
 def rename_structural(path_to_summary):
@@ -64,7 +109,12 @@ def rename_structural(path_to_summary):
     return new_imgs
 
 
-def structural_montage(path_in, path_out):
+def structural_montage_cmd(path_in, path_out):
+    """path_in is a full-path to the set of structural images, path_out to where
+    you want the montage to be placed.
+    :returns the command_line for ImageMagick"""
+
+    path_out = os.path.join(path_out)
 
     cmd = 'montage '
 
@@ -72,17 +122,17 @@ def structural_montage(path_in, path_out):
 
         input_file = os.path.join(png)
 
-        cmd += '-label %t '
+        cmd += "-label %t "
         cmd += '%s ' % input_file
 
-    cmd += '-tile 3x2 -geometry 200x250>+2+2 Structural.png'
-
-    print cmd
+    cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
 
     return cmd
 
 
 def main():
+
+    formatted_time = time.ctime()
 
     _log = logging.getLogger('my_log.log')
 
@@ -90,8 +140,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='Maker of Image Summaries.')
 
-    parser.add_argument('-l', '--list', action="store", dest='file_list', help="Provide a full path to a .txt with "
-                                                                               "one column of participant codes.")
+    parser.add_argument('-l', '--list', action="store", dest='file_list', help="Provide a full path to a data folder.")
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     args = parser.parse_args()
