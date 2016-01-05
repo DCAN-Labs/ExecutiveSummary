@@ -72,11 +72,11 @@ def structural_montage(path_in, path_out):
 
         input_file = os.path.join(png)
 
-        cmd += '-label %t %s ' % input_file
+        cmd += '-label %t '
         cmd += '%s ' % input_file
 
     cmd += '-tile 3x2 -geometry 200x250>+2+2 Structural.png'
-    
+
     print cmd
 
     return cmd
