@@ -15,6 +15,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
+VERSION = '1.0.0'
+
+program_desc = """Image Summary v%s:
+Compile acquisition parameters, post-processed structural and functional
+images, and grayordinates results into one file for efficient pipeline QC (of the FNL_preproc stage).
+""" % VERSION
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
@@ -38,17 +44,21 @@ images_dict = {
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
     }
 
-# for example
-project_root = os.path.join('/remote_home/bucklesh/Projects/ExecutiveSummary/TestData/')
 
-
-def get_subject_code(path_to_data_file):
+def get_subject_info(path_to_data_file):
 
     filename = os.path.basename(path_to_data_file)
 
-    subject_code = filename.split('_')[0]
+    subject_code, modality = filename.split('_')[0], filename.split('_')[1]
 
-    return subject_code
+    if 'REST' in modality:
+        modality = modality.strip('.nii.gz')
+        series_num = modality[-1]
+    elif 'T1w' in modality:
+        acq_num = filename.split('_')[2].strip('.nii.gz')
+        series_num = acq_num[-1]
+
+    return subject_code, modality, series_num
 
 
 def rename_image(img_path):
@@ -68,26 +78,34 @@ def rename_image(img_path):
         return new_file_path
 
 
-def get_epi_info(path_to_raw):
-    """:arg path to raw EPI data storage
+def get_epi_info(path_to_epi_raw_file):
+    """:arg path to raw EPI data (.nii.gz presumed)
         :returns dict of params for each EPI acquisition with format:
             REST#: (x,y,z,TE,TR,etc)"""
 
-    # need this?
-    subcode = get_subject_code(path_to_raw)
-
-    epi_info = {}
-
+    raw_files = os.listdir(os.path.dirname(path_to_epi_raw_file))
+    print raw_files
     epi_files = []
 
-    raw_files = os.listdir(path_to_raw)
+    subcode, modality, series = get_subject_info(path_to_epi_raw_file)
 
-    # for example...
-    rs_pattern = '%(code)s_REST%(acq_num)d' % {'code': subcode, 'acq_num': series_num}
+    # TODO: make below work properly, since epi_files is not populating
 
-    for file in raw_files:
-        if file == glob.glob1(path_to_raw, rs_pattern):
-            epi_files.append(file)
+    rs_pattern = '%(code)s_REST%(acq_num)s' % {'code': subcode, 'acq_num': series}
+
+    for a_file in raw_files:
+        if a_file == glob.glob1(path_to_epi_raw_file, rs_pattern):
+            epi_files.append(a_file)
+
+    print epi_files
+
+    epi_info = {'data_path'     : path_to_epi_raw_file,
+                'subject_code'  : subcode,
+                'series'        : series}
+
+    num_acq = len(epi_files)
+
+    epi_info['number_acquired'] = num_acq
 
     return epi_info
 
@@ -109,6 +127,7 @@ def rename_structural(path_to_summary):
     return new_imgs
 
 
+# TODO: do we really want to build montages?
 def structural_montage_cmd(path_in, path_out):
     """path_in is a full-path to the set of structural images, path_out to where
     you want the montage to be placed.
@@ -130,17 +149,30 @@ def structural_montage_cmd(path_in, path_out):
     return cmd
 
 
+def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
+
+    s = Spacer(0.2*inch, sep*inch)
+    Story.append(s)
+    para = klass(txt, style)
+    Story.append(para)
+
+
+def p(txt):
+
+    return header(txt, style=ParaStyle, sep=0.1)
+
+
 def main():
 
-    formatted_time = time.ctime()
-
-    _log = logging.getLogger('my_log.log')
+    _log = logging.getLogger('exec_sum.log')
 
     _log.info('Starting Up...')
 
-    parser = argparse.ArgumentParser(description='Maker of Image Summaries.')
+    parser = argparse.ArgumentParser(description=program_desc)
 
-    parser.add_argument('-l', '--list', action="store", dest='file_list', help="Provide a full path to a data folder.")
+    # TODO: one at a time for now rather than a list... Still not sure about this.
+
+    parser.add_argument('-p', '--path', action="store", dest='file_path', help="Provide a full path to a data folder.")
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     args = parser.parse_args()
@@ -150,8 +182,17 @@ def main():
     else:
         _log.setLevel(logging.INFO)
 
+    print 'now serving %s ... ' % args.file_path
+
 
 if __name__ == '__main__':
+
+    styles = getSampleStyleSheet()
+
+    HeaderStyle = styles['Heading1']
+    ParaStyle = styles["Normal"]
+
+    Story = []
 
     main()
 
