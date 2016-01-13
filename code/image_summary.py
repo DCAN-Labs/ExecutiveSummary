@@ -7,7 +7,7 @@ import os
 import argparse
 from os import path
 import logging
-import time
+from datetime import datetime
 import glob
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import letter
@@ -155,6 +155,8 @@ def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
     Story.append(s)
     para = klass(txt, style)
     Story.append(para)
+
+    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
 
 
 def p(txt):
