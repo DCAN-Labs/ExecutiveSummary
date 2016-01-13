@@ -7,7 +7,7 @@ import os
 import argparse
 from os import path
 import logging
-import time
+from datetime import datetime
 import glob
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import letter
@@ -132,7 +132,7 @@ def structural_montage_cmd(path_in, path_out):
 
 def main():
 
-    formatted_time = time.ctime()
+    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
 
     _log = logging.getLogger('my_log.log')
 
