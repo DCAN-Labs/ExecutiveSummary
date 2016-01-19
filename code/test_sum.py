@@ -1,4 +1,4 @@
-
+import image_summary
 from datetime import datetime
 import os
 from reportlab.pdfgen import canvas
@@ -57,18 +57,17 @@ Story.append(Spacer(1, 24))
 Story.append(dvars_im)
 
 # TODO: figure out how to setup Table
-t = Table(table_info, 5*[0.4*inch], 4*[0.4*inch])
-# t.setStyle(TableStyle(
+# t = Table(table_info, 5*[0.4*inch], 4*[0.4*inch])
+# wh_table.setStyle(TableStyle(
 #     [('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
 #      ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
 #      ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
 #      ('BACKGROUND', (0, 0), (-1, 0), colors.gray)]))
 
+# finally, after all elements added to Story list...
 doc.build(Story)
 
 # alternative, lower-level way to build the doc... any better?
-# c = canvas.Canvas('testing.pdf')
-
 c = canvas.Canvas('mydoc.pdf')
 f = Frame(inch, inch, 6*inch, 9*inch, showBoundary=1)
 f.addFromList(Story, c)
