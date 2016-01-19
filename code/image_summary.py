@@ -4,11 +4,13 @@ __author__ = 'Shannon Buckley', 12/27/15
 """
 
 import os
+import sys
 import argparse
 from os import path
 import logging
 from datetime import datetime
 import glob
+
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
@@ -18,8 +20,9 @@ from reportlab.lib.units import inch
 VERSION = '1.0.0'
 
 program_desc = """Image Summary v%s:
-Compile acquisition parameters, post-processed structural and functional
-images, and grayordinates results into one file for efficient pipeline QC (of the FNL_preproc stage).
+Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
+structural and functional images, and grayordinates results into one file for efficient pipeline QC (of the
+FNL_preproc pipeline module).
 """ % VERSION
 
 # describes existing set of structural images... may need adjustments to other locations / names
@@ -45,11 +48,47 @@ images_dict = {
     }
 
 
+def rename_structural(path_to_summary):
+
+    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+
+    new_imgs = []
+
+    for img_label in structural_imgs:
+
+        filename = os.path.join(path_to_summary, img_label, '.png')
+
+        new_file = rename_image(filename)
+
+        new_imgs.append(new_file)
+
+    return new_imgs
+
+
 def get_subject_info(path_to_data_file):
 
     filename = os.path.basename(path_to_data_file)
 
-    subject_code, modality = filename.split('_')[0], filename.split('_')[1]
+    parts = filename.split('_')
+
+    if parts[0].isalpha():
+
+        # then you have an underscore between study prefix and code
+
+        subject_code = parts[0] + '_' + parts[1]
+
+        modality = parts[2]
+
+    elif parts[0].isalnum():
+
+        subject_code = parts[0]
+
+        modality = parts[1]
+
+    else:
+
+        print 'subject-code unknown'
+        return None
 
     if 'REST' in modality:
         modality = modality.strip('.nii.gz')
@@ -78,6 +117,7 @@ def rename_image(img_path):
         return new_file_path
 
 
+# huh?
 def get_epi_info(path_to_epi_raw_file):
     """:arg path to raw EPI data (.nii.gz presumed)
         :returns dict of params for each EPI acquisition with format:
@@ -110,61 +150,24 @@ def get_epi_info(path_to_epi_raw_file):
     return epi_info
 
 
-def rename_structural(path_to_summary):
+def make_param_table(path_to_raw_data):
 
-    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+    try:
+        f = open('all_params.txt', 'w')
 
-    new_imgs = []
+        f.write('Modality,x(mm),y(mm),z(mm),TE,TR,Frames,TI')
 
-    for img_label in structural_imgs:
-
-        filename = os.path.join(path_to_summary, img_label, '.png')
-
-        new_file = rename_image(filename)
-
-        new_imgs.append(new_file)
-
-    return new_imgs
+    finally:
+        f.close()
 
 
-# TODO: do we really want to build montages?
-def structural_montage_cmd(path_in, path_out):
-    """path_in is a full-path to the set of structural images, path_out to where
-    you want the montage to be placed.
-    :returns the command_line for ImageMagick"""
-
-    path_out = os.path.join(path_out)
-
-    cmd = 'montage '
-
-    for png in rename_structural(path_in):
-
-        input_file = os.path.join(png)
-
-        cmd += "-label %t "
-        cmd += '%s ' % input_file
-
-    cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
-
-    return cmd
-
-
-def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
-
-    s = Spacer(0.2*inch, sep*inch)
-    Story.append(s)
-    para = klass(txt, style)
-    Story.append(para)
-
-    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
-
-
-def p(txt):
-
-    return header(txt, style=ParaStyle, sep=0.1)
+def populate_template_table_data():
+    pass
 
 
 def main():
+
+    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
 
     _log = logging.getLogger('exec_sum.log')
 
@@ -198,3 +201,39 @@ if __name__ == '__main__':
 
     main()
 
+
+# reportlab stuff
+# TODO: do we really want to build montages and/or use Reportlab?
+def structural_montage_cmd(path_in, path_out):
+    """path_in is a full-path to the set of structural images, path_out to where
+    you want the montage to be placed.
+    :returns the command_line for ImageMagick"""
+
+    path_out = os.path.join(path_out)
+
+    cmd = 'montage '
+
+    for png in rename_structural(path_in):
+
+        input_file = os.path.join(png)
+
+        cmd += "-label %t "
+        cmd += '%s ' % input_file
+
+    cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
+
+    return cmd
+
+
+def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
+
+    s = Spacer(0.2*inch, sep*inch)
+    Story.append(s)
+    para = klass(txt, style)
+    Story.append(para)
+
+
+def p(txt):
+
+    return header(txt, style=ParaStyle, sep=0.1)
+####
