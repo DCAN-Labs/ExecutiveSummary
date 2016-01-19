@@ -4,6 +4,7 @@ __author__ = 'Shannon Buckley', 12/27/15
 """
 
 import os
+import sys
 import argparse
 from os import path
 import logging
@@ -46,7 +47,22 @@ def get_subject_code(path_to_data_file):
 
     filename = os.path.basename(path_to_data_file)
 
-    subject_code = filename.split('_')[0]
+    parts = filename.split('_')
+
+    if parts[0].isalpha():
+
+        # then you have an underscore between study prefix and code
+
+        subject_code = parts[0] + '_' + parts[1]
+
+    elif parts[0].isalnum():
+
+        subject_code = parts[0]
+
+    else:
+
+        print 'subject-code unknown'
+        return None
 
     return subject_code
 
@@ -130,6 +146,17 @@ def structural_montage_cmd(path_in, path_out):
     return cmd
 
 
+def make_param_table(path_to_raw_data):
+
+    try:
+        f = open('all_params.txt', 'w')
+
+        f.write('Modality,x(mm),y(mm),z(mm),TE,TR,Frames,TI')
+
+    finally:
+        f.close()
+
+
 def main():
 
     date_stamp = "{:%Y_%m_%d}".format(datetime.now())
@@ -149,6 +176,12 @@ def main():
         _log.setLevel(logging.DEBUG)
     else:
         _log.setLevel(logging.INFO)
+
+    # TODO: make 4 panel images, place into a 4 x 4 grid
+    # 1,1 - Structural panel (top left)
+    # 2,1 - Param Table (bot left)
+    # 1,2 - EPI Panel
+    # 2,2 - grayordinates
 
 
 if __name__ == '__main__':

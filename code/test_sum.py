@@ -1,7 +1,6 @@
-
+import image_summary
 from datetime import datetime
 import os
-from reportlab.lib.
 from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import landscape, letter, A4
@@ -55,13 +54,12 @@ Story.append(Spacer(1, 24))
 Story.append(dvars_im)
 
 # setup Table
-t = Table(table_info, 5*[0.4*inch], 4*[0.4*inch])
+# t = Table(table_info, 5*[0.4*inch], 4*[0.4*inch])
 # wh_table.setStyle(TableStyle(
 #     [('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
 #      ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
 #      ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
 #      ('BACKGROUND', (0, 0), (-1, 0), colors.gray)]))
-
 
 
 doc.build(Story)
