@@ -10,12 +10,20 @@ from os import path
 import logging
 from datetime import datetime
 import glob
+
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
+VERSION = '1.0.0'
+
+program_desc = """Image Summary v%s:
+Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
+structural and functional images, and grayordinates results into one file for efficient pipeline QC (of the
+FNL_preproc pipeline module).
+""" % VERSION
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
@@ -39,11 +47,25 @@ images_dict = {
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
     }
 
-# for example
-project_root = os.path.join('/remote_home/bucklesh/Projects/ExecutiveSummary/TestData/')
+
+def rename_structural(path_to_summary):
+
+    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+
+    new_imgs = []
+
+    for img_label in structural_imgs:
+
+        filename = os.path.join(path_to_summary, img_label, '.png')
+
+        new_file = rename_image(filename)
+
+        new_imgs.append(new_file)
+
+    return new_imgs
 
 
-def get_subject_code(path_to_data_file):
+def get_subject_info(path_to_data_file):
 
     filename = os.path.basename(path_to_data_file)
 
@@ -55,16 +77,27 @@ def get_subject_code(path_to_data_file):
 
         subject_code = parts[0] + '_' + parts[1]
 
+        modality = parts[2]
+
     elif parts[0].isalnum():
 
         subject_code = parts[0]
+
+        modality = parts[1]
 
     else:
 
         print 'subject-code unknown'
         return None
 
-    return subject_code
+    if 'REST' in modality:
+        modality = modality.strip('.nii.gz')
+        series_num = modality[-1]
+    elif 'T1w' in modality:
+        acq_num = filename.split('_')[2].strip('.nii.gz')
+        series_num = acq_num[-1]
+
+    return subject_code, modality, series_num
 
 
 def rename_image(img_path):
@@ -84,47 +117,93 @@ def rename_image(img_path):
         return new_file_path
 
 
-def get_epi_info(path_to_raw):
-    """:arg path to raw EPI data storage
+# huh?
+def get_epi_info(path_to_epi_raw_file):
+    """:arg path to raw EPI data (.nii.gz presumed)
         :returns dict of params for each EPI acquisition with format:
             REST#: (x,y,z,TE,TR,etc)"""
 
-    # need this?
-    subcode = get_subject_code(path_to_raw)
-
-    epi_info = {}
-
+    raw_files = os.listdir(os.path.dirname(path_to_epi_raw_file))
+    print raw_files
     epi_files = []
 
-    raw_files = os.listdir(path_to_raw)
+    subcode, modality, series = get_subject_info(path_to_epi_raw_file)
 
-    # for example...
-    rs_pattern = '%(code)s_REST%(acq_num)d' % {'code': subcode, 'acq_num': series_num}
+    # TODO: make below work properly, since epi_files is not populating
 
-    for file in raw_files:
-        if file == glob.glob1(path_to_raw, rs_pattern):
-            epi_files.append(file)
+    rs_pattern = '%(code)s_REST%(acq_num)s' % {'code': subcode, 'acq_num': series}
+
+    for a_file in raw_files:
+        if a_file == glob.glob1(path_to_epi_raw_file, rs_pattern):
+            epi_files.append(a_file)
+
+    print epi_files
+
+    epi_info = {'data_path'     : path_to_epi_raw_file,
+                'subject_code'  : subcode,
+                'series'        : series}
+
+    num_acq = len(epi_files)
+
+    epi_info['number_acquired'] = num_acq
 
     return epi_info
 
 
-def rename_structural(path_to_summary):
+def make_param_table(path_to_raw_data):
 
-    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+    try:
+        f = open('all_params.txt', 'w')
 
-    new_imgs = []
+        f.write('Modality,x(mm),y(mm),z(mm),TE,TR,Frames,TI')
 
-    for img_label in structural_imgs:
-
-        filename = os.path.join(path_to_summary, img_label, '.png')
-
-        new_file = rename_image(filename)
-
-        new_imgs.append(new_file)
-
-    return new_imgs
+    finally:
+        f.close()
 
 
+def populate_template_table_data():
+    pass
+
+
+def main():
+
+    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
+
+    _log = logging.getLogger('exec_sum.log')
+
+    _log.info('Starting Up...')
+
+    parser = argparse.ArgumentParser(description=program_desc)
+
+    # TODO: one at a time for now rather than a list... Still not sure about this.
+
+    parser.add_argument('-p', '--path', action="store", dest='file_path', help="Provide a full path to a data folder.")
+    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        _log.setLevel(logging.DEBUG)
+    else:
+        _log.setLevel(logging.INFO)
+
+    print 'now serving %s ... ' % args.file_path
+
+
+if __name__ == '__main__':
+
+    styles = getSampleStyleSheet()
+
+    HeaderStyle = styles['Heading1']
+    ParaStyle = styles["Normal"]
+
+    Story = []
+
+    main()
+
+
+# reportlab stuff
+# TODO: do we really want to build montages and/or use Reportlab?
 def structural_montage_cmd(path_in, path_out):
     """path_in is a full-path to the set of structural images, path_out to where
     you want the montage to be placed.
@@ -146,45 +225,15 @@ def structural_montage_cmd(path_in, path_out):
     return cmd
 
 
-def make_param_table(path_to_raw_data):
+def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
 
-    try:
-        f = open('all_params.txt', 'w')
-
-        f.write('Modality,x(mm),y(mm),z(mm),TE,TR,Frames,TI')
-
-    finally:
-        f.close()
+    s = Spacer(0.2*inch, sep*inch)
+    Story.append(s)
+    para = klass(txt, style)
+    Story.append(para)
 
 
-def main():
+def p(txt):
 
-    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
-
-    _log = logging.getLogger('my_log.log')
-
-    _log.info('Starting Up...')
-
-    parser = argparse.ArgumentParser(description='Maker of Image Summaries.')
-
-    parser.add_argument('-l', '--list', action="store", dest='file_list', help="Provide a full path to a data folder.")
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
-
-    args = parser.parse_args()
-
-    if args.verbose:
-        _log.setLevel(logging.DEBUG)
-    else:
-        _log.setLevel(logging.INFO)
-
-    # TODO: make 4 panel images, place into a 4 x 4 grid
-    # 1,1 - Structural panel (top left)
-    # 2,1 - Param Table (bot left)
-    # 1,2 - EPI Panel
-    # 2,2 - grayordinates
-
-
-if __name__ == '__main__':
-
-    main()
-
+    return header(txt, style=ParaStyle, sep=0.1)
+####

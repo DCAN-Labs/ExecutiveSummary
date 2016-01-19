@@ -1,12 +1,21 @@
+body {
+    background-color: rgb(195,196,195);
+}
 
+span {
+    font-size: 10px;
+}
 
-img {
-	width:250px;
-	height:200px;
+.header {
+    font-family: Garamond;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
 table, td {
 	border: 1px #70b8ff dashed;
+	text-align: center;
 }
 
 .top-left-panel {
@@ -14,7 +23,56 @@ table, td {
     width: 50%;
 }
 
-.bottom-left-panel {
+.top-left-panel img {
+    width: 250px;
+    height: 200px;
+}
+
+.top-left-panel table, td {
+    border: none;
+}
+
+.epi {
+    float: right;
+}
+
+.epi img {
+    width: 175px;
+    height: 150px;
+}
+
+.epi td {
+    border: none;
+}
+
+.params {
     float: left;
-    width: 50%;
+    width: 40%;
+}
+
+.params td {
+    border: collapse-border;
+
+}
+
+.params th {
+    border-bottom: 1px #70b8ff solid;
+
+}
+
+.params .column-names {
+    border-bottom: 1px blue solid;
+    font-weight: bold;
+}
+.grayords {
+    float: right;
+}
+
+.grayords img {
+    width: 250px;
+    height: 200px;
+}
+
+.out-of-range {
+    color: red;
 }
