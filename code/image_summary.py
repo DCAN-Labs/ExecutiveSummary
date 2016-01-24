@@ -4,26 +4,21 @@ __author__ = 'Shannon Buckley', 12/27/15
 """
 
 import os
-import sys
+import csv
+import subprocess
 import argparse
 from os import path
 import logging
 from datetime import datetime
-import glob
 
-from reportlab.lib.enums import TA_JUSTIFY
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-
+PROG = 'Image Summary'
 VERSION = '1.0.0'
 
-program_desc = """Image Summary v%s:
+program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
 structural and functional images, and grayordinates results into one file for efficient pipeline QC (of the
 FNL_preproc pipeline module).
-""" % VERSION
+""" % {'prog': PROG, 'ver': VERSION}
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
@@ -45,18 +40,16 @@ images_dict = {
     'temp_16': 'T2-Sagittal-CorpusCallosum',
     'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
-    }
+}
 
 
-def rename_structural(path_to_summary):
-
+def rename_structural(path_to_image_dump):
     structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
 
     new_imgs = []
 
     for img_label in structural_imgs:
-
-        filename = os.path.join(path_to_summary, img_label, '.png')
+        filename = os.path.join(path_to_image_dump, img_label, '.png')
 
         new_file = rename_image(filename)
 
@@ -69,35 +62,28 @@ def get_subject_info(path_to_data_file):
 
     filename = os.path.basename(path_to_data_file)
 
+    if filename.endswith('.gz'):
+        filename = filename.strip('.nii.gz')
+    elif filename.endswith('.nii'):
+        filename = filename.strip('.nii')
+
     parts = filename.split('_')
 
-    if parts[0].isalpha():
+    if len(parts) <= 1:
+        _logger.error('parts is too small: %s' % len(parts))
+        return parts
 
-        # then you have an underscore between study prefix and code
+    #_logger.debug('filename parts are: %s' % parts)
 
-        subject_code = parts[0] + '_' + parts[1]
+    subject_code = parts[0]
 
-        modality = parts[2]
+    modality = parts[1]
 
-    elif parts[0].isalnum():
+    series_num = parts[2]
 
-        subject_code = parts[0]
+    _logger.info('code: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
-        modality = parts[1]
-
-    else:
-
-        print 'subject-code unknown'
-        return None
-
-    if 'REST' in modality:
-        modality = modality.strip('.nii.gz')
-        series_num = modality[-1]
-    elif 'T1w' in modality:
-        acq_num = filename.split('_')[2].strip('.nii.gz')
-        series_num = acq_num[-1]
-
-    return subject_code, modality, series_num
+    return [subject_code, modality, series_num]
 
 
 def rename_image(img_path):
@@ -107,7 +93,6 @@ def rename_image(img_path):
     filename, file_extension = path.splitext(path.basename(img_path))
 
     if filename in images_dict.keys():
-
         new_filename = images_dict[filename]
 
         new_file_path = path.join(path.dirname(img_path), new_filename, file_extension)
@@ -117,87 +102,164 @@ def rename_image(img_path):
         return new_file_path
 
 
-# huh?
-def get_epi_info(path_to_epi_raw_file):
-    """:arg path to raw EPI data (.nii.gz presumed)
-        :returns dict of params for each EPI acquisition with format:
-            REST#: (x,y,z,TE,TR,etc)"""
-
-    raw_files = os.listdir(os.path.dirname(path_to_epi_raw_file))
-    print raw_files
-    epi_files = []
-
-    subcode, modality, series = get_subject_info(path_to_epi_raw_file)
-
-    # TODO: make below work properly, since epi_files is not populating
-
-    rs_pattern = '%(code)s_REST%(acq_num)s' % {'code': subcode, 'acq_num': series}
-
-    for a_file in raw_files:
-        if a_file == glob.glob1(path_to_epi_raw_file, rs_pattern):
-            epi_files.append(a_file)
-
-    print epi_files
-
-    epi_info = {'data_path'     : path_to_epi_raw_file,
-                'subject_code'  : subcode,
-                'series'        : series}
-
-    num_acq = len(epi_files)
-
-    epi_info['number_acquired'] = num_acq
-
-    return epi_info
+def write_csv(data, filepath):
+    f = open(filepath, 'wb')
+    writer = csv.writer(f)
+    writer.writerows(data)
+    f.close()
 
 
-def make_param_table(path_to_raw_data):
+def get_nii_info(path_to_nii):
 
-    try:
-        f = open('all_params.txt', 'w')
+    path_to_nii = os.path.join(path_to_nii)
 
-        f.write('Modality,x(mm),y(mm),z(mm),TE,TR,Frames,TI')
+    _logger.info("getting params on %s\n" % path_to_nii)
 
-    finally:
-        f.close()
+    info = get_subject_info(path_to_nii)
+
+    _logger.debug('modality is %s' % info)
+
+    modality = info[1]
+
+    cmd = 'echo %s,' % modality
+    cmd += '`fslval %s pixdim1`,' % path_to_nii
+    cmd += '`fslval %s pixdim2`,' % path_to_nii
+    cmd += '`fslval %s pixdim3`,' % path_to_nii
+    cmd += '`fslval %s pixdim4`,' % path_to_nii
+    cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")
+    cmd += '`fslval %s dim4`,' % path_to_nii
+    cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
+
+    _logger.debug(cmd)
+
+    proc = subprocess.Popen(
+        cmd
+        , shell=True
+        , stdout=subprocess.PIPE
+        , stderr=subprocess.PIPE
+    )
+
+    (output, error) = proc.communicate()
+
+    data = output.strip("\n").split(',')
+
+    if error:
+        _logger.error(error)
+    if output:
+        _logger.info(output)
+
+    return data
 
 
-def populate_template_table_data():
-    pass
+def get_list_of_data(src):
+
+    tree = os.walk(src)
+    t1_data = []
+    t2_data = []
+    epi_data = []
+
+    for dir in tree:
+
+        for file in dir[2]:
+
+            if not (file.endswith('.gz') or file.endswith('.nii')):
+                continue
+
+            try:
+
+                if get_subject_info(file)[1] == 'T1w':
+
+                    full_path = os.path.join(dir[0], file)
+                    t1_data.append(full_path)
+
+                elif get_subject_info(file)[1] == 'T2w':
+
+                    full_path = os.path.join(dir[0], file)
+                    t2_data.append(full_path)
+
+                elif get_subject_info(file)[1].__contains__('REST'):
+
+                    full_path = os.path.join(dir[0], file)
+                    epi_data.append(full_path)
+
+            except IndexError, e:
+                _logger.error(e)
+                continue
+
+    data_lists = [t1_data, t2_data, epi_data]
+    _logger.info('\ndata_lists: %s' % data_lists)
+
+    return data_lists
 
 
 def main():
-
-    date_stamp = "{:%Y_%m_%d}".format(datetime.now())
-
-    _log = logging.getLogger('exec_sum.log')
-
-    _log.info('Starting Up...')
-
     parser = argparse.ArgumentParser(description=program_desc)
 
     # TODO: one at a time for now rather than a list... Still not sure about this.
 
-    parser.add_argument('-p', '--path', action="store", dest='file_path', help="Provide a full path to a data folder.")
+    parser.add_argument('-i', '--image-path', action="store", dest='file_path', help="Provide a full path to the "
+                                                                                     "folder "
+                                                                                     "containing all summary images.")
+
+    parser.add_argument('-d' '--data-path', dest='data_path', help="Full path to raw data file.")
+
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     args = parser.parse_args()
 
-    if args.verbose:
-        _log.setLevel(logging.DEBUG)
-    else:
-        _log.setLevel(logging.INFO)
+    _logger.debug('args are: %s' % args)
 
-    print 'now serving %s ... ' % args.file_path
+    if not args.file_path.endswith('/'):
+        args.file_path += '/'
+
+    if args.verbose:
+        _logger.setLevel(logging.DEBUG)
+    else:
+        _logger.setLevel(logging.INFO)
+
+    if not args.data_path:
+        data_path = os.path.join('/Users/st_buckls/imageprocessing/Projects/FS/01/subj002/10075-2_T1w_MPR1.nii')
+    else:
+        data_path = args.data_path
+
+    img_in = os.path.join(args.file_path)
+
+    _logger.debug('path to images: %s' % img_in)
+    _logger.debug(os.listdir(img_in))
+
+    out_path = os.path.join(img_in)
+
+    param_table = os.path.join(out_path + 'Params.csv')
+
+    top_row = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
+
+    data_row = get_nii_info(data_path)
+
+    top_row.append(data_row)
+
+    write_csv(top_row, param_table)
+
+    more_data = get_list_of_data(os.path.dirname('/Users/st_buckls/imageprocessing/Projects/FS/01/subj002/10075-2_T1w_MPR1.nii'))
+
+    for list_entry in more_data:
+        if len(list_entry) > 0:
+            for item in list_entry:
+                top_row.append(get_nii_info(item))
+
+    write_csv(top_row, param_table)
 
 
 if __name__ == '__main__':
 
-    styles = getSampleStyleSheet()
+    date_stamp = "{:%Y_%m_%d_%H:%M}".format(datetime.now())
 
-    HeaderStyle = styles['Heading1']
-    ParaStyle = styles["Normal"]
+    logfile = os.path.join(os.getcwd(), 'log-%s.log' % date_stamp)
 
-    Story = []
+    logging.basicConfig(filename=logfile, level=logging.DEBUG)
+
+    _logger = logging.getLogger()
+
+    _logger.info('%s_v%s: ran on %s\n' % (PROG, VERSION, date_stamp))
 
     main()
 
@@ -214,7 +276,6 @@ def structural_montage_cmd(path_in, path_out):
     cmd = 'montage '
 
     for png in rename_structural(path_in):
-
         input_file = os.path.join(png)
 
         cmd += "-label %t "
@@ -223,17 +284,3 @@ def structural_montage_cmd(path_in, path_out):
     cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
 
     return cmd
-
-
-def header(txt, style='Heading1', klass=Paragraph, sep=0.3):
-
-    s = Spacer(0.2*inch, sep*inch)
-    Story.append(s)
-    para = klass(txt, style)
-    Story.append(para)
-
-
-def p(txt):
-
-    return header(txt, style=ParaStyle, sep=0.1)
-####
