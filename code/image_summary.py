@@ -151,6 +151,89 @@ def get_nii_info(path_to_nii):
     return data
 
 
+def get_dcm_info(path_to_dicom, modality):
+
+    path_to_dicom = os.path.join(path_to_dicom)
+
+    cmd = 'echo %s,' % modality
+    cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
+    cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
+    cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
+
+    _logger.debug(cmd)
+
+    proc = subprocess.Popen(
+        cmd
+        , shell=True
+        , stdout=subprocess.PIPE
+        , stderr=subprocess.PIPE
+    )
+
+    (output, error) = proc.communicate()
+
+    data = output.strip("\n").split(',')
+
+    data = [item for item in data if not item == '']
+
+    if error:
+        _logger.error(error)
+    if output:
+        _logger.info(output)
+
+    return data
+
+
+def grab_te_from_dicom(path_to_dicom):
+
+    path_to_dicom = os.path.join(path_to_dicom)
+
+    cmd = 'echo `mri_info %s | grep "TE" | awk %s`' % (path_to_dicom, "'{print $5}'")
+
+    _logger.debug(cmd)
+
+    proc = subprocess.Popen(
+        cmd
+        , shell=True
+        , stdout=subprocess.PIPE
+        , stderr=subprocess.PIPE
+    )
+
+    (output, error) = proc.communicate()
+
+    echo_time = output.strip("\n").split(',')
+
+    if error:
+        _logger.error(error)
+    if output:
+        _logger.info(output)
+
+    return echo_time
+
+
+# TODO: use this to remove the redundant code from other functions
+def submit_command(cmd):
+
+    _logger.debug(cmd)
+
+    proc = subprocess.Popen(
+        cmd
+        , shell=True
+        , stdout=subprocess.PIPE
+        , stderr=subprocess.PIPE
+    )
+
+    (output, error) = proc.communicate()
+
+    if error:
+        _logger.error(error)
+    if output:
+        _logger.info(output)
+
+    return output
+
+
 def get_list_of_data(src):
 
     tree = os.walk(src)
@@ -239,12 +322,23 @@ def main():
 
     write_csv(top_row, param_table)
 
+    # Use a filepath to find all files in the path
     more_data = get_list_of_data(os.path.dirname('/Users/st_buckls/imageprocessing/Projects/FS/01/subj002/10075-2_T1w_MPR1.nii'))
+
+    # DICOM tests
+
+    dicom_path = '/Users/st_buckls/programming/Projects/ExecutiveSummary/in/0.dcm'
+
+    even_more_data = get_dcm_info(dicom_path, 'DWI')
+
+    print even_more_data
 
     for list_entry in more_data:
         if len(list_entry) > 0:
             for item in list_entry:
                 top_row.append(get_nii_info(item))
+
+    top_row.append(even_more_data)
 
     write_csv(top_row, param_table)
 
