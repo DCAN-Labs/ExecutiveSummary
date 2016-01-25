@@ -6,6 +6,10 @@ span {
     font-size: 10px;
 }
 
+img {
+    border-radius: 5px;
+}
+
 .header {
     font-family: Garamond;
     margin-top: 25px;
@@ -34,6 +38,7 @@ table, td {
 
 .epi {
     float: right;
+    position: relative;
 }
 
 .epi img {
@@ -48,6 +53,7 @@ table, td {
 .params {
     float: left;
     width: 40%;
+    position: relative;
 }
 
 .params td {
@@ -64,8 +70,10 @@ table, td {
     border-bottom: 1px blue solid;
     font-weight: bold;
 }
+
 .grayords {
     float: right;
+    position: relative;
 }
 
 .grayords img {
