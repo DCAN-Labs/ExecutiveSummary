@@ -76,3 +76,7 @@ table, td {
 .out-of-range {
     color: red;
 }
+
+.button {
+    width: 20px;
+}
