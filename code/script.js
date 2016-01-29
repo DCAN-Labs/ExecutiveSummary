@@ -77,6 +77,63 @@ $(document).ready(function() {
         $('#epi2_frames').addClass('out-of-range');
     };
 
+    if($('#epi1_x').text() != '3.8') {
+        $('#epi1_x').addClass('out-of-range');
+    };
+
+    if($('#epi1_y').text() != '3.8') {
+        $('#epi1_y').addClass('out-of-range');
+    };
+
+    if($('#epi1_z').text() != '3.8') {
+        $('#epi1_z').addClass('out-of-range');
+    };
+
+    if($('#epi2_x').text() != '3.8') {
+        $('#epi2_x').addClass('out-of-range');
+    };
+
+    if($('#epi2_y').text() != '3.8') {
+        $('#epi2_y').addClass('out-of-range');
+    };
+
+    if($('#epi2_z').text() != '3.8') {
+        $('#epi2_z').addClass('out-of-range');
+    };
+        if($('#epi3_x').text() != '3.8') {
+        $('#epi3_x').addClass('out-of-range');
+    };
+
+    if($('#epi3_y').text() != '3.8') {
+        $('#epi3_y').addClass('out-of-range');
+    };
+
+    if($('#epi3_z').text() != '3.8') {
+        $('#epi3_z').addClass('out-of-range');
+    };
+        if($('#epi4_x').text() != '3.8') {
+        $('#epi4_x').addClass('out-of-range');
+    };
+
+    if($('#epi4_y').text() != '3.8') {
+        $('#epi4_y').addClass('out-of-range');
+    };
+
+    if($('#epi4_z').text() != '3.8') {
+        $('#epi4_z').addClass('out-of-range');
+    };
+
+    if($('#epi5_x').text() != '3.8') {
+        $('#epi5_x').addClass('out-of-range');
+    };
+
+    if($('#epi5_y').text() != '3.8') {
+        $('#epi5_y').addClass('out-of-range');
+    };
+
+    if($('#epi5_z').text() != '3.8') {
+        $('#epi5_z').addClass('out-of-range');
+    };
     $('div.params').draggable();
 
     $('div.grayords').resizable();
