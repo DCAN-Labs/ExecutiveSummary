@@ -1,8 +1,44 @@
 $(document).ready(function() {
 
-    if($('#t1_tr').text() != '2400.0') {
-        $('#t1_tr').addClass('out-of-range');
+    var t1Dimensions = Array($('.t1_x'), $('.t1_y'), $('.t1_z'));
+    console.log(t1Dimensions.length);
+
+    console.log(t1Dimensions[0].childNodes);
+
+    // grab the text of an id
+    var $t1_tr = $('#t1_tr').text();
+
+    //convert that text to a number then check against an expected value
+    if(Number($t1_tr) < 2400) {
+        console.log($t1_tr + ' is less than 2400');  //delete this later...
+        $('#t1_tr').addClass('out-of-range');  //make red if not within range
+    }
+
+    //TODO: make objects for data params for more efficient param checks?
+    var t1_data = {x: $('.t1_x'),
+                    y: $('.t1_y'),
+                    z: $('.t1_z')
     };
+
+    //TODO: figure out how loop through an object array... or scrap this method
+
+    function checkT1Values() {
+        console.log('x: ' + this.x.text());
+        console.log('y: ' + this.y);
+        console.log('z: ' + this.z);
+        // TODO: for loop here through the object
+
+        if(parseFloat(this.x.text()) != 1) {
+            console.log(this.x + ' is out of range!');
+            this.x.addClass('out-of-range');
+        };
+    };
+
+    t1_data.logDetails = checkT1Values;
+
+    t1_data.logDetails();
+
+    //TODO: change all this below here to be more loopy and check for values instead of text!
 
     if($('.t1_x').text() != '1.0') {
         $('.t1_x').addClass('out-of-range');
