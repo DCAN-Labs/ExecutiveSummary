@@ -43,24 +43,9 @@ images_dict = {
 }
 
 
-def rename_structural(path_to_image_dump):
-    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+def get_subject_info(path_to_nii_file):
 
-    new_imgs = []
-
-    for img_label in structural_imgs:
-        filename = os.path.join(path_to_image_dump, img_label, '.png')
-
-        new_file = rename_image(filename)
-
-        new_imgs.append(new_file)
-
-    return new_imgs
-
-
-def get_subject_info(path_to_data_file):
-
-    filename = os.path.basename(path_to_data_file)
+    filename = os.path.basename(path_to_nii_file)
 
     if filename.endswith('.gz'):
         filename = filename.strip('.nii.gz')
@@ -84,22 +69,6 @@ def get_subject_info(path_to_data_file):
     _logger.info('code: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
     return [subject_code, modality, series_num]
-
-
-def rename_image(img_path):
-    """:arg img_path should be full-path to any image file
-        :returns renamed, full-path to new image filename"""
-
-    filename, file_extension = path.splitext(path.basename(img_path))
-
-    if filename in images_dict.keys():
-        new_filename = images_dict[filename]
-
-        new_file_path = path.join(path.dirname(img_path), new_filename, file_extension)
-
-        os.rename(img_path, new_file_path)
-
-        return new_file_path
 
 
 def write_csv(data, filepath):
@@ -162,7 +131,7 @@ def get_dcm_info(path_to_dicom, modality):
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
-    _logger.debug(cmd)
+    #_logger.debug(cmd)
 
     proc = subprocess.Popen(
         cmd
@@ -177,10 +146,10 @@ def get_dcm_info(path_to_dicom, modality):
 
     data = [item for item in data if not item == '']
 
-    if error:
-        _logger.error(error)
-    if output:
-        _logger.info(output)
+    # if error:
+    #     _logger.error(error)
+    # if output:
+    #     _logger.info(output)
 
     return data
 
@@ -275,12 +244,37 @@ def get_list_of_data(src):
     return data_lists
 
 
+def make_image_dump(src, dst):
+    src = os.path.join(src)
+    pass
+
+
+def super_slice_me(nii_gz_path, plane, slice_pos, dst):
+    """
+    :param nii_gz_path: full path to nii.gz file
+    :param x: default slice position in the x-plane (Sagittal on T1)
+    :param y: default slice position in y-plane (Coronal on T1)
+    :param z: default slice position in the z-plane (Axial on T1)
+    :param dst: destination for files.
+    :return: nothing, or a path to the sliced outputs? Or a tuple of path(s)?
+    """
+
+    cmd = ''
+    cmd += 'slicer %(input_file)s -u -%(x_y_or_z)s -%(slice_pos)i %(dest)s' % {'input_file': nii_gz_path,
+                                                                               'x_y_or_z': plane,
+                                                                               'slice_pos': slice_pos,
+                                                                                'dest': dst}
+
+    submit_command(cmd)
+
+
 def main():
+
     parser = argparse.ArgumentParser(description=program_desc)
 
     # TODO: one at a time for now rather than a list... Still not sure about this.
 
-    parser.add_argument('-i', '--image-path', action="store", dest='file_path', help="Provide a full path to the "
+    parser.add_argument('-i', '--image-path', action="store", dest='img_path', help="Provide a full path to the "
                                                                                      "folder "
                                                                                      "containing all summary images.")
 
@@ -292,8 +286,9 @@ def main():
 
     _logger.debug('args are: %s' % args)
 
-    if not args.file_path.endswith('/'):
-        args.file_path += '/'
+    if not args.img_path.endswith('/'):
+       args.img_path += '/'
+    img_in = os.path.join(args.img_path)
 
     if args.verbose:
         _logger.setLevel(logging.DEBUG)
@@ -301,11 +296,11 @@ def main():
         _logger.setLevel(logging.INFO)
 
     if not args.data_path:
-        data_path = os.path.join('/Users/st_buckls/imageprocessing/Projects/FS/01/subj002/10075-2_T1w_MPR1.nii')
+        data_path = os.path.join('/remote_home/bucklesh/Projects/TestData/REST1_SBRef.nii.gz')
     else:
         data_path = args.data_path
 
-    img_in = os.path.join(args.file_path)
+    print 'data list: %s' % get_list_of_data(data_path)
 
     _logger.debug('path to images: %s' % img_in)
     _logger.debug(os.listdir(img_in))
@@ -316,6 +311,7 @@ def main():
 
     top_row = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
+    # TODO: Determine whether nii info has the right parts
     data_row = get_nii_info(data_path)
 
     top_row.append(data_row)
@@ -323,13 +319,13 @@ def main():
     write_csv(top_row, param_table)
 
     # Use a filepath to find all files in the path
-    more_data = get_list_of_data(os.path.dirname('/Users/st_buckls/imageprocessing/Projects/FS/01/subj002/10075-2_T1w_MPR1.nii'))
+    more_data = get_list_of_data(os.path.dirname('/remote_home/bucklesh/Projects/TestData/unprocessed/T1w_MPR1/11445-2_T1w_MPR1.nii.gz'))
 
     # DICOM tests
 
-    dicom_path = '/Users/st_buckls/programming/Projects/ExecutiveSummary/in/0.dcm'
+    dicom_path = '/dicom/2015/12/11378_013_11378_013/04_1310/007-PD_fl3D/1.3.12.2.1107.5.2.34.18913.2015120413391664710789251.dcm'
 
-    even_more_data = get_dcm_info(dicom_path, 'DWI')
+    even_more_data = get_dcm_info(dicom_path, 'PD-Flair')
 
     print even_more_data
 
@@ -356,6 +352,37 @@ if __name__ == '__main__':
     _logger.info('%s_v%s: ran on %s\n' % (PROG, VERSION, date_stamp))
 
     main()
+
+
+def rename_structural(path_to_image_dump):
+    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
+
+    new_imgs = []
+
+    for img_label in structural_imgs:
+        filename = os.path.join(path_to_image_dump, img_label, '.png')
+
+        new_file = rename_image(filename)
+
+        new_imgs.append(new_file)
+
+    return new_imgs
+
+
+def rename_image(img_path):
+    """:arg img_path should be full-path to any image file
+        :returns renamed, full-path to new image filename"""
+
+    filename, file_extension = path.splitext(path.basename(img_path))
+
+    if filename in images_dict.keys():
+        new_filename = images_dict[filename]
+
+        new_file_path = path.join(path.dirname(img_path), new_filename, file_extension)
+
+        os.rename(img_path, new_file_path)
+
+        return new_file_path
 
 
 # reportlab stuff
