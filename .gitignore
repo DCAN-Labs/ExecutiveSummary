@@ -1,3 +1,4 @@
 *.name
 .idea/
 out/Image_And_Text_Test.pdf
+code/image_summary.pyc
