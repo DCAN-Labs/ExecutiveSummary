@@ -6,12 +6,6 @@ __author__ = 'Shannon Buckley', 12/27/15
 import image_summary
 from datetime import datetime
 import os
-from reportlab.pdfgen import canvas
-from reportlab.lib.enums import TA_JUSTIFY
-from reportlab.lib.pagesizes import landscape, letter, A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Frame, Table
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
 
 test_sub_path = '/remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02'
 
