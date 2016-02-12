@@ -43,6 +43,17 @@ images_dict = {
 }
 
 
+def get_paths(subject_code_path):
+
+    sub_path = os.path.join(subject_code_path)
+
+    if os.path.exists(sub_path):
+        img_path = path.join(sub_path, 'summary')
+        data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
+
+        return img_path, data_path
+
+
 def get_subject_info(path_to_nii_file):
 
     filename = os.path.basename(path_to_nii_file)
@@ -223,10 +234,12 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     """
 
     cmd = ''
-    cmd += 'slicer %(input_file)s -u -%(x_y_or_z)s -%(slice_pos)i %(dest)s' % {'input_file': nii_gz_path,
-                                                                               'x_y_or_z': plane,
-                                                                               'slice_pos': slice_pos,
-                                                                                'dest': dst}
+    cmd += 'slicer %(input_file)s -u -%(x_y_or_z)s -%(slice_pos)i %(dest)s' % {
+
+        'input_file': nii_gz_path,
+        'x_y_or_z': plane,
+        'slice_pos': slice_pos,
+        'dest': dst}
 
     submit_command(cmd)
 
@@ -245,27 +258,25 @@ def main():
 
     parser.add_argument('-n' '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
 
+    parser.add_argument('-s', '--subject_path', dest='project_path', help='''
+        Path to given subject folder under a given project e.g.
+       /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
+
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     args = parser.parse_args()
 
     _logger.debug('args are: %s' % args)
 
-    if not args.img_path.endswith('/'):
-       args.img_path += '/'
-    img_in = os.path.join(args.img_path)
-
     if args.verbose:
         _logger.setLevel(logging.DEBUG)
     else:
         _logger.setLevel(logging.INFO)
 
-    if not args.data_path:
-        data_path = os.path.join('/remote_home/bucklesh/Projects/TestData/REST1_SBRef.nii.gz')
-    else:
-        data_path = args.data_path
+    if not args.img_path.endswith('/'):
+       args.img_path += '/'
 
-    print 'data list: %s' % get_list_of_data(data_path)
+    img_in = os.path.join(args.img_path)
 
     _logger.debug('path to images: %s' % img_in)
     _logger.debug(os.listdir(img_in))
@@ -274,34 +285,10 @@ def main():
 
     param_table = os.path.join(out_path + 'Params.csv')
 
-    top_row = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
+    # write out the first row of our data rows to setup column headers
+    data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
-    # TODO: Determine whether nii info has the right parts
-    data_row = get_nii_info(data_path)
-
-    top_row.append(data_row)
-
-    write_csv(top_row, param_table)
-
-    # Use a filepath to find all files in the path
-    more_data = get_list_of_data(os.path.dirname('/remote_home/bucklesh/Projects/TestData/unprocessed/T1w_MPR1/11445-2_T1w_MPR1.nii.gz'))
-
-    # DICOM tests
-
-    dicom_path = '/dicom/2015/12/11378_013_11378_013/04_1310/007-PD_fl3D/1.3.12.2.1107.5.2.34.18913.2015120413391664710789251.dcm'
-
-    even_more_data = get_dcm_info(dicom_path, 'PD-Flair')
-
-    print even_more_data
-
-    for list_entry in more_data:
-        if len(list_entry) > 0:
-            for item in list_entry:
-                top_row.append(get_nii_info(item))
-
-    top_row.append(even_more_data)
-
-    write_csv(top_row, param_table)
+    write_csv(data_rows, param_table)
 
 
 if __name__ == '__main__':
