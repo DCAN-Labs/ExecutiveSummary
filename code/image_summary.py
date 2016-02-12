@@ -58,7 +58,7 @@ def get_subject_info(path_to_nii_file):
         _logger.error('parts is too small: %s' % len(parts))
         return parts
 
-    #_logger.debug('filename parts are: %s' % parts)
+    _logger.debug('filename parts were: %s' % parts)
 
     subject_code = parts[0]
 
@@ -101,21 +101,9 @@ def get_nii_info(path_to_nii):
 
     _logger.debug(cmd)
 
-    proc = subprocess.Popen(
-        cmd
-        , shell=True
-        , stdout=subprocess.PIPE
-        , stderr=subprocess.PIPE
-    )
-
-    (output, error) = proc.communicate()
+    output = submit_command(cmd)
 
     data = output.strip("\n").split(',')
-
-    if error:
-        _logger.error(error)
-    if output:
-        _logger.info(output)
 
     return data
 
@@ -131,25 +119,13 @@ def get_dcm_info(path_to_dicom, modality):
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
-    #_logger.debug(cmd)
+    _logger.debug(cmd)
 
-    proc = subprocess.Popen(
-        cmd
-        , shell=True
-        , stdout=subprocess.PIPE
-        , stderr=subprocess.PIPE
-    )
-
-    (output, error) = proc.communicate()
+    output = submit_command(cmd)
 
     data = output.strip("\n").split(',')
 
     data = [item for item in data if not item == '']
-
-    # if error:
-    #     _logger.error(error)
-    # if output:
-    #     _logger.info(output)
 
     return data
 
@@ -162,26 +138,13 @@ def grab_te_from_dicom(path_to_dicom):
 
     _logger.debug(cmd)
 
-    proc = subprocess.Popen(
-        cmd
-        , shell=True
-        , stdout=subprocess.PIPE
-        , stderr=subprocess.PIPE
-    )
-
-    (output, error) = proc.communicate()
+    output = submit_command(cmd)
 
     echo_time = output.strip("\n").split(',')
-
-    if error:
-        _logger.error(error)
-    if output:
-        _logger.info(output)
 
     return echo_time
 
 
-# TODO: use this to remove the redundant code from other functions
 def submit_command(cmd):
 
     _logger.debug(cmd)
@@ -279,6 +242,8 @@ def main():
                                                                                      "containing all summary images.")
 
     parser.add_argument('-d' '--data-path', dest='data_path', help="Full path to raw data file.")
+
+    parser.add_argument('-n' '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
