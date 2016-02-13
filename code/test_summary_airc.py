@@ -4,8 +4,8 @@ __author__ = 'Shannon Buckley', 12/27/15
 """
 
 import image_summary
-from datetime import datetime
 import os
+
 
 test_sub_path = '/remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02'
 
