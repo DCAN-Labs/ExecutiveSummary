@@ -20,6 +20,16 @@ structural and functional images, and grayordinates results into one file for ef
 FNL_preproc pipeline module).
 """ % {'prog': PROG, 'ver': VERSION}
 
+date_stamp = "{:%Y_%m_%d_%H:%M}".format(datetime.now())
+
+logfile = os.path.join(os.getcwd(), 'log-%s.log' % date_stamp)
+
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
+
+_logger = logging.getLogger()
+
+_logger.info('%s_v%s: ran on %s\n' % (PROG, VERSION, date_stamp))
+
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
     'temp_1': 'T1-Axial-InferiorTemporal-Cerebellum',
@@ -102,12 +112,12 @@ def get_nii_info(path_to_nii):
     modality = info[1]
 
     cmd = 'echo %s,' % modality
-    cmd += '`fslval %s pixdim1`,' % path_to_nii
-    cmd += '`fslval %s pixdim2`,' % path_to_nii
-    cmd += '`fslval %s pixdim3`,' % path_to_nii
-    cmd += '`fslval %s pixdim4`,' % path_to_nii
-    cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")
-    cmd += '`fslval %s dim4`,' % path_to_nii
+    cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
+    cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
+    cmd += '`fslval %s pixdim3`,' % path_to_nii  # z
+    cmd += '`fslval %s pixdim4`,' % path_to_nii  # TR
+    cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE
+    cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
 
     _logger.debug(cmd)
@@ -125,7 +135,7 @@ def get_dcm_info(path_to_dicom, modality):
 
     cmd = 'echo %s,' % modality
     cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
     cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
@@ -292,16 +302,6 @@ def main():
 
 
 if __name__ == '__main__':
-
-    date_stamp = "{:%Y_%m_%d_%H:%M}".format(datetime.now())
-
-    logfile = os.path.join(os.getcwd(), 'log-%s.log' % date_stamp)
-
-    logging.basicConfig(filename=logfile, level=logging.DEBUG)
-
-    _logger = logging.getLogger()
-
-    _logger.info('%s_v%s: ran on %s\n' % (PROG, VERSION, date_stamp))
 
     main()
 
