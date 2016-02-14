@@ -22,7 +22,10 @@ FNL_preproc pipeline module).
 
 date_stamp = "{:%Y_%m_%d_%H:%M}".format(datetime.now())
 
-logfile = os.path.join(os.getcwd(), 'log-%s.log' % date_stamp)
+if not path.exists(path.join(os.getcwd(), 'logs')):
+    os.makedirs('logs')
+
+logfile = os.path.join(os.getcwd(), 'logs', 'log-%s.log' % date_stamp)
 
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
@@ -55,7 +58,7 @@ images_dict = {
 
 def get_paths(subject_code_path):
 
-    sub_path = os.path.join(subject_code_path)
+    sub_path = path.join(subject_code_path)
 
     if os.path.exists(sub_path):
         img_path = path.join(sub_path, 'summary')
@@ -75,19 +78,38 @@ def get_subject_info(path_to_nii_file):
 
     parts = filename.split('_')
 
-    if len(parts) <= 1:
-        _logger.error('parts is too small: %s' % len(parts))
-        return parts
+    p_count = len(parts)
 
-    _logger.debug('filename parts were: %s' % parts)
+    _logger.debug('num parts are: %d' % p_count)
 
-    subject_code = parts[0]
+    if p_count <= 1:
+        _logger.error('parts is too small: %s' % p_count)
 
-    modality = parts[1]
+    elif p_count == 4:
 
-    series_num = parts[2]
+        _logger.info('filename parts were: %s' % parts)
 
-    _logger.info('code: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
+        series_num = parts.pop()
+
+        modality = parts.pop()
+
+        if len(parts) == 2:
+
+            subject_code = parts[1]
+
+        elif len(parts) == 1:
+
+            subject_code = parts[0]
+
+    elif p_count == 3:
+
+        subject_code, modality, series_num = parts
+
+        _logger.info('code: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
+
+    else:
+
+        subject_code, modality, series_num = parts[3], parts[5], parts[4]
 
     return [subject_code, modality, series_num]
 
@@ -107,7 +129,7 @@ def get_nii_info(path_to_nii):
 
     info = get_subject_info(path_to_nii)
 
-    _logger.debug('modality is %s' % info)
+    _logger.debug('data-info is: %s' % info)
 
     modality = info[1]
 
@@ -120,7 +142,7 @@ def get_nii_info(path_to_nii):
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
 
-    _logger.debug(cmd)
+    _logger.debug('param_command was %s' % cmd)
 
     output = submit_command(cmd)
 
@@ -140,7 +162,7 @@ def get_dcm_info(path_to_dicom, modality):
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
-    _logger.debug(cmd)
+    _logger.debug('dicom param-extraction cmdline: %s' % cmd)
 
     output = submit_command(cmd)
 
@@ -203,12 +225,12 @@ def get_list_of_data(src):
 
             try:
 
-                if get_subject_info(file)[1] == 'T1w':
+                if 'T1' in get_subject_info(file)[1]:
 
                     full_path = os.path.join(dir[0], file)
                     t1_data.append(full_path)
 
-                elif get_subject_info(file)[1] == 'T2w':
+                elif 'T2' in get_subject_info(file)[1]:
 
                     full_path = os.path.join(dir[0], file)
                     t2_data.append(full_path)
@@ -223,7 +245,7 @@ def get_list_of_data(src):
                 continue
 
     data_lists = [t1_data, t2_data, epi_data]
-    _logger.info('\ndata_lists: %s' % data_lists)
+    _logger.debug('\ndata_lists: %s' % data_lists)
 
     return data_lists
 
@@ -283,23 +305,35 @@ def main():
     else:
         _logger.setLevel(logging.INFO)
 
-    if not args.img_path.endswith('/'):
-       args.img_path += '/'
+    if args.img_path:
 
-    img_in = os.path.join(args.img_path)
+        img_in = os.path.join(args.img_path)
 
-    _logger.debug('path to images: %s' % img_in)
-    _logger.debug(os.listdir(img_in))
+        _logger.info('path to images: %s' % img_in)
 
-    out_path = os.path.join(img_in)
+        _logger.info(os.listdir(img_in))
 
-    param_table = os.path.join(out_path + 'Params.csv')
+        out_path = os.path.join(img_in)
+
+    else:
+        out_path = path.join('../out')
+
+    param_table = os.path.join(out_path, 'Params.csv')
 
     # write out the first row of our data rows to setup column headers
     data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
     write_csv(data_rows, param_table)
 
+    if args.nifti_path:
+
+        nii = path.join(args.nifti_path)
+
+        nifti_data = get_nii_info(nii)
+
+        if nifti_data:
+            data_rows.append(nifti_data)
+            write_csv(data_rows, param_table)
 
 if __name__ == '__main__':
 
