@@ -61,9 +61,9 @@ def get_paths(subject_code_path):
 
 def get_subject_info(path_to_nii_file):
 
-    filename = os.path.basename(path_to_nii_file)
+    filename = path.basename(path_to_nii_file)
 
-    if filename.endswith('.gz'):
+    if filename.endswith('.nii.gz'):
         filename = filename.strip('.nii.gz')
     elif filename.endswith('.nii'):
         filename = filename.strip('.nii')
@@ -116,6 +116,11 @@ def write_csv(data, filepath):
 def get_nii_info(path_to_nii):
 
     path_to_nii = os.path.join(path_to_nii)
+
+    if not path.basename(path_to_nii).endswith('.nii.gz'):
+        if not path.basename(path_to_nii).endswith('.nii'):
+            _logger.error('wrong file type: %s' % path.basename(path_to_nii))
+            pass
 
     _logger.info("getting params on %s\n" % path_to_nii)
 
@@ -208,30 +213,38 @@ def get_list_of_data(src_folder):
     t2_data = []
     epi_data = []
 
-    for dir in tree:
+    for dir_name in tree:
 
-        for file in dir[2]:
+        _logger.debug('dir: %s' % dir_name[0])
 
-            if not (file.endswith('.gz') or not file.endswith('.nii')):
+        for file in dir_name[2]:
+            _logger.debug('file: %s' % file)
+
+            if not file.endswith('.nii.gz') and not file.endswith('.nii'):
+                _logger.debug('file not a .nii or .nii.gz: %s' % file)
                 continue
 
             try:
-                data_info = get_nii_info(file)
+                data_info = get_nii_info(path.join(dir_name[0], file))
 
-                if 'T1w' in data_info[1]:
+                if 'T1w' or 'T1' in data_info[1]:
 
-                    full_path = os.path.join(dir[0], file)
+                    full_path = os.path.join(dir_name[0], file)
                     t1_data.append(full_path)
 
-                elif 'T2w' in data_info[1]:
+                elif 'T2w' or 'T2' in data_info[1]:
 
-                    full_path = os.path.join(dir[0], file)
+                    full_path = os.path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif data_info[1].__contains__('REST'):
+                elif 'REST' in data_info[1]:
 
-                    full_path = os.path.join(dir[0], file)
+                    full_path = os.path.join(dir_name[0], file)
                     epi_data.append(full_path)
+
+                else:
+
+                    continue
 
             except IndexError, e:
                 _logger.error(e)
