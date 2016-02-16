@@ -9,10 +9,11 @@ import argparse
 import csv
 from os import path
 import logging
+import logging.handlers
 from datetime import datetime
 
 PROG = 'Image Summary'
-VERSION = '1.0.0'
+VERSION = '0.1.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -20,7 +21,7 @@ structural and functional images, and grayordinates results into one file for ef
 FNL_preproc pipeline module).
 """ % {'prog': PROG, 'ver': VERSION}
 
-date_stamp = "{:%Y_%m_%d_%H:%M}".format(datetime.now())
+date_stamp = "{:%Y_%m_%d %H:%M}".format(datetime.now())
 
 if not path.exists(path.join(os.getcwd(), 'logs')):
     os.makedirs('logs')
@@ -29,31 +30,22 @@ logfile = os.path.join(os.getcwd(), 'logs', 'log-%s.log' % date_stamp)
 
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
-_logger = logging.getLogger()
+_logger = logging.getLogger('Image_Summary_v%s' % VERSION)
 
-_logger.info('%s_v%s: ran on %s\n' % (PROG, VERSION, date_stamp))
+# trying out a different format...
+fmt = '%(asctime)s %(filename)-8s %(levelname)-8s: %(message)s'
 
-# describes existing set of structural images... may need adjustments to other locations / names
-images_dict = {
-    'temp_1': 'T1-Axial-InferiorTemporal-Cerebellum',
-    'temp_2': 'T2-Axial-InferiorTemporal-Cerebellum',
-    'temp_3': 'T1-Axial-BasalGangila-Putamen',
-    'temp_4': 'T2-Axial-BasalGangila-Putamen',
-    'temp_5': 'T1-Axial-SuperiorFrontal',
-    'temp_6': 'T2-Axial-SuperiorFrontal',
-    'temp_7': 'T1-Coronal-PosteriorParietal-Lingual',
-    'temp_8': 'T2-Coronal-PosteriorParietal-Lingual',
-    'temp_9': 'T1-Coronal-Caudate-Amygdala',
-    'temp_10': 'T2-Coronal-Caudate-Amygdala',
-    'temp_11': 'T1-Coronal-OrbitoFrontal',
-    'temp_12': 'T2-Coronal-OrbitoFrontal',
-    'temp_13': 'T1-Sagittal-Insula-FrontoTemporal',
-    'temp_14': 'T2-Sagittal-Insula-FrontoTemporal',
-    'temp_15': 'T1-Sagittal-CorpusCallosum',
-    'temp_16': 'T2-Sagittal-CorpusCallosum',
-    'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
-    'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
-}
+fmt_date = '%Y_%m_%d %H:%M %T%Z'
+
+formatter = logging.Formatter(fmt, fmt_date)
+
+handler = logging.handlers.RotatingFileHandler('_log', backupCount=2)
+
+handler.setFormatter(formatter)
+
+_logger.addHandler(handler)
+
+_logger.info('program log: %s\n' % (date_stamp))
 
 
 def get_paths(subject_code_path):
@@ -80,14 +72,14 @@ def get_subject_info(path_to_nii_file):
 
     p_count = len(parts)
 
-    _logger.debug('num parts are: %d' % p_count)
+    _logger.debug('file string has %d parts' % p_count)
 
     if p_count <= 1:
-        _logger.error('parts is too small: %s' % p_count)
+        _logger.error('not enough parts for this to be a "good code": %s' % p_count)
 
     elif p_count == 4:
 
-        _logger.info('filename parts were: %s' % parts)
+        _logger.info('file string parts were: %s' % parts)
 
         series_num = parts.pop()
 
@@ -142,7 +134,7 @@ def get_nii_info(path_to_nii):
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
 
-    _logger.debug('param_command was %s' % cmd)
+    # _logger.debug('param_command was %s' % cmd)
 
     output = submit_command(cmd)
 
@@ -209,9 +201,9 @@ def submit_command(cmd):
     return output
 
 
-def get_list_of_data(src):
+def get_list_of_data(src_folder):
 
-    tree = os.walk(src)
+    tree = os.walk(src_folder)
     t1_data = []
     t2_data = []
     epi_data = []
@@ -220,22 +212,23 @@ def get_list_of_data(src):
 
         for file in dir[2]:
 
-            if not (file.endswith('.gz') or file.endswith('.nii')):
+            if not (file.endswith('.gz') or not file.endswith('.nii')):
                 continue
 
             try:
+                data_info = get_nii_info(file)
 
-                if 'T1' in get_subject_info(file)[1]:
+                if 'T1w' in data_info[1]:
 
                     full_path = os.path.join(dir[0], file)
                     t1_data.append(full_path)
 
-                elif 'T2' in get_subject_info(file)[1]:
+                elif 'T2w' in data_info[1]:
 
                     full_path = os.path.join(dir[0], file)
                     t2_data.append(full_path)
 
-                elif get_subject_info(file)[1].__contains__('REST'):
+                elif data_info[1].__contains__('REST'):
 
                     full_path = os.path.join(dir[0], file)
                     epi_data.append(full_path)
@@ -244,7 +237,8 @@ def get_list_of_data(src):
                 _logger.error(e)
                 continue
 
-    data_lists = [t1_data, t2_data, epi_data]
+    data_lists = {'t1-data': t1_data, 't2-data': t2_data, 'epi-data': epi_data}
+
     _logger.debug('\ndata_lists: %s' % data_lists)
 
     return data_lists
@@ -265,10 +259,12 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     :return: nothing, or a path to the sliced outputs? Or a tuple of path(s)?
     """
 
+    dst = path.join(dst)
+
     cmd = ''
     cmd += 'slicer %(input_file)s -u -%(x_y_or_z)s -%(slice_pos)i %(dest)s' % {
 
-        'input_file': nii_gz_path,
+        'input_file': path.join(nii_gz_path),
         'x_y_or_z': plane,
         'slice_pos': slice_pos,
         'dest': dst}
@@ -311,14 +307,17 @@ def main():
 
         _logger.info('path to images: %s' % img_in)
 
-        _logger.info(os.listdir(img_in))
+        _logger.info('list of images:', os.listdir(img_in))
 
-        out_path = os.path.join(img_in)
+        img_out_path = os.path.join(img_in)
 
     else:
-        out_path = path.join('../out')
+        img_out_path = path.join('./img')
 
-    param_table = os.path.join(out_path, 'Params.csv')
+    if not path.exists(img_out_path):
+        os.makedirs(img_out_path)
+
+    param_table = path.join(os.getcwd(), 'Params.csv')
 
     # write out the first row of our data rows to setup column headers
     data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
@@ -346,7 +345,8 @@ def rename_structural(path_to_image_dump):
     new_imgs = []
 
     for img_label in structural_imgs:
-        filename = os.path.join(path_to_image_dump, img_label, '.png')
+
+        filename = path.join(path_to_image_dump, img_label, '.png')
 
         new_file = rename_image(filename)
 
@@ -356,8 +356,10 @@ def rename_structural(path_to_image_dump):
 
 
 def rename_image(img_path):
-    """:arg img_path should be full-path to any image file
-        :returns renamed, full-path to new image filename"""
+    """
+    :arg img_path should be full-path to any image file
+    :returns renamed, full-path to new image filename
+    """
 
     filename, file_extension = path.splitext(path.basename(img_path))
 
@@ -391,3 +393,25 @@ def structural_montage_cmd(path_in, path_out):
     cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
 
     return cmd
+
+# describes existing set of structural images... may need adjustments to other locations / names
+images_dict = {
+    'temp_1': 'T1-Axial-InferiorTemporal-Cerebellum',
+    'temp_2': 'T2-Axial-InferiorTemporal-Cerebellum',
+    'temp_3': 'T1-Axial-BasalGangila-Putamen',
+    'temp_4': 'T2-Axial-BasalGangila-Putamen',
+    'temp_5': 'T1-Axial-SuperiorFrontal',
+    'temp_6': 'T2-Axial-SuperiorFrontal',
+    'temp_7': 'T1-Coronal-PosteriorParietal-Lingual',
+    'temp_8': 'T2-Coronal-PosteriorParietal-Lingual',
+    'temp_9': 'T1-Coronal-Caudate-Amygdala',
+    'temp_10': 'T2-Coronal-Caudate-Amygdala',
+    'temp_11': 'T1-Coronal-OrbitoFrontal',
+    'temp_12': 'T2-Coronal-OrbitoFrontal',
+    'temp_13': 'T1-Sagittal-Insula-FrontoTemporal',
+    'temp_14': 'T2-Sagittal-Insula-FrontoTemporal',
+    'temp_15': 'T1-Sagittal-CorpusCallosum',
+    'temp_16': 'T2-Sagittal-CorpusCallosum',
+    'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
+    'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
+}
