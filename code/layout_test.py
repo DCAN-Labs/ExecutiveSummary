@@ -6,9 +6,14 @@ __author__ = 'Shannon Buckley', 2/20/16
 import os
 from os import path
 import argparse
+import image_summary
+
+VERSION = '0.0.0'
+
+LAST_MOD = '2-20-16'
 
 
-def write_html(template, title="test_doc.html"):
+def write_html(template, title="summary_out.html"):
 
     if not title.endswith('.html'):
         title += '.html'
@@ -30,11 +35,12 @@ html_header = """<!DOCTYPE html>
     <body>
         <div class="header">
             <h1>%(subj_code)s</h1>
-            <p>pipeline_version</p>
+            <p>pipeline_v%(version)s</p>
             <div class="button" id="next-button">
                 <button>Next</button>
             </div>
-        </div>""" % {'subj_code': 'code'}
+        </div>""" % {'subj_code': 'code',
+                     'version'  : VERSION}
 
 
 param_table_html_header = """
@@ -90,8 +96,6 @@ epi_panel_header = """
                             Resting State Data
                         </th>
                     </thead>
-                        <!--TODO: restructure the EPI panel to be in rows instead of columns-->
-                        <!--TODO: add rows dynamically based on what data are available (in script.js)-->
                     <tbody>"""
 
 epi_panel_footer = """
@@ -334,7 +338,26 @@ def main():
 
     epi_img_paths = [path.join('../in', code + '_' + img + '_in_t1.gif') for img in gif_labels]
 
-    newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_img_paths) + epi_panel_footer
+    more_epi_img_paths = [path.join('../in', code + '_t1_in_' + img + '.gif') for img in gif_labels]
+
+    sb_ref_paths = [path.join('../img', img + '.png') for img in gif_labels]
+
+    non_lin_paths = [path.join('../in', img + '_nonlin_norm.png') for img in gif_labels]
+
+    epi_rows = []
+
+    for i in range(0, len(gif_labels)-1):
+        epi_rows.append(epi_img_paths[i])
+        epi_rows.append(more_epi_img_paths[i])
+        epi_rows.append(sb_ref_paths[i])
+        epi_rows.append(non_lin_paths[i])
+
+    ordered_epi = epi_rows
+
+    print ordered_epi[0:4]
+
+    newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
+                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) + epi_panel_footer
 
     print newer_body
 
