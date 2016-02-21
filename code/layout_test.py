@@ -224,6 +224,17 @@ def write_epi_panel_row(list_of_img_paths):
     return epi_panel_row
 
 
+def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_footer):
+
+    epi_panel_html = header
+
+    for row in epi_rows_list:
+        epi_panel_html += row
+    epi_panel_html += footer
+
+    return epi_panel_html
+
+
 def write_dvars_panel(dvars_path='../in/DVARS_and_FD_CONCA.png'):
 
     dvars_panel_html_string = """
@@ -255,6 +266,13 @@ def make_img_list(path_to_dir):
             image.append(get_image_path(image))
 
     return images
+
+
+def append_html_with_chunk(existing_html, string_to_insert):
+
+    new_html_string = existing_html + string_to_insert
+
+    return new_html_string
 
 
 def main():
@@ -306,6 +324,8 @@ def main():
 
         pngs = []
 ###############################
+    # TEST WITH FAKE DATA
+###############################
 
     code = '10075-2'
 
@@ -340,7 +360,7 @@ def main():
 
     more_epi_img_paths = [path.join('../in', code + '_t1_in_' + img + '.gif') for img in gif_labels]
 
-    sb_ref_paths = [path.join('../img', img + '.png') for img in gif_labels]
+    sb_ref_paths = [path.join('./img', img + '.png') for img in gif_labels]
 
     non_lin_paths = [path.join('../in', img + '_nonlin_norm.png') for img in gif_labels]
 
