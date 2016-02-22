@@ -60,7 +60,7 @@ def get_paths(subject_code_path):
 
 
 def get_subject_info(path_to_nii_file):
-
+    subject_code, modality, series_num = '', '', ''
     filename = path.basename(path_to_nii_file)
 
     if filename.endswith('.nii.gz'):
@@ -74,8 +74,15 @@ def get_subject_info(path_to_nii_file):
 
     _logger.debug('file string has %d parts' % p_count)
 
-    if p_count <= 1:
+    if p_count <= 2:
         _logger.error('not enough parts for this to be a "good code": %s' % p_count)
+
+    elif p_count == 3:
+
+        subject_code = parts[1]
+        modality = 'epi'
+        series_num = parts[2]
+        _logger.info('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
     elif p_count == 4:
 
@@ -85,7 +92,7 @@ def get_subject_info(path_to_nii_file):
 
         modality = parts.pop()
 
-        if len(parts) == 2:
+        if len(parts) == 2:  # parts now 2 fewer and we check what's left
 
             subject_code = parts[1]
 
@@ -93,15 +100,14 @@ def get_subject_info(path_to_nii_file):
 
             subject_code = parts[0]
 
-    elif p_count == 3:
+    elif p_count == 5:
+        subject_code = parts[1]
+        modality = parts[3]
+        series_num = parts[4]
 
-        subject_code, modality, series_num = parts
-
-        _logger.info('code: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
-
-    else:
-
-        subject_code, modality, series_num = parts[3], parts[5], parts[4]
+    elif parts > 5:
+        _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
+        pass
 
     return [subject_code, modality, series_num]
 
@@ -218,7 +224,7 @@ def get_list_of_data(src_folder):
         _logger.debug('dir: %s' % dir_name[0])
 
         for file in dir_name[2]:
-            _logger.debug('file: %s' % file)
+            _logger.debug('processing nifti file: %s' % file)
 
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
                 _logger.debug('file not a .nii or .nii.gz: %s' % file)
@@ -226,18 +232,19 @@ def get_list_of_data(src_folder):
 
             try:
                 data_info = get_nii_info(path.join(dir_name[0], file))
+                modality = data_info[0]
 
-                if 'T1w' or 'T1' in data_info[1]:
+                if 'T1w' == modality or 'T1' == modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     t1_data.append(full_path)
 
-                elif 'T2w' or 'T2' in data_info[1]:
+                elif 'T2w' == modality or 'T2' == modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'REST' in data_info[1]:
+                elif 'REST' in modality or 'epi' == modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -258,8 +265,18 @@ def get_list_of_data(src_folder):
 
 
 def make_image_dump(src, dst):
+    """
+    :param src: path to folder of images
+    :param dst: path to dir where images should be placed (need to be picked up by html)
+    :return: path to images
+    """
+
     src = os.path.join(src)
-    pass
+
+    dst = os.path.join(dst)
+
+    if not os.path.exists(dst):
+        os.makedirs(dst)
 
 
 def slice_image_to_ortho_row(file_path, dst):
@@ -370,7 +387,7 @@ def main():
 
     parser.add_argument('-n' '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
 
-    parser.add_argument('-s', '--subject_path', dest='project_path', help='''
+    parser.add_argument('-s', '--subject_path', dest='subject_path', help='''
         Path to given subject folder under a given project e.g.
        /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
 
@@ -400,6 +417,11 @@ def main():
 
     if not path.exists(img_out_path):
         os.makedirs(img_out_path)
+
+    if args.subject_path:
+        subject_path = os.path.join(args.subject_path)
+        if os.path.exists(subject_path):
+            print get_list_of_data(subject_path)
 
     param_table = path.join(os.getcwd(), 'Params.csv')
 
@@ -479,6 +501,8 @@ def structural_montage_cmd(list_in, path_out, label=False):
     cmd += '-tile 3x2 -geometry 200x250+0+0 %s/Structural.png' % path_out
 
     submit_command(cmd)
+
+    return cmd
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
