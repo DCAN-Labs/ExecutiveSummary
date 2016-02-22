@@ -9,8 +9,8 @@ $(document).ready(function() {
     var $t1_tr = $('#t1_tr').text();
 
     //convert that text to a number then check against an expected value
-    if(Number($t1_tr) < 2400) {
-        console.log($t1_tr + ' is less than 2400');  //delete this later...
+    if(Number($t1_tr) != 2400) {
+        console.log($t1_tr + ' is not equal to 2400');  //delete this later...
         $('#t1_tr').addClass('out-of-range');  //make red if not within range
     }
 
@@ -90,7 +90,7 @@ $(document).ready(function() {
 
     if($('#epi1_frames').text() != '120') {
 
-        $('#epi2_frames').addClass('out-of-range');
+        $('#epi1_frames').addClass('out-of-range');
     };
 
     if($('#epi2_frames').text() != '120') {
@@ -100,17 +100,17 @@ $(document).ready(function() {
 
     if($('#epi3_frames').text() != '120') {
 
-        $('#epi2_frames').addClass('out-of-range');
+        $('#epi3_frames').addClass('out-of-range');
     };
 
     if($('#epi4_frames').text() != '120') {
 
-        $('#epi2_frames').addClass('out-of-range');
+        $('#epi4_frames').addClass('out-of-range');
     };
 
     if($('#epi5_frames').text() != '120') {
 
-        $('#epi2_frames').addClass('out-of-range');
+        $('#epi5_frames').addClass('out-of-range');
     };
 
     if($('#epi1_x').text() != '3.8') {
