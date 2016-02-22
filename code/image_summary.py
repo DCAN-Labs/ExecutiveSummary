@@ -262,13 +262,26 @@ def make_image_dump(src, dst):
     pass
 
 
+def slice_image_to_ortho_row(file_path, dst):
+
+    dst = path.join(dst)
+
+    cmd = ''
+    cmd += 'slicer %(input_file)s -u -a %(dest)s' % {
+
+        'input_file': path.join(file_path),
+        'dest': dst}
+
+    submit_command(cmd)
+
+    return dst
+
+
 def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     """
     :param nii_gz_path: full path to nii.gz file
-    :param x: default slice position in the x-plane (Sagittal on T1)
-    :param y: default slice position in y-plane (Coronal on T1)
-    :param z: default slice position in the z-plane (Axial on T1)
-    :param dst: destination for files.
+    :param plane: string = either x/y/or z
+    :param dst: destination_path for image_file_out (include your own extensions!)
     :return: nothing, or a path to the sliced outputs? Or a tuple of path(s)?
     """
 
@@ -284,6 +297,64 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
 
     submit_command(cmd)
 
+    return dst
+
+
+def choose_slices_dict(nifti_file_path):
+
+    nifti_info = get_nii_info(path.join(nifti_file_path))
+
+    if not nifti_info:
+        return
+
+    T2_slices = {
+        'x': 55,
+        'y': 115,
+        'z': 145
+    }
+
+    T1_slices = {
+        'x': 55,
+        'y': 115,
+        'z': 145
+
+    }
+
+    epi_slices = {
+        'x': 55,
+        'y': 135,
+        'z': 130
+    }
+
+    if 'REST' in nifti_info[0]:
+        slices_dict = epi_slices
+    elif 'T2' in nifti_info[0]:
+        slices_dict = T2_slices
+    elif 'T1' in nifti_info[0]:
+        slices_dict = T1_slices
+
+    return slices_dict
+
+
+def slice_list_of_data(list_of_data_paths, dest_dir=False):
+
+    num = 0
+
+    for i in range(num, len(list_of_data_paths)-1):
+
+        if not dest_dir:
+            dest_dir = path.join('./img')
+
+        for datum in list_of_data_paths:
+            info = get_nii_info(datum)
+            slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
+            dict = choose_slices_dict(datum)
+            for key in dict.keys():
+
+                print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
+                                                                             (info[0],
+                                                                              key,
+                                                                              dict[key])))
 
 def main():
 
@@ -386,9 +457,7 @@ def rename_image(img_path):
         return new_file_path
 
 
-# reportlab stuff
-# TODO: do we really want to build montages and/or use Reportlab?
-def structural_montage_cmd(path_in, path_out):
+def structural_montage_cmd(list_in, path_out, label=False):
     """path_in is a full-path to the set of structural images, path_out to where
     you want the montage to be placed.
     :returns the command_line for ImageMagick"""
@@ -397,15 +466,19 @@ def structural_montage_cmd(path_in, path_out):
 
     cmd = 'montage '
 
-    for png in rename_structural(path_in):
-        input_file = os.path.join(png)
+    for image_path in list_in:
+        input_file = os.path.join(image_path)
 
-        cmd += "-label %t "
+        if label:
+            cmd += "-label %t "
+
         cmd += '%s ' % input_file
 
-    cmd += '-tile 3x2 -geometry 200x250>+2+2 %s/Structural.png' % path_out
+    # TODO: change to black background
 
-    return cmd
+    cmd += '-tile 3x2 -geometry 200x250+0+0 %s/Structural.png' % path_out
+
+    submit_command(cmd)
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
