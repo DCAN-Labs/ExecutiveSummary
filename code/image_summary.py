@@ -295,10 +295,8 @@ def get_list_of_data(src_folder):
         _logger.debug('dir: %s' % dir_name[0])
 
         for file in dir_name[2]:
-            _logger.info('processing nifti file: %s' % file)
 
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
-                _logger.debug('file not a .nii or .nii.gz: %s' % file)
                 continue
             elif 'unused' in path.abspath(file):
                 continue
@@ -307,6 +305,7 @@ def get_list_of_data(src_folder):
 
             try:
                 # TODO: change this to get_subj_info?
+                _logger.info('processing nifti file: %s' % file)
                 data_info = get_nii_info(path.join(dir_name[0], file))
                 modality = data_info[0]
 
@@ -453,7 +452,7 @@ def choose_slices_dict(nifti_file_path):
     return slices_dict
 
 
-def slice_list_of_data(list_of_data_paths, dest_dir=None):
+def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, also_xyz=False):
     """
 
     :param list_of_data_paths:
@@ -472,15 +471,18 @@ def slice_list_of_data(list_of_data_paths, dest_dir=None):
 
         for datum in list_of_data_paths:
             # TODO: maybe just grab the subject code in args?
-            info = get_nii_info(datum)
-            slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
-            dict = choose_slices_dict(datum)
-            for key in dict.keys():
+            if not subject_code:
+                subject_code = get_subject_info(datum)[0]
 
-                print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
-                                                                             (info[0],
-                                                                              key,
-                                                                              dict[key])))
+            slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
+            if also_xyz:
+                dict = choose_slices_dict(datum)
+                for key in dict.keys():
+
+                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
+                                                                                 (subject_code,
+                                                                                  key,
+                                                                                  dict[key])))
 
 
 def main():
