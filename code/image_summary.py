@@ -13,7 +13,7 @@ import logging.handlers
 from datetime import datetime
 
 PROG = 'Image Summary'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -60,11 +60,19 @@ def get_paths(subject_code_path):
 
 
 def get_subject_info(path_to_nii_file):
+    """
+    Much relies upon this function figuring out what sort of file it has been given via file strings.
+
+    Super hacky!
+    :param path_to_nii_file: full-path to .nii or .nii.gz
+    :return: tuple of subject_code, modality, series
+    """
 
     filename = path.join(path_to_nii_file)
 
     subject_code, modality, series_num = '', '', ''
 
+    # TODO: fix this up a bit
     if not path.join(path_to_nii_file).endswith('/'):
 
         filename = path.basename(path_to_nii_file)
@@ -88,6 +96,7 @@ def get_subject_info(path_to_nii_file):
 
     # TODO: needs more checks
     elif p_count == 3 and 'REST' in parts:
+        _logger.info('REST file: %s' % parts)
         subject_code = parts[1]
         modality = parts[2]
         series_num = parts[2]
@@ -97,11 +106,11 @@ def get_subject_info(path_to_nii_file):
         subject_code = parts[1]
         modality = 'undefined_modality'
         series_num = parts[2]
-        _logger.info('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
+        _logger.error('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
     elif p_count == 4 and 'SBRef' in parts:
 
-        _logger.info('file string parts were: %s' % parts)
+        _logger.info('SBRef file: %s' % parts)
 
         modality = parts[3]
 
@@ -126,6 +135,7 @@ def get_subject_info(path_to_nii_file):
             subject_code = parts[1]
 
     elif p_count == 5:
+        _logger.debug('file parts: %s' % parts)
         subject_code = parts[1]
         modality = parts[3]
         series_num = parts[4]
@@ -138,13 +148,27 @@ def get_subject_info(path_to_nii_file):
 
 
 def write_csv(data, filepath):
+    """
+    takes a list of data rows and writes out a csv file to the path provided.
+
+    :param data: list of lists, with each inner-list being one row of data
+    :param filepath: path to file-out.csv
+    :return: None
+    """
     f = open(filepath, 'wb')
     writer = csv.writer(f)
     writer.writerows(data)
     f.close()
 
 
-def get_nii_info(path_to_nii):
+def get_nii_info(path_to_nii, info=None):
+    """
+    Runs fslval on a given nifti file and can take an optional info set.
+
+    :param path_to_nii: full path to nii or nii.gz
+    :param info: optional info 3-tuple of subject_code, modality, series
+    :return: row of data in a list, length 8
+    """
 
     path_to_nii = os.path.join(path_to_nii)
 
@@ -155,7 +179,8 @@ def get_nii_info(path_to_nii):
 
     _logger.info("getting params on %s\n" % path_to_nii)
 
-    info = get_subject_info(path_to_nii)
+    if not info:
+        info = get_subject_info(path_to_nii)
 
     _logger.debug('data-info is: %s' % info)
 
@@ -170,8 +195,6 @@ def get_nii_info(path_to_nii):
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
 
-    # _logger.debug('param_command was %s' % cmd)
-
     output = submit_command(cmd)
 
     data = output.strip("\n").split(',')
@@ -180,6 +203,13 @@ def get_nii_info(path_to_nii):
 
 
 def get_dcm_info(path_to_dicom, modality):
+    """
+    Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
+
+    :param path_to_dicom: full-path to any single .dcm file
+    :param modality: string you want used as a label for this dicom file
+    :return: list of data with length 8
+    """
 
     path_to_dicom = os.path.join(path_to_dicom)
 
@@ -189,8 +219,6 @@ def get_dcm_info(path_to_dicom, modality):
     cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
-
-    _logger.debug('dicom param-extraction cmdline: %s' % cmd)
 
     output = submit_command(cmd)
 
@@ -202,6 +230,12 @@ def get_dcm_info(path_to_dicom, modality):
 
 
 def grab_te_from_dicom(path_to_dicom):
+    """
+    We probably do not need this.
+
+    :param path_to_dicom:
+    :return: echo time
+    """
 
     path_to_dicom = os.path.join(path_to_dicom)
 
@@ -217,6 +251,12 @@ def grab_te_from_dicom(path_to_dicom):
 
 
 def submit_command(cmd):
+    """
+    Takes a string (command-line) and runs it in a sub-shell, collecting either errors or info (output) in logger.
+
+    :param cmd: string (command-line you might otherwise run in a terminal)
+    :return: output
+    """
 
     _logger.debug(cmd)
 
@@ -238,6 +278,12 @@ def submit_command(cmd):
 
 
 def get_list_of_data(src_folder):
+    """
+    Walk through the given directory to find all the nifti data, crudely, to fill lists of t1, t2 and epi-data.
+
+    :param src_folder: directory
+    :return: dictionary of lists with full paths to nifti files of interest: t1, t2, epi
+    """
 
     tree = os.walk(src_folder)
     t1_data = []
@@ -249,7 +295,7 @@ def get_list_of_data(src_folder):
         _logger.debug('dir: %s' % dir_name[0])
 
         for file in dir_name[2]:
-            _logger.debug('processing nifti file: %s' % file)
+            _logger.info('processing nifti file: %s' % file)
 
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
                 _logger.debug('file not a .nii or .nii.gz: %s' % file)
@@ -260,6 +306,7 @@ def get_list_of_data(src_folder):
                 continue
 
             try:
+                # TODO: change this to get_subj_info?
                 data_info = get_nii_info(path.join(dir_name[0], file))
                 modality = data_info[0]
 
@@ -309,6 +356,13 @@ def make_image_dump(src, dst='./img'):
 
 
 def slice_image_to_ortho_row(file_path, dst):
+    """
+    Takes path to nifti file and creates an orthogonal row of slices at the mid-lines of brain.
+
+    :param file_path: full path to nifti data
+    :param dst: full path including extension
+    :return: destination of file-out
+    """
 
     dst = path.join(dst)
 
@@ -325,10 +379,12 @@ def slice_image_to_ortho_row(file_path, dst):
 
 def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     """
+    Uses slicer in subprocess to chop given nifti file along the position/plane provided, output to dst.
+
     :param nii_gz_path: full path to nii.gz file
     :param plane: string = either x/y/or z
     :param dst: destination_path for image_file_out (include your own extensions!)
-    :return: nothing, or a path to the sliced outputs? Or a tuple of path(s)?
+    :return: path to the sliced outputs
     """
 
     dst = path.join(dst)
@@ -347,6 +403,12 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
 
 
 def choose_slices_dict(nifti_file_path):
+    """
+    Helps decide how to slice-up an image by running 'get_nii_info', which might be a bad idea?
+
+    :param nifti_file_path:
+    :return: dict of x/y/z slice positions (to use for slicer)
+    """
 
     nifti_info = get_nii_info(path.join(nifti_file_path))
 
@@ -391,7 +453,13 @@ def choose_slices_dict(nifti_file_path):
     return slices_dict
 
 
-def slice_list_of_data(list_of_data_paths, dest_dir=False):
+def slice_list_of_data(list_of_data_paths, dest_dir=None):
+    """
+
+    :param list_of_data_paths:
+    :param dest_dir:
+    :return: None
+    """
 
     num = 0
 
@@ -403,6 +471,7 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
                 os.makedirs(dest_dir)
 
         for datum in list_of_data_paths:
+            # TODO: maybe just grab the subject code in args?
             info = get_nii_info(datum)
             slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
             dict = choose_slices_dict(datum)
@@ -421,12 +490,12 @@ def main():
     # TODO: one at a time for now rather than a list... Still not sure about this.
 
     parser.add_argument('-i', '--image-path', action="store", dest='img_path', help="Provide a full path to the "
-                                                                                     "folder "
-                                                                                     "containing all summary images.")
+                                                                                     "folder containing all summary "
+                                                                                    "images.")
 
-    parser.add_argument('-d' '--data-path', dest='data_path', help="Full path to raw data file.")
+    parser.add_argument('-d', '--data-path', dest='data_path', help="Full path to raw data file.")
 
-    parser.add_argument('-n' '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
+    parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
 
     parser.add_argument('-s', '--subject_path', dest='subject_path', help='''
         Path to given subject folder under a given project e.g.
@@ -447,11 +516,11 @@ def main():
 
         img_in = os.path.join(args.img_path)
 
-        _logger.info('path to images: %s' % img_in)
+        _logger.info('path to images provided: %s' % img_in)
 
         _logger.info('list of images:', os.listdir(img_in))
 
-        img_out_path = os.path.join(img_in)
+        img_out_path = os.path.join(img_in, 'img')
 
     else:
         img_out_path = path.join('./img')
