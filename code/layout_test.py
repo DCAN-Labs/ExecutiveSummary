@@ -347,6 +347,8 @@ def main():
     data = image_summary.get_list_of_data(sub_root)
     print 'data are: %s' % data
     img_out_path = path.join(summary_path, 'img')
+    if not path.exists(img_out_path):
+        os.makedirs(img_out_path)
 
     # TODO: figure out a better way to extract code
     code = 'ABCDPILOT_MSC02'
@@ -357,19 +359,21 @@ def main():
 
     # TODO: this section is redundant given what 'get_list_of_data' achieves all at once
     # TODO: consider chopping up that method into smaller chunks of code or remove iterating twice
+    for list_entry in data['epi-data']:
+        print 'slicing up %s' % list_entry
+        code, modality, series = image_summary.get_subject_info(list_entry)
+        image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
     for list_entry in data.values():
-        image_summary.slice_list_of_data(list_entry, img_out_path)
 
         for item in list_entry:
 
-            print 'adding %s to %s' %(item, real_data)
+            print '\nadding %s to list of data, for which we need parameters...\n' % item
+            #_logger.debug('data_list is: %s' % data)
             params_row = image_summary.get_nii_info(item)
             real_data.append(params_row)
 
     html_params_panel = param_table_html_header
-
-    # for row in fake_data_set:
-    #     html_params_panel += write_param_table_row(row)
 
     for data_row in real_data:
         html_params_panel += write_param_table_row(data_row)
@@ -384,33 +388,31 @@ def main():
     # TODO: we may have fewer than 6, so do this better...
     gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
 
-    epi_img_paths = [path.join(code + '_' + img + '_in_t1.gif') for img in gif_labels]
+    epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
+                                                 gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-    more_epi_img_paths = [path.join(code + '_t1_in_' + img + '.gif') for img in gif_labels]
+    t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
 
     sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in gif_labels]
 
-    # TODO: still need to slice these up then locate in the img_out location
+    # TODO: still need to slice these up then locate in the img_out location?
     non_lin_paths = [path.join(summary_path, img + '_nonlin_norm.png') for img in gif_labels]
 
     epi_rows = []
 
     for i in range(0, len(gif_labels)-1):
-        epi_rows.append(epi_img_paths[i])
-        epi_rows.append(more_epi_img_paths[i])
+        epi_rows.append(epi_in_t1_gifs[i])
+        epi_rows.append(t1_in_epi_gifs[i])
         epi_rows.append(sb_ref_paths[i])
         epi_rows.append(non_lin_paths[i])
 
-    ordered_epi = epi_rows
-
-    # print 'ordered epi is %s' % ordered_epi[0:4]
-
-    # head = html_header
+    head = html_header
 
     newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
-                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) + epi_panel_footer
+                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) \
+                 + write_epi_panel_row(epi_rows[16:20]) + epi_panel_footer
 
-    # print newer_body
+    # _logger.debug('newer_body is : %s' % newer_body)
 
     new_html_header = edit_html_chunk(head, 'code', code)
 
