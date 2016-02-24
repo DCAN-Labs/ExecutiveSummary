@@ -13,13 +13,13 @@ VERSION = '0.0.0'
 LAST_MOD = '2-20-16'
 
 
-def write_html(template, title="summary_out.html"):
+def write_html(template, dest_dir, title="summary_out.html"):
 
     if not title.endswith('.html'):
         title += '.html'
 
     try:
-        f = open(path.join(os.getcwd(), title), 'w')
+        f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
     finally:
         f.close()
@@ -113,11 +113,11 @@ html_footer = """
 """
 
 
-def convert_image_paths(list_of_images, location, ext='.png'):
+def convert_image_paths(list_of_images, src_location, ext='.png'):
 
     new_image_paths = []
     for image in list_of_images:
-        img_path = path.join(location, image + ext)
+        img_path = path.join(src_location, image + ext)
         if path.exists(img_path):
             new_image_paths.append(img_path)
         else:
@@ -146,14 +146,14 @@ def write_structural_panel(list_of_image_paths):
                     </thead>
                 <tbody>
                     <tr>
-                        <td><a href="%(T1-left)s" target="_blank"><img src="%(T1-left)s"></a></td>
-                        <td><a href="%(T1-middle)s" target="_blank"><img src="%(T1-middle)s"></a></td>
-                        <td><a href="%(T1-right)s" target="_blank"><img src="%(T1-right)s"></a></td>
+                        <td><a href="%(T1-left)s" target="_blank"><img src="./%(T1-left)s"></a></td>
+                        <td><a href="%(T1-middle)s" target="_blank"><img src="./%(T1-middle)s"></a></td>
+                        <td><a href="%(T1-right)s" target="_blank"><img src="./%(T1-right)s"></a></td>
                     </tr>
                     <tr>
-                        <td><a href="%(T2-left)s" target="_blank"><img src="%(T2-left)s"></a></td>
-                        <td><a href="%(T2-middle)s" target="_blank"><img src="%(T2-middle)s"></a></td>
-                        <td><a href="%(T2-right)s" target="_blank"><img src="%(T2-right)s"></a></td>
+                        <td><a href="%(T2-left)s" target="_blank"><img src="./%(T2-left)s"></a></td>
+                        <td><a href="%(T2-middle)s" target="_blank"><img src="./%(T2-middle)s"></a></td>
+                        <td><a href="%(T2-right)s" target="_blank"><img src="./%(T2-right)s"></a></td>
                     </tr>
                 </tbody>
             </table>
@@ -235,7 +235,7 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     return epi_panel_html
 
 
-def write_dvars_panel(dvars_path='../in/DVARS_and_FD_CONCA.png'):
+def write_dvars_panel(dvars_path='./DVARS_and_FD_CONCA.png'):
 
     dvars_panel_html_string = """
             <div class="grayords">
@@ -301,16 +301,14 @@ def main():
 
             image_set = make_img_list(images_dir)
 
-            image_paths = convert_image_paths(image_set, 'img')
+            image_paths = convert_image_paths(image_set, './img')
 
             print image_paths
 
     if args.images_list:
         print args.images_list
         for image in args.images_list:
-            image_path = path.join('in', '%s' % image)
-            if not image_path.endswith('png'):
-                image_path += '.png'
+            image_path = path.join('summary', '%s' % image)
 
             if path.exists(image_path):
 
@@ -318,51 +316,82 @@ def main():
 
     if args.subject_path:
         sub_root = path.join(args.subject_path)
-        img_in_path = path.join(sub_root, 'in')
-        img_out_path = path.join(sub_root, 'img')
-        data_in_path = img_in_path
+        img_in_path = path.join(sub_root, 'summary')
+        img_out_path = path.join(img_in_path, 'img')
+        data_in_path = image_summary.get_paths(sub_root)[1]
 
-        pngs = []
+        pngs = [png for png in os.listdir(img_in_path) if png.endswith('png')]
+        gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+
 ###############################
     # TEST WITH FAKE DATA
 ###############################
 
-    code = '10075-2'
-
-    structural_img_labels = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
-
-    structural_paths = convert_image_paths(structural_img_labels, '../in')
-
-    fake_data_set = [['T1', '1.0', '1.0', '1.9', '4.97', '2300', '1', '900'],
-                     ['T2', '1.0', '1.1', '1.0', '4.97', '3200.0', '1.0', '0.00'],
-                     ['EPI1', '3.8', '3.8', '3.9', '4.97', '3200.0', '1.0', '0.00'],
-                     ['EPI2', '1.0', '1.1', '1.0', '4.97', '3200.0', '1.0', '0.00'],
-                     ['EPI3', '1.0', '1.1', '1.0', '4.97', '3200.0', '1.0', '0.00']
-                     ]
+    structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
+                             'T1-Axial-BasalGangila-Putamen.png',
+                             'T1-Coronal-Caudate-Amygdala.png',
+                             'T2-Sagittal-Insula-FrontoTemporal.png',
+                             'T2-Axial-BasalGangila-Putamen.png',
+                             'T2-Coronal-Caudate-Amygdala.png'
+                             ]
 
     real_data = []
 
+    # MAKE SOME REAL DATA FOR TESTING
+    summary_path, data_path = image_summary.get_paths(sub_root)
+
+    # see if changing to the local dir helps other issues
+    os.chdir(summary_path)
+
+    # THIS PART TAKES A WHILE... CONSIDER Chopping the function up a little?
+    data = image_summary.get_list_of_data(sub_root)
+    print 'data are: %s' % data
+    img_out_path = path.join(summary_path, 'img')
+
+    # TODO: figure out a better way to extract code
+    code = 'ABCDPILOT_MSC02'
+
+    #code = image_summary.get_subject_info(sub_root)[0]
+
+    print 'PROCESSING code: %s' % code
+
+    # TODO: this section is redundant given what 'get_list_of_data' achieves all at once
+    # TODO: consider chopping up that method into smaller chunks of code or remove iterating twice
+    for list_entry in data.values():
+        image_summary.slice_list_of_data(list_entry, img_out_path)
+
+        for item in list_entry:
+
+            print 'adding %s to %s' %(item, real_data)
+            params_row = image_summary.get_nii_info(item)
+            real_data.append(params_row)
+
     html_params_panel = param_table_html_header
 
-    for row in fake_data_set:
-        html_params_panel += write_param_table_row(row)
+    # for row in fake_data_set:
+    #     html_params_panel += write_param_table_row(row)
 
     for data_row in real_data:
         html_params_panel += write_param_table_row(data_row)
 
     html_params_panel += param_table_footer
 
-    new_body = write_structural_panel(structural_paths) + html_params_panel
+    body = write_structural_panel(structural_img_labels)
 
-    gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5']
+    new_body = body + html_params_panel
 
-    epi_img_paths = [path.join('../in', code + '_' + img + '_in_t1.gif') for img in gif_labels]
+    # TODO: below is a mess... fix all this epi-panel-makin stuff
+    # TODO: we may have fewer than 6, so do this better...
+    gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
 
-    more_epi_img_paths = [path.join('../in', code + '_t1_in_' + img + '.gif') for img in gif_labels]
+    epi_img_paths = [path.join(code + '_' + img + '_in_t1.gif') for img in gif_labels]
 
-    sb_ref_paths = [path.join('./img', img + '.png') for img in gif_labels]
+    more_epi_img_paths = [path.join(code + '_t1_in_' + img + '.gif') for img in gif_labels]
 
-    non_lin_paths = [path.join('../in', img + '_nonlin_norm.png') for img in gif_labels]
+    sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in gif_labels]
+
+    # TODO: still need to slice these up then locate in the img_out location
+    non_lin_paths = [path.join(summary_path, img + '_nonlin_norm.png') for img in gif_labels]
 
     epi_rows = []
 
@@ -374,19 +403,21 @@ def main():
 
     ordered_epi = epi_rows
 
-    print ordered_epi[0:4]
+    # print 'ordered epi is %s' % ordered_epi[0:4]
+
+    # head = html_header
 
     newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
                  + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) + epi_panel_footer
 
-    print newer_body
+    # print newer_body
 
-    new_html_header = edit_html_chunk(html_header, 'code', code)
+    new_html_header = edit_html_chunk(head, 'code', code)
 
     # Test 1: Build the doc and write it as-is
     html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
 
-    write_html(html_doc)
+    write_html(html_doc, summary_path)
 
     # Test 2: change the body and write the chunk
     # new_body = html_body.replace('t1-top-left', args.images_list[0])

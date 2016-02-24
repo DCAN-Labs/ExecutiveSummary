@@ -60,8 +60,17 @@ def get_paths(subject_code_path):
 
 
 def get_subject_info(path_to_nii_file):
+
+    filename = path.join(path_to_nii_file)
+
     subject_code, modality, series_num = '', '', ''
-    filename = path.basename(path_to_nii_file)
+
+    if not path.join(path_to_nii_file).endswith('/'):
+
+        filename = path.basename(path_to_nii_file)
+    else:
+        print '%s is not a file and I reeeally needed a file, not a dir' % filename
+        return
 
     if filename.endswith('.nii.gz'):
         filename = filename.strip('.nii.gz')
@@ -77,28 +86,44 @@ def get_subject_info(path_to_nii_file):
     if p_count <= 2:
         _logger.error('not enough parts for this to be a "good code": %s' % p_count)
 
-    elif p_count == 3:
+    # TODO: needs more checks
+    elif p_count == 3 and 'REST' in parts:
+        subject_code = parts[1]
+        modality = parts[2]
+        series_num = parts[2]
+
+    elif p_count == 3 and 'REST' not in parts:
 
         subject_code = parts[1]
-        modality = 'epi'
+        modality = 'undefined_modality'
         series_num = parts[2]
         _logger.info('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
-    elif p_count == 4:
+    elif p_count == 4 and 'SBRef' in parts:
 
+        _logger.info('file string parts were: %s' % parts)
+
+        modality = parts[3]
+
+        series_num = parts[2]
+
+        subject_code = parts[1]
+
+        modality += series_num
+
+    elif p_count == 4 and 'SBRef' not in parts:
         _logger.info('file string parts were: %s' % parts)
 
         series_num = parts.pop()
 
         modality = parts.pop()
 
+        if modality == 'T2w' or modality == 'T1w':
+            modality += series_num
+
         if len(parts) == 2:  # parts now 2 fewer and we check what's left
 
             subject_code = parts[1]
-
-        elif len(parts) == 1:
-
-            subject_code = parts[0]
 
     elif p_count == 5:
         subject_code = parts[1]
@@ -229,22 +254,26 @@ def get_list_of_data(src_folder):
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
                 _logger.debug('file not a .nii or .nii.gz: %s' % file)
                 continue
+            elif 'unused' in path.abspath(file):
+                continue
+            elif 'cortex' in path.abspath(file):
+                continue
 
             try:
                 data_info = get_nii_info(path.join(dir_name[0], file))
                 modality = data_info[0]
 
-                if 'T1w' == modality or 'T1' == modality:
+                if 'T1w' in modality or 'T1' == modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     t1_data.append(full_path)
 
-                elif 'T2w' == modality or 'T2' == modality:
+                elif 'T2w' in modality or 'T2' == modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'REST' in modality or 'epi' == modality:
+                elif 'SBRef' in modality or 'REST' in modality:
 
                     full_path = os.path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -264,7 +293,7 @@ def get_list_of_data(src_folder):
     return data_lists
 
 
-def make_image_dump(src, dst):
+def make_image_dump(src, dst='./img'):
     """
     :param src: path to folder of images
     :param dst: path to dir where images should be placed (need to be picked up by html)
@@ -343,7 +372,16 @@ def choose_slices_dict(nifti_file_path):
         'z': 130
     }
 
-    if 'REST' in nifti_info[0]:
+    sb_ref_slices = {
+        'x': 65,
+        'y': 55,
+        'z': 45
+
+    }
+
+    if 'SBRef' in nifti_info[0]:
+        slices_dict = sb_ref_slices
+    elif 'REST' in nifti_info[0]:
         slices_dict = epi_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices
@@ -361,6 +399,8 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
 
         if not dest_dir:
             dest_dir = path.join('./img')
+            if not path.exists(dest_dir):
+                os.makedirs(dest_dir)
 
         for datum in list_of_data_paths:
             info = get_nii_info(datum)
@@ -372,6 +412,7 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
                                                                              (info[0],
                                                                               key,
                                                                               dict[key])))
+
 
 def main():
 
@@ -428,7 +469,7 @@ def main():
         if os.path.exists(subject_path):
             print get_list_of_data(subject_path)
 
-    param_table = path.join(os.getcwd(), 'Params.csv')
+    param_table = path.join(img_out_path, 'Params.csv')
 
     # write out the first row of our data rows to setup column headers
     data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
@@ -451,6 +492,10 @@ if __name__ == '__main__':
 
 
 def rename_structural(path_to_image_dump):
+    """
+    :param path_to_image_dump: directory containing inputs (will also serve as output dir)
+    :return: list of new image (paths)
+    """
     structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
 
     new_imgs = []
@@ -468,7 +513,7 @@ def rename_structural(path_to_image_dump):
 
 def rename_image(img_path):
     """
-    :arg img_path should be full-path to any image file
+    :img_path should be full-path to any image file
     :returns renamed, full-path to new image filename
     """
 
@@ -485,10 +530,11 @@ def rename_image(img_path):
 
 
 def structural_montage_cmd(list_in, path_out, label=False):
-    """path_in is a full-path to the set of structural images, path_out to where
-    you want the montage to be placed.
-    :returns the command_line for ImageMagick"""
-
+    """
+    list_in is a list of image paths
+    path_out: output filename (with path)
+    label: T or F to decide whether to add labels below each image
+    """
     path_out = os.path.join(path_out)
 
     cmd = 'montage '
