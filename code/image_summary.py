@@ -93,20 +93,20 @@ def get_subject_info(path_to_nii_file):
 
     if p_count <= 2:
         _logger.error('not enough parts for this to be a "good code": %s' % p_count)
+    #
+    # # TODO: needs more checks
+    # elif p_count == 3 and 'REST' in parts:
+    #     _logger.info('REST file: %s' % parts)
+    #     subject_code = parts[1]
+    #     modality = parts[2]
+    #     series_num = parts[2]
 
-    # TODO: needs more checks
-    elif p_count == 3 and 'REST' in parts:
+    elif p_count == 3:
+
         _logger.info('REST file: %s' % parts)
         subject_code = parts[1]
         modality = parts[2]
         series_num = parts[2]
-
-    elif p_count == 3 and 'REST' not in parts:
-
-        subject_code = parts[1]
-        modality = 'undefined_modality'
-        series_num = parts[2]
-        _logger.error('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
 
     elif p_count == 4 and 'SBRef' in parts:
 
@@ -142,6 +142,7 @@ def get_subject_info(path_to_nii_file):
 
     elif parts > 5:
         _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
+        _logger.error('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
 
     return [subject_code, modality, series_num]

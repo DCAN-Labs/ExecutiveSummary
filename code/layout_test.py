@@ -34,7 +34,8 @@ html_header = """<!DOCTYPE html>
     </head>
     <body>
         <div class="header">
-            <h1>code/h1>
+            <h1>code</h1>
+            <p>VERSION</p>
             <div class="button" id="next-button">
                 <button>Next</button>
             </div>
@@ -319,7 +320,6 @@ def main():
         img_out_path = path.join(img_in_path, 'img')
         data_in_path = image_summary.get_paths(sub_root)[1]
 
-        pngs = [png for png in os.listdir(img_in_path) if png.endswith('png')]
         gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
 ###############################
@@ -356,8 +356,6 @@ def main():
 
     print 'PROCESSING code: %s' % code
 
-    # TODO: this section is redundant given what 'get_list_of_data' achieves all at once
-    # TODO: consider chopping up that method into smaller chunks of code or remove iterating twice
     for list_entry in data['epi-data']:
         print 'slicing up %s' % list_entry
         code, modality, series = image_summary.get_subject_info(list_entry)
@@ -383,6 +381,7 @@ def main():
 
     new_body = body + html_params_panel
 
+    pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
     # TODO: below is a mess... fix all this epi-panel-makin stuff
     # TODO: we may have fewer than 6, so do this better...
     gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
@@ -395,7 +394,7 @@ def main():
     sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in gif_labels]
 
     # TODO: still need to slice these up then locate in the img_out location?
-    non_lin_paths = [path.join(summary_path, img + '_nonlin_norm.png') for img in gif_labels]
+    rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
 
     epi_rows = []
 
@@ -403,7 +402,7 @@ def main():
         epi_rows.append(epi_in_t1_gifs[i])
         epi_rows.append(t1_in_epi_gifs[i])
         epi_rows.append(sb_ref_paths[i])
-        epi_rows.append(non_lin_paths[i])
+        epi_rows.append(rest_raw_paths[i])
 
     head = html_header
 
@@ -411,9 +410,11 @@ def main():
                  + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) \
                  + write_epi_panel_row(epi_rows[16:20]) + epi_panel_footer
 
-    # _logger.debug('newer_body is : %s' % newer_body)
 
+    # _logger.debug('newer_body is : %s' % newer_body)
+    # TODO: this seems dumb
     new_html_header = edit_html_chunk(head, 'code', code)
+    new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
     # Test 1: Build the doc and write it as-is
     html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
