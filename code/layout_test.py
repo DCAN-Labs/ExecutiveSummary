@@ -36,8 +36,6 @@ html_header = """<!DOCTYPE html>
         <div class="header">
             <h1>code</h1>
             <p>VERSION</p>
-            <div class="button" id="next-button">
-                <button>Next</button>
             </div>
         </div>"""
 
@@ -362,6 +360,8 @@ def main():
         image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
     for list_entry in data.values():
+
+        list_entry = sorted(list_entry)
 
         for item in list_entry:
 
