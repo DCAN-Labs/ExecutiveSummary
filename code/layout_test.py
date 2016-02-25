@@ -28,19 +28,17 @@ html_header = """<!DOCTYPE html>
 <html lang = "en">
     <head>
         <meta charset = "utf-8">
-        <title>Executive Summary</title>
-        <link href="style.css" type="text/css" rel="stylesheet">
-
+        <title>Executive Summary: code</title>
+        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:250px;height:200px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
+        </style>
     </head>
     <body>
         <div class="header">
-            <h1>%(subj_code)s</h1>
-            <p>pipeline_v%(version)s</p>
+            <h1>code/h1>
             <div class="button" id="next-button">
                 <button>Next</button>
             </div>
-        </div>""" % {'subj_code': 'code',
-                     'version'  : VERSION}
+        </div>"""
 
 
 param_table_html_header = """
@@ -106,8 +104,9 @@ epi_panel_footer = """
 
 html_footer = """
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-        <script src="script.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+        <script>$(document).ready(function(){function e(){console.log("x: "+this.x.text()),console.log("y: "+this.y),console.log("z: "+this.z),1!=parseFloat(this.x.text())&&(console.log(this.x+" is out of range!"),this.x.addClass("out-of-range"))}var t=Array($(".t1_x"),$(".t1_y"),$(".t1_z"));console.log(t.length),console.log(t[0].childNodes);var a=$("#t1_tr").text();2400!=Number(a)&&(console.log(a+" is not equal to 2400"),$("#t1_tr").addClass("out-of-range"));var o={x:$(".t1_x"),y:$(".t1_y"),z:$(".t1_z")};o.logDetails=e,o.logDetails(),"1.0"!=$(".t1_x").text()&&$(".t1_x").addClass("out-of-range"),"1.0"!=$(".t1_y").text()&&$(".t1_y").addClass("out-of-range"),"1.0"!=$(".t1_z").text()&&$(".t1_z").addClass("out-of-range"),"1.0"!=$(".t2_x").text()&&$(".t2_x").addClass("out-of-range"),"1.0"!=$(".t2_y").text()&&$(".t2_y").addClass("out-of-range"),"1.0"!=$(".t2_z").text()&&$(".t2_z").addClass("out-of-range"),"5.0"!=$("#epi1_te").text()&&$("#epi1_te").addClass("out-of-range"),"5.0"!=$("#epi2_te").text()&&$("#epi2_te").addClass("out-of-range"),"5.0"!=$("#epi3_te").text()&&$("#epi3_te").addClass("out-of-range"),"5.0"!=$("#epi4_te").text()&&$("#epi4_te").addClass("out-of-range"),"5.0"!=$("#epi5_te").text()&&$("#epi5_te").addClass("out-of-range"),"120"!=$("#epi1_frames").text()&&$("#epi1_frames").addClass("out-of-range"),"120"!=$("#epi2_frames").text()&&$("#epi2_frames").addClass("out-of-range"),"120"!=$("#epi3_frames").text()&&$("#epi3_frames").addClass("out-of-range"),"120"!=$("#epi4_frames").text()&&$("#epi4_frames").addClass("out-of-range"),"120"!=$("#epi5_frames").text()&&$("#epi5_frames").addClass("out-of-range"),"3.8"!=$("#epi1_x").text()&&$("#epi1_x").addClass("out-of-range"),"3.8"!=$("#epi1_y").text()&&$("#epi1_y").addClass("out-of-range"),"3.8"!=$("#epi1_z").text()&&$("#epi1_z").addClass("out-of-range"),"3.8"!=$("#epi2_x").text()&&$("#epi2_x").addClass("out-of-range"),"3.8"!=$("#epi2_y").text()&&$("#epi2_y").addClass("out-of-range"),"3.8"!=$("#epi2_z").text()&&$("#epi2_z").addClass("out-of-range"),"3.8"!=$("#epi3_x").text()&&$("#epi3_x").addClass("out-of-range"),"3.8"!=$("#epi3_y").text()&&$("#epi3_y").addClass("out-of-range"),"3.8"!=$("#epi3_z").text()&&$("#epi3_z").addClass("out-of-range"),"3.8"!=$("#epi4_x").text()&&$("#epi4_x").addClass("out-of-range"),"3.8"!=$("#epi4_y").text()&&$("#epi4_y").addClass("out-of-range"),"3.8"!=$("#epi4_z").text()&&$("#epi4_z").addClass("out-of-range"),"3.8"!=$("#epi5_x").text()&&$("#epi5_x").addClass("out-of-range"),"3.8"!=$("#epi5_y").text()&&$("#epi5_y").addClass("out-of-range"),"3.8"!=$("#epi5_z").text()&&$("#epi5_z").addClass("out-of-range"),$("div.params").draggable(),$("div.grayords").resizable(),$("div.grayords").draggable(),$("div.epi").draggable()});
+        </script>
     </body>
 </html>
 """
@@ -420,7 +419,6 @@ def main():
     html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
 
     write_html(html_doc, summary_path)
-
     # Test 2: change the body and write the chunk
     # new_body = html_body.replace('t1-top-left', args.images_list[0])
     # new_body = html_body.replace('t1-middle', args.images_list[1])
