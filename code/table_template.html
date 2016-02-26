@@ -74,6 +74,12 @@
                             <td></td>
                             <td></td>
                         </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -98,22 +104,32 @@
                             <td>TI <span>(ms)</span></td>
                         </tr>
                         <tr class="t1_data">
-                            <td>T1</td>
-                            <td class="t1_x">1.1</td>
+                            <td>T1wMPR1</td>
+                            <td class="t1_x">1.1</td> <!--wrong-->
                             <td class="t1_y">1.0</td>
-                            <td class="t1_z">1.9</td>
+                            <td class="t1_z">1.9</td> <!--wrong-->
                             <td id="t1_te" class="te">4.97</td>
-                            <td id="t1_tr">2300</td>
+                            <td id="t1wmpr1_tr" class="t1_tr">2300.0</td> <!--wrong-->
                             <td>1.0</td>
                             <td id="t1_ti">900</td>
                         </tr>
+                        <tr class="t1_data">
+                            <td>T1wMPR2</td>
+                            <td class="t1_x">1.0</td>
+                            <td class="t1_y">1.0</td>
+                            <td class="t1_z">1.0</td>
+                            <td class="te">4.97</td>
+                            <td id="t1wmpr2_tr" class="t1_tr">2400.0</td>
+                            <td>1.0</td>
+                            <td class="t1_ti">900</td>
+                        </tr>
                         <tr class="t2_data">
-                            <td>T2</td>
+                            <td>T2wSPC1</td>
                             <td class="t2_x">1.0</td>
-                            <td class="t2_y">1.1</td>
+                            <td class="t2_y">1.1</td> <!--wrong-->
                             <td class="t2_z">1.0</td>
-                            <td id="t2_te" class="te">4.97</td>
-                            <td id="t2_tr">3200.0</td>
+                            <td id="t2wspc1_te" class="t2_te">4.97</td>
+                            <td id="t2wspc1_tr">3200.0</td>
                             <td>1.0</td>
                             <td>n/a</td>
                         </tr>
@@ -122,9 +138,9 @@
                             <td id="epi1_x" class="epi_x">3.8</td>
                             <td id="epi1_y" class="epi_y">3.8</td>
                             <td id="epi1_z" class="epi_z">3.8</td>
-                            <td id="epi1_te" class="te">4.0</td>
+                            <td id="epi1_te" class="epi_te">4.0</td>
                             <td id="epi1_tr">2100.0</td>
-                            <td id="epi1_frames" class="frames">120</td>
+                            <td id="epi1_frames" class="epi_frames">120</td>
                             <td>n/a</td>
                         </tr>
                         <tr class="epi_data">
@@ -132,9 +148,9 @@
                             <td id="epi2_x" class="epi_x">3.8</td>
                             <td id="epi2_y" class="epi_y">3.8</td>
                             <td id="epi2_z" class="epi_z">3.8</td>
-                            <td id="epi2_te" class="te">5.1</td>
+                            <td id="epi2_te" class="epi_te">5.1</td>
                             <td id="epi2_tr">2100.0</td>
-                            <td id="epi2_frames"  class="frames">109</td>
+                            <td id="epi2_frames"  class="epi_frames">109</td>
                             <td>n/a</td>
                         </tr>
                         <tr class="epi_data">
@@ -144,7 +160,7 @@
                             <td id="epi3_z" class="epi_z">3.7</td>
                             <td id="epi3_te" class="te">5.0</td>
                             <td id="epi3_tr">2100.0</td>
-                            <td id="epi3_frames"  class="frames">120</td>
+                            <td id="epi3_frames"  class="epi_frames">120</td>
                             <td>n/a</td>
                         </tr>
                         <tr class="epi_data">
@@ -154,7 +170,7 @@
                             <td id="epi4_z" class="epi_z">3.8</td>
                             <td id="epi4_te" class="te">5.0</td>
                             <td id="epi4_tr">2100.0</td>
-                            <td id="epi4_frames"  class="frames">120</td>
+                            <td id="epi4_frames"  class="epi_frames">120</td>
                             <td>n/a</td>
                         </tr>
                         <tr class="epi_data">
@@ -164,7 +180,17 @@
                             <td id="epi5_z" class="epi_z">3.8</td>
                             <td id="epi5_te" class="te">5.0</td>
                             <td id="epi5_tr">2100.0</td>
-                            <td id="epi5_frames" class="frames">120</td>
+                            <td id="epi5_frames" class="epi_frames">120</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI6</td>
+                            <td id="epi6_x" class="epi_x">3.8</td>
+                            <td id="epi6_y" class="epi_y">3.8</td>
+                            <td id="epi6_z" class="epi_z">3.8</td>
+                            <td id="epi6_te" class="te">5.0</td>
+                            <td id="epi6_tr">2100.0</td>
+                            <td id="epi6_frames" class="epi_frames">120</td>
                             <td>n/a</td>
                         </tr>
                     </tbody>
@@ -185,8 +211,8 @@
                 </table>
             </div>
 	    </div>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
         <script src="script.js"></script>
     </body>
 </html>
