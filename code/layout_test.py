@@ -283,7 +283,7 @@ def main():
 
     parser.add_argument('-l', '--list_of_images', action="store", nargs='*', dest='images_list')
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', help='''
+    parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='*', help='''
         Path to given subject folder under a given project e.g.
        /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
 
@@ -320,10 +320,6 @@ def main():
 
         gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
-###############################
-    # TEST WITH FAKE DATA
-###############################
-
     structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
                              'T1-Axial-BasalGangila-Putamen.png',
                              'T1-Coronal-Caudate-Amygdala.png',
@@ -350,7 +346,7 @@ def main():
     # TODO: figure out a better way to extract code
     code = 'ABCDPILOT_MSC02'
 
-    #code = image_summary.get_subject_info(sub_root)[0]
+    #code = image_summary.get_subject_info(sub_root)[0] # or [1]?
 
     print 'PROCESSING code: %s' % code
 
@@ -382,23 +378,25 @@ def main():
     new_body = body + html_params_panel
 
     pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
-    # TODO: below is a mess... fix all this epi-panel-makin stuff
+
     # TODO: we may have fewer than 6, so do this better...
-    gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
+    #gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
 
     epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
                                                  gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
     t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
 
-    sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in gif_labels]
+    sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in pngs]
 
     # TODO: still need to slice these up then locate in the img_out location?
     rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
 
     epi_rows = []
 
-    for i in range(0, len(gif_labels)-1):
+    num_epi_files = len(epi_in_t1_gifs)
+
+    for i in range(0, num_epi_files-1):
         epi_rows.append(epi_in_t1_gifs[i])
         epi_rows.append(t1_in_epi_gifs[i])
         epi_rows.append(sb_ref_paths[i])
