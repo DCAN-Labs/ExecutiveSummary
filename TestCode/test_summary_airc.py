@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 __author__ = 'Shannon Buckley', 12/27/15
+
+testing the dicom-info grabber, mostly.
 """
 
 import code.image_summary
