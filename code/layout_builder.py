@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
 __author__ = 'Shannon Buckley', 2/20/16
+
+Call this program with -s, pointing to a subject-code path, to build the Executive Summary for that subject's processed
+data.
 """
 
 import os
@@ -330,13 +333,11 @@ def main():
 
     real_data = []
 
-    # MAKE SOME REAL DATA FOR TESTING
+    # MAKE SOME REAL DATA PATHS
     summary_path, data_path = image_summary.get_paths(sub_root)
 
-    # see if changing to the local dir helps other issues
-    os.chdir(summary_path)
+    os.chdir(summary_path) # fail if not?
 
-    # THIS PART TAKES A WHILE... CONSIDER Chopping the function up a little?
     data = image_summary.get_list_of_data(sub_root)
     print 'data are: %s' % data
     img_out_path = path.join(summary_path, 'img')
@@ -362,25 +363,32 @@ def main():
         for item in list_entry:
 
             print '\nadding %s to list of data, for which we need parameters...\n' % item
-            #_logger.debug('data_list is: %s' % data)
+            # _logger.debug('data_list is: %s' % data)
             params_row = image_summary.get_nii_info(item)
             real_data.append(params_row)
 
+    # START TO BUILD THE LAYOUT
+
     html_params_panel = param_table_html_header
+
+    # BUILD PARAM PANEL
 
     for data_row in real_data:
         html_params_panel += write_param_table_row(data_row)
 
     html_params_panel += param_table_footer
 
+    # BUILD & WRITE THE STRUCTURAL PANEL
+
     body = write_structural_panel(structural_img_labels)
+
+    # APPEND WITH PARAMS PANEL
 
     new_body = body + html_params_panel
 
     pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
-    # TODO: we may have fewer than 6, so do this better...
-    #gif_labels = ['REST1', 'REST2', 'REST3', 'REST4', 'REST5', 'REST6']
+    # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
     epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
                                                  gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
@@ -389,8 +397,9 @@ def main():
 
     sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in pngs]
 
-    # TODO: still need to slice these up then locate in the img_out location?
     rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
+
+    # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
 
     epi_rows = []
 
@@ -404,27 +413,25 @@ def main():
 
     head = html_header
 
+    # TODO: adjust this more.
+    # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
     newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
                  + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) \
                  + write_epi_panel_row(epi_rows[16:20]) + epi_panel_footer
 
+    # print 'newer_body is : %s' % newer_body
 
-    # _logger.debug('newer_body is : %s' % newer_body)
-    # TODO: this seems dumb
+    # FILL-IN THE CODE / VERSION INFO
     new_html_header = edit_html_chunk(head, 'code', code)
     new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
-    # Test 1: Build the doc and write it as-is
+    # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
     html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
 
     write_html(html_doc, summary_path)
-    # Test 2: change the body and write the chunk
-    # new_body = html_body.replace('t1-top-left', args.images_list[0])
-    # new_body = html_body.replace('t1-middle', args.images_list[1])
-    # new_body = html_body.replace('t1-top-right', args.images_list[2])
-
-    # write_html(new_body, 'body-test-with-args')
 
 if __name__ == '__main__':
 
     main()
+
+    print '\nall done!'
