@@ -5,7 +5,7 @@ __author__ = 'Shannon Buckley', 2/12/16
 Testing the more important pieces of image_summary.
 """
 
-import os, sys
+import os
 from os import path
 import logging
 from datetime import datetime
