@@ -1,19 +1,30 @@
 $(document).ready(function() {
 
-    var t1Dimensions = Array($('.t1_x'), $('.t1_y'), $('.t1_z'));
+    /*
+    var t1Dimensions = $('.t1_x'), $('.t1_y'), $('.t1_z'));
     console.log(t1Dimensions.length);
 
-    console.log(t1Dimensions[0].childNodes);
+    console.log(t1Dimensions[0]);
+*/
+    // grab the class
+//    var $t1_tr = $('.t1_tr');
+//
+//    //convert that text to a Float then check against an expected value
+//    if($t1_tr.text() != 2400.0) {
+//        console.log(parseFloat($t1_tr.text()) + ' is not equal to 2400.0');  //delete this later...
+//        $t1_tr.addClass('out-of-range');  //make red if not within range
+//    }
 
-    // grab the text of an id
-    var $t1_tr = $('#t1_tr').text();
+    $('img[src*=SBRef]').css('width', 300);
 
-    //convert that text to a number then check against an expected value
-    if(Number($t1_tr) != 2400) {
-        console.log($t1_tr + ' is not equal to 2400');  //delete this later...
-        $('#t1_tr').addClass('out-of-range');  //make red if not within range
-    }
+    $('#t1_te:not(td:contains(4.97))').addClass('out-of-range');
 
+    $('.t1_tr').each(function(index, element) {
+
+         $('element:contains(2400.0)').addClass('out-of-range');
+    });
+
+    /*
     //TODO: make objects for data params for more efficient param checks?
     var t1_data = {x: $('.t1_x'),
                     y: $('.t1_y'),
@@ -22,21 +33,25 @@ $(document).ready(function() {
 
     //TODO: figure out how loop through an object array... or scrap this method
 
-    function checkT1Values() {
-        console.log('x: ' + this.x.text());
+
+
+    function checkT1Values(data) {
+
+        console.log('x: ' + this.x);
         console.log('y: ' + this.y);
         console.log('z: ' + this.z);
         // TODO: for loop here through the object
 
-        if(parseFloat(this.x.text()) != 1) {
+        if(parseFloat(this.x) != 1.0) {
             console.log(this.x + ' is out of range!');
-            this.x.addClass('out-of-range');
+            this.addClass('out-of-range');
         };
     };
 
-    t1_data.logDetails = checkT1Values;
+    t1_data.logDetails = checkT1Values(t1_data);
 
     t1_data.logDetails();
+    */
 
     //TODO: change all this below here to be more loopy and check for values instead of text!
 
@@ -170,6 +185,7 @@ $(document).ready(function() {
     if($('#epi5_z').text() != '3.8') {
         $('#epi5_z').addClass('out-of-range');
     };
+
     $('div.params').draggable();
 
     $('div.grayords').resizable();
