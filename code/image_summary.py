@@ -78,12 +78,15 @@ def get_subject_info(path_to_nii_file):
         filename = path.basename(path_to_nii_file)
     else:
         print '%s is not a file and I reeeally needed a file, not a dir' % filename
+        _logger.error('\n%s is not a file...' % filename)
         return
 
     if filename.endswith('.nii.gz'):
         filename = filename.strip('.nii.gz')
     elif filename.endswith('.nii'):
         filename = filename.strip('.nii')
+    else:
+        print('%s is neither .nii nor nii.gz' % filename)
 
     parts = filename.split('_')
 
@@ -93,13 +96,6 @@ def get_subject_info(path_to_nii_file):
 
     if p_count <= 2:
         _logger.error('not enough parts for this to be a "good code": %s' % p_count)
-    #
-    # # TODO: needs more checks
-    # elif p_count == 3 and 'REST' in parts:
-    #     _logger.info('REST file: %s' % parts)
-    #     subject_code = parts[1]
-    #     modality = parts[2]
-    #     series_num = parts[2]
 
     elif p_count == 3:
 
@@ -171,12 +167,12 @@ def get_nii_info(path_to_nii, info=None):
     :return: row of data in a list, length 8
     """
 
-    path_to_nii = os.path.join(path_to_nii)
+    path_to_nii = path.join(path_to_nii)
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
         if not path.basename(path_to_nii).endswith('.nii'):
             _logger.error('wrong file type: %s' % path.basename(path_to_nii))
-            pass
+            return
 
     _logger.info("getting params on %s\n" % path_to_nii)
 
@@ -185,7 +181,10 @@ def get_nii_info(path_to_nii, info=None):
 
     _logger.debug('data-info is: %s' % info)
 
-    modality = info[1]
+    try:
+        modality = info[1]
+    except TypeError:
+        print '%s is the wrong file type ' % path.join(path_to_nii)
 
     cmd = 'echo %s,' % modality
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
@@ -212,7 +211,7 @@ def get_dcm_info(path_to_dicom, modality):
     :return: list of data with length 8
     """
 
-    path_to_dicom = os.path.join(path_to_dicom)
+    path_to_dicom = path.join(path_to_dicom)
 
     cmd = 'echo %s,' % modality
     cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
@@ -228,27 +227,6 @@ def get_dcm_info(path_to_dicom, modality):
     data = [item for item in data if not item == '']
 
     return data
-
-
-def grab_te_from_dicom(path_to_dicom):
-    """
-    We probably do not need this.
-
-    :param path_to_dicom:
-    :return: echo time
-    """
-
-    path_to_dicom = os.path.join(path_to_dicom)
-
-    cmd = 'echo `mri_info %s | grep "TE" | awk %s`' % (path_to_dicom, "'{print $5}'")
-
-    _logger.debug(cmd)
-
-    output = submit_command(cmd)
-
-    echo_time = output.strip("\n").split(',')
-
-    return echo_time
 
 
 def submit_command(cmd):
@@ -340,19 +318,19 @@ def get_list_of_data(src_folder):
     return data_lists
 
 
-def make_image_dump(src, dst='./img'):
-    """
-    :param src: path to folder of images
-    :param dst: path to dir where images should be placed (need to be picked up by html)
-    :return: path to images
-    """
-
-    src = os.path.join(src)
-
-    dst = os.path.join(dst)
-
-    if not os.path.exists(dst):
-        os.makedirs(dst)
+# def make_image_dump(src, dst='./img'):
+#     """
+#     :param src: path to folder of images
+#     :param dst: path to dir where images should be placed (need to be picked up by html)
+#     :return: path to images
+#     """
+#
+#     src = os.path.join(src)
+#
+#     dst = os.path.join(dst)
+#
+#     if not os.path.exists(dst):
+#         os.makedirs(dst)
 
 
 def slice_image_to_ortho_row(file_path, dst):
@@ -496,7 +474,7 @@ def main():
                                                                                      "folder containing all summary "
                                                                                     "images.")
 
-    parser.add_argument('-d', '--data-path', dest='data_path', help="Full path to raw data file.")
+    parser.add_argument('-d', '--dicom-path', dest='dicom_path', help="Full path to raw data file.")
 
     parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
 
@@ -509,6 +487,9 @@ def main():
     args = parser.parse_args()
 
     _logger.debug('args are: %s' % args)
+
+    # write out the first row of our data rows to setup column headers
+    data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
     if args.verbose:
         _logger.setLevel(logging.DEBUG)
@@ -528,23 +509,18 @@ def main():
     else:
         img_out_path = path.join('./img')
 
+    if args.subject_path:
+        sub_root = path.join(args.subject_path)
+        img_in_path = path.join(sub_root, 'summary')
+        img_out_path = path.join(img_in_path, 'img')
+        data_in_path = get_paths(sub_root)[1]
+
+        gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+
     if not path.exists(img_out_path):
         os.makedirs(img_out_path)
 
-    if args.subject_path:
-        subject_path = os.path.join(args.subject_path)
-        if os.path.exists(subject_path):
-            print get_list_of_data(subject_path)
-
-    if args.subject_path:
-        subject_path = os.path.join(args.subject_path)
-        if os.path.exists(subject_path):
-            print get_list_of_data(subject_path)
-
     param_table = path.join(img_out_path, 'Params.csv')
-
-    # write out the first row of our data rows to setup column headers
-    data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
     write_csv(data_rows, param_table)
 
@@ -558,93 +534,7 @@ def main():
             data_rows.append(nifti_data)
             write_csv(data_rows, param_table)
 
+
 if __name__ == '__main__':
 
     main()
-
-
-def rename_structural(path_to_image_dump):
-    """
-    :param path_to_image_dump: directory containing inputs (will also serve as output dir)
-    :return: list of new image (paths)
-    """
-    structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
-
-    new_imgs = []
-
-    for img_label in structural_imgs:
-
-        filename = path.join(path_to_image_dump, img_label, '.png')
-
-        new_file = rename_image(filename)
-
-        new_imgs.append(new_file)
-
-    return new_imgs
-
-
-def rename_image(img_path):
-    """
-    :img_path should be full-path to any image file
-    :returns renamed, full-path to new image filename
-    """
-
-    filename, file_extension = path.splitext(path.basename(img_path))
-
-    if filename in images_dict.keys():
-        new_filename = images_dict[filename]
-
-        new_file_path = path.join(path.dirname(img_path), new_filename, file_extension)
-
-        os.rename(img_path, new_file_path)
-
-        return new_file_path
-
-
-def structural_montage_cmd(list_in, path_out, label=False):
-    """
-    list_in is a list of image paths
-    path_out: output filename (with path)
-    label: T or F to decide whether to add labels below each image
-    """
-    path_out = os.path.join(path_out)
-
-    cmd = 'montage '
-
-    for image_path in list_in:
-        input_file = os.path.join(image_path)
-
-        if label:
-            cmd += "-label %t "
-
-        cmd += '%s ' % input_file
-
-    # TODO: change to black background
-
-    cmd += '-tile 3x2 -geometry 200x250+0+0 %s/Structural.png' % path_out
-
-    submit_command(cmd)
-
-    return cmd
-
-# describes existing set of structural images... may need adjustments to other locations / names
-images_dict = {
-    'temp_1': 'T1-Axial-InferiorTemporal-Cerebellum',
-    'temp_2': 'T2-Axial-InferiorTemporal-Cerebellum',
-    'temp_3': 'T1-Axial-BasalGangila-Putamen',
-    'temp_4': 'T2-Axial-BasalGangila-Putamen',
-    'temp_5': 'T1-Axial-SuperiorFrontal',
-    'temp_6': 'T2-Axial-SuperiorFrontal',
-    'temp_7': 'T1-Coronal-PosteriorParietal-Lingual',
-    'temp_8': 'T2-Coronal-PosteriorParietal-Lingual',
-    'temp_9': 'T1-Coronal-Caudate-Amygdala',
-    'temp_10': 'T2-Coronal-Caudate-Amygdala',
-    'temp_11': 'T1-Coronal-OrbitoFrontal',
-    'temp_12': 'T2-Coronal-OrbitoFrontal',
-    'temp_13': 'T1-Sagittal-Insula-FrontoTemporal',
-    'temp_14': 'T2-Sagittal-Insula-FrontoTemporal',
-    'temp_15': 'T1-Sagittal-CorpusCallosum',
-    'temp_16': 'T2-Sagittal-CorpusCallosum',
-    'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
-    'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
-}
