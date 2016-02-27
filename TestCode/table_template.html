@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset = "utf-8">
+        <title>Executive Summary</title>
+        <link href="css/style.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="header">
+            <h1>Code</h1>
+            <p>pipeline_version</p>
+            <div class="button" id="next-button">
+                <button>Next</button>
+            </div>
+        </div>
+        <div class="top-row">
+            <div class="structural">
+                <table class="top-left-panel">
+                    <thead>
+                        <th colspan="3">
+                            Structural Segmentation
+                        </th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="../in/temp_13.png" target="_blank"><img src="../in/temp_13.png"></a></td>
+                            <td><a href="../in/temp_3.png"><img src="../in/temp_3.png"></a></td>
+                            <td><a href="../in/temp_9.png"><img src="../in/temp_9.png"></a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="../in/temp_14.png"><img src="../in/temp_14.png"></a></td>
+                            <td><a href="../in/temp_4.png"><img src="../in/temp_4.png"></a></td>
+                            <td><a href="../in/temp_10.png"><img src="../in/temp_10.png"></a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="epi">
+                <table class="epi">
+                    <thead>
+                        <th colspan="4">
+                            Resting State Data
+                        </th>
+                    </thead>
+                        <!--TODO: add rows dynamically based on what data are available (in script.js)-->
+                    <tbody>
+                        <tr>
+                            <td><a href="../in/10075-2_REST1_in_t1.gif"><img src="../in/10075-2_REST1_in_t1.gif"></a></td>
+                            <td><a href="../in/10075-2_t1_in_REST1.gif"><img src="../in/10075-2_t1_in_REST1.gif"></a></td>
+                            <td><a href="../in/SBRef_REST1.png"><img src="../in/SBRef_REST1.png"></a></td>
+                            <td><a href="../in/REST1_nonlin_norm.png"><img src="../in/REST1_nonlin_norm.png"></a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="../in/10075-2_REST2_in_t1.gif"><img src="../in/10075-2_REST2_in_t1.gif"></a></td>
+                            <td><a href="../in/10075-2_t1_in_REST2.gif"><img src="../in/10075-2_t1_in_REST2.gif"></a></td>
+                            <td><a href="../in/SBRef_REST2.png"><img src="../in/SBRef_REST2.png"></a></td>
+                            <td><a href="../in/REST2_nonlin_norm.png"><img src="../in/REST2_nonlin_norm.png"></a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="../in/10075-2_REST3_in_t1.gif"><img src="../in/10075-2_REST3_in_t1.gif"></a></td>
+                            <td><a href="../in/10075-2_t1_in_REST3.gif"><img src="../in/10075-2_t1_in_REST3.gif"></a></td>
+                            <td><a href=../in/SBRef_REST3.png"><img src="../in/SBRef_REST3.png"></a></td>
+                            <td><a href=../in/REST3_nonlin_norm.png"><img src="../in/REST3_nonlin_norm.png"></a></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+    	</div>
+    	<div class="bottom-row">
+            <div class="params">
+                <table id="param_table">
+                    <thead>
+                        <th colspan="8">
+                            Acquisition Parameters
+                        </th>
+                    </thead>
+                    <tbody>
+                        <tr class="column-names">
+                            <td>Modality</td>
+                            <td>x <span>(mm)</span></td>
+                            <td>y <span>(mm)</span></td>
+                            <td>z <span>(mm)</span></td>
+                            <td>TE <span>(ms)</span></td>
+                            <td>TR <span>(ms)</span></td>
+                            <td>Frames <span>(n)</span></td>
+                            <td>TI <span>(ms)</span></td>
+                        </tr>
+                        <tr class="t1_data">
+                            <td>T1</td>
+                            <td class="t1_x">1.1</td>
+                            <td class="t1_y">1.0</td>
+                            <td class="t1_z">1.9</td>
+                            <td id="t1_te" class="te">4.97</td>
+                            <td id="t1_tr">2300</td>
+                            <td>1.0</td>
+                            <td id="t1_ti">900</td>
+                        </tr>
+                        <tr class="t2_data">
+                            <td>T2</td>
+                            <td class="t2_x">1.0</td>
+                            <td class="t2_y">1.1</td>
+                            <td class="t2_z">1.0</td>
+                            <td id="t2_te" class="te">4.97</td>
+                            <td id="t2_tr">3200.0</td>
+                            <td>1.0</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI1</td>
+                            <td id="epi1_x" class="epi_x">3.8</td>
+                            <td id="epi1_y" class="epi_y">3.8</td>
+                            <td id="epi1_z" class="epi_z">3.8</td>
+                            <td id="epi1_te" class="te">4.0</td>
+                            <td id="epi1_tr">2100.0</td>
+                            <td id="epi1_frames" class="frames">120</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI2</td>
+                            <td id="epi2_x" class="epi_x">3.8</td>
+                            <td id="epi2_y" class="epi_y">3.8</td>
+                            <td id="epi2_z" class="epi_z">3.8</td>
+                            <td id="epi2_te" class="te">5.1</td>
+                            <td id="epi2_tr">2100.0</td>
+                            <td id="epi2_frames"  class="frames">109</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI3</td>
+                            <td id="epi3_x" class="epi_x">3.8</td>
+                            <td id="epi3_y" class="epi_y">3.8</td>
+                            <td id="epi3_z" class="epi_z">3.7</td>
+                            <td id="epi3_te" class="te">5.0</td>
+                            <td id="epi3_tr">2100.0</td>
+                            <td id="epi3_frames"  class="frames">120</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI4</td>
+                            <td id="epi4_x" class="epi_x">3.8</td>
+                            <td id="epi4_y" class="epi_y">3.8</td>
+                            <td id="epi4_z" class="epi_z">3.8</td>
+                            <td id="epi4_te" class="te">5.0</td>
+                            <td id="epi4_tr">2100.0</td>
+                            <td id="epi4_frames"  class="frames">120</td>
+                            <td>n/a</td>
+                        </tr>
+                        <tr class="epi_data">
+                            <td>EPI5</td>
+                            <td id="epi5_x" class="epi_x">3.8</td>
+                            <td id="epi5_y" class="epi_y">3.8</td>
+                            <td id="epi5_z" class="epi_z">3.8</td>
+                            <td id="epi5_te" class="te">5.0</td>
+                            <td id="epi5_tr">2100.0</td>
+                            <td id="epi5_frames" class="frames">120</td>
+                            <td>n/a</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="grayords">
+                <table class="grayords">
+                <thead>
+                    <th colspan="3">
+                        Resting State Grayordinates Plot
+                    </th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="../in/DVARS_and_FD_CONCA.png" target="_blank"><img src="../in/DVARS_and_FD_CONCA.png"></a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+	    </div>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+        <script src="js/script.js"></script>
+    </body>
+</html>
