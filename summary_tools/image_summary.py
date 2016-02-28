@@ -13,12 +13,12 @@ import logging.handlers
 from datetime import datetime
 
 PROG = 'Image Summary'
-VERSION = '0.1.1'
+VERSION = '0.2.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
-structural and functional images, and grayordinates results into one file for efficient pipeline QC (of the
-FNL_preproc pipeline module).
+structural and functional images, and grayordinates results into one file for efficient QC (of the
+FNL_preproc pipeline).
 """ % {'prog': PROG, 'ver': VERSION}
 
 date_stamp = "{:%Y_%m_%d %H:%M}".format(datetime.now())
@@ -377,6 +377,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None):
     Helps decide how to slice-up an image by running 'get_nii_info', which might be a bad idea?
 
     :param nifti_file_path:
+    :param subj_code: optional subject_code can be passed-in to speed things along
     :return: dict of x/y/z slice positions (to use for slicer)
     """
 
@@ -429,8 +430,10 @@ def choose_slices_dict(nifti_file_path, subj_code=None):
 def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, also_xyz=False):
     """
 
-    :param list_of_data_paths:
-    :param dest_dir:
+    :param list_of_data_paths: a list containing full-path strings
+    :param subject_code: optional string. faster function if known & can pass?
+    :param dest_dir: destination dir for the images to be produced & gathered
+    :param also_xyz: boolean as to whether or not you also want to create x-y-z, individual planes of sliced images.
     :return: None
     """
 
@@ -444,7 +447,7 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, als
                 os.makedirs(dest_dir)
 
         for datum in list_of_data_paths:
-            # TODO: maybe just grab the subject summary_tools in args?
+
             if not subject_code:
                 subject_code = get_subject_info(datum)[0]
 
@@ -463,19 +466,15 @@ def main():
 
     parser = argparse.ArgumentParser(description=program_desc)
 
-    # TODO: one at a time for now rather than a list... Still not sure about this.
+    parser.add_argument('-d', '--dicom-path', dest='dicom_path', help="Uses mri_info to grab params via the given full "
+                                                                      "path to any single, raw dicom file.")
 
-    parser.add_argument('-i', '--image-path', action="store", dest='img_path', help="Provide a full path to the "
-                                                                                     "folder containing all summary "
-                                                                                    "images.")
-
-    parser.add_argument('-d', '--dicom-path', dest='dicom_path', help="Full path to raw data file.")
-
-    parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Full path to raw nii.gz file.")
+    parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Uses fslval to grab params via the given full "
+                                                                    "path to any nii or nii.gz file.")
 
     parser.add_argument('-s', '--subject_path', dest='subject_path', help='''
-        Path to given subject folder under a given project e.g.
-       /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
+        Path to given PROCESSED subject folder, with underlying 'summary' folder & contents.
+        e.g. /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
@@ -491,13 +490,27 @@ def main():
     else:
         _logger.setLevel(logging.INFO)
 
+    if args.dicom_path:
+        dcm_path = path.join(args.dicom_path)
+        if path.exists(dcm_path):
+            dcm_params = get_dcm_info(dcm_path)
+
+            print 'parameters are: %s ' % dcm_params
+
+    if args.nifti_path:
+        nifti_path = path.join(args.nifti_path)
+        if path.exists(nifti_path):
+            nii_params = get_nii_info(nifti_path)
+
+            print 'parameters are: %s ' % nii_params
+
     if args.img_path:
 
-        img_in = os.path.join(args.img_path)
+        img_in = path.join(args.img_path)
 
         _logger.info('path to images provided: %s' % img_in)
 
-        _logger.info('list of images:', os.listdir(img_in))
+        _logger.info('list of images found:', os.listdir(img_in))
 
         img_out_path = os.path.join(img_in, 'img')
 
@@ -508,12 +521,11 @@ def main():
         sub_root = path.join(args.subject_path)
         img_in_path = path.join(sub_root, 'summary')
         img_out_path = path.join(img_in_path, 'img')
-        data_in_path = get_paths(sub_root)[1]
 
         gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
     if not path.exists(img_out_path):
-        os.makedirs(img_out_path)
+        os.makedirs(img_out_path, exist_ok=True)
 
     param_table = path.join(img_out_path, 'Params.csv')
 
