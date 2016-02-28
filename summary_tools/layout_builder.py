@@ -10,10 +10,18 @@ import os
 from os import path
 import argparse
 import image_summary
+from image_summary import _logger
 
-VERSION = '0.0.0'
+PROG = 'Image Summary'
+VERSION = '0.1.0'
 
-LAST_MOD = '2-20-16'
+LAST_MOD = '2-27-16'
+
+program_desc = """%(prog)s v%(ver)s:
+Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
+Use -s /path/to/subjectfolder/with/summary/subfolder to launch and build a summary page.
+Has embedded css & jquery elements.
+""" % {'prog': PROG, 'ver': VERSION}
 
 
 def write_html(template, dest_dir, title="summary_out.html"):
@@ -63,25 +71,6 @@ param_table_html_header = """
                             <td>Frames <span>(n)</span></td>
                             <td>TI <span>(ms)</span></td>
                         </tr>"""
-
-param_table_html_row_example = """
-                        <tr class="t1_data">
-                            <td>%(modality)s</td>
-                            <td class="t1_x">%(x_dim)s</td>
-                            <td class="t1_y">%(y_dim)s</td>
-                            <td class="t1_z">%(z_dim)s</td>
-                            <td id="t1_te" class="te">%(te)s</td>
-                            <td id="t1_tr">%(tr)s</td>
-                            <td>%(frames)s</td>
-                            <td id="t1_ti">%(ti)s</td>
-                        </tr>""" % {'modality'  : 'data_modality',
-                                    'x_dim'     : 'pixdimx',
-                                    'y_dim'     : 'pixdimy',
-                                    'z_dim'     : 'pixdimz',
-                                    'te'        : 'echo_time',
-                                    'tr'        : 'repetition_time',
-                                    'frames'    : 'n_frames',
-                                    'ti'        : 'inversion_time'}
 
 param_table_footer = """
                     </tbody>
@@ -134,6 +123,7 @@ def get_image_path(image_string):
 def write_structural_panel(list_of_image_paths):
 
     if len(list_of_image_paths) < 6:
+        _logger.error('not enough structural images!')
         return
 
     structural_html_panel = """
@@ -278,13 +268,13 @@ def append_html_with_chunk(existing_html, string_to_insert):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='html_layout_tester')
+    parser = argparse.ArgumentParser(description=program_desc)
 
-    parser.add_argument('-i', '--image-dir', action="store", dest='img_dir', help="Provide a full path to the "
-                                                                                     "folder "
-                                                                                     "containing all summary images.")
+    parser.add_argument('-i', '--image-path', action="store", dest='img_path', help="Provide a full path to the "
+                                                                                    "folder containing all summary "
+                                                                                    "images.")
 
-    parser.add_argument('-l', '--list_of_images', action="store", nargs='*', dest='images_list')
+    parser.add_argument('-l', '--list_of_images', action="store", dest='images_list')
 
     parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='*', help='''
         Path to given subject folder under a given project e.g.
@@ -316,26 +306,38 @@ def main():
                 print 'image path is %s' % image_path
 
     if args.subject_path:
+        for sub in args.subject_path:
+            sub_root = path.join(sub)
 
-        sub_root = path.join(args.subject_path)
+            try:
+                summary_path, data_path = image_summary.get_paths(sub_root)
+                if path.exists(summary_path):
+                    img_out_path = path.join(sub_root, 'summary', 'img')
+                    img_in_path = summary_path
+                try:
+                    gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
-        try:
-            summary_path, data_path = image_summary.get_paths(sub_root)
-            if summary_path:
-                img_out_path = path.join(sub_root, 'summary', 'img')
-                img_in_path = summary_path
-                gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+                    if len(gifs) == 0:
+                        _logger.error('no gifs in summary folder')
+                        print '\nNo .gifs were found! Check to make sure the previous scripts have been ran? ' \
+                              'There should be some .gifs and I do not make those!'
+                        return
+
+                except OSError:
+
+                    print 'Path does not exist because the summary folder is not there...'
+                    return
 
                 if not path.exists(img_out_path):
                     os.makedirs(img_out_path)
 
-        except TypeError:
+            except TypeError:
 
-                print 'no summary data! exiting...'
-                return
+                    print 'no summary data within %s \nexiting...' % args.subject_path
+                    return
 
-        except UnboundLocalError:
-            print 'oops, wrong type'
+        else:
+            print 'no subject path provided!'
 
     structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
                              'T1-Axial-BasalGangila-Putamen.png',
@@ -361,7 +363,7 @@ def main():
         code, modality, series = image_summary.get_subject_info(list_entry)
         image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
-    print 'PROCESSING summary_tools: %s' % code
+        print 'PROCESSING summary_tools: %s' % code
 
     for list_entry in data.values():
 
@@ -370,7 +372,7 @@ def main():
         for item in list_entry:
 
             print '\nadding %s to list of data, for which we need parameters...\n' % item
-            # _logger.debug('data_list is: %s' % data)
+            _logger.debug('data_list is: %s' % data)
             params_row = image_summary.get_nii_info(item)
             real_data.append(params_row)
 
@@ -412,24 +414,31 @@ def main():
 
     num_epi_files = len(epi_in_t1_gifs)
 
+    if num_epi_files % 4 != 0 or epi_rows is None:
+        _logger.error('incorrect number of epi files!')
+        print 'ack, exiting...'
+
     for i in range(0, num_epi_files-1):
         epi_rows.append(epi_in_t1_gifs[i])
         epi_rows.append(t1_in_epi_gifs[i])
         epi_rows.append(sb_ref_paths[i])
         epi_rows.append(rest_raw_paths[i])
 
+    _logger.debug(epi_rows)
+
     head = html_header
 
     # TODO: adjust this more.
     # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
     newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
-                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) \
-                 + write_epi_panel_row(epi_rows[16:20]) + epi_panel_footer
+                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) + write_epi_panel_row(epi_rows[16:20]) \
 
-    # print 'newer_body is : %s' % newer_body
+    newer_body += epi_panel_footer
+
+    _logger.debug('newer_body is : %s' % newer_body)
 
     # FILL-IN THE CODE / VERSION INFO
-    new_html_header = edit_html_chunk(head, 'summary_tools', code)
+    new_html_header = edit_html_chunk(head, 'code', code)
     new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
