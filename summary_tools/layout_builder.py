@@ -2,8 +2,8 @@
 """
 __author__ = 'Shannon Buckley', 2/20/16
 
-Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's processed
-data.
+Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
+processed data.
 """
 
 import os
@@ -13,9 +13,9 @@ import image_summary
 from image_summary import _logger
 
 PROG = 'Layout Builder'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
-LAST_MOD = '2-27-16'
+LAST_MOD = '2-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
