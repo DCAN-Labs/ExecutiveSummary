@@ -45,8 +45,8 @@ html_header = """<!DOCTYPE html>
     </head>
     <body>
         <div class="header">
-            <h1>summary_tools</h1>
-            <p>VERSION</p>
+            <h1>CODE</h1>
+            <p>vVERSION</p>
             </div>
         </div>"""
 
@@ -180,7 +180,7 @@ def write_param_table_row(list_of_data):
                             <td id="%(class_prefix)s_z" class="%(class_prefix)s_z">%(z_dim)s</td>
                             <td id="%(class_prefix)s_te" class="te">%(te)s</td>
                             <td id="%(class_prefix)s_tr">%(tr)s</td>
-                            <td id="%(class_prefix)s_frames">%(frames)s</td>
+                            <td id="%(class_prefix)s_frames" class="%(class_prefix)s_frames">%(frames)s</td>
                             <td id="%(class_prefix)s_ti">%(ti)s</td>
                         </tr>""" % {'modality': list_of_data[0],
                                     'class_prefix': list_of_data[0].lower(),
@@ -418,6 +418,7 @@ def main():
     if num_epi_files % 4 != 0 or epi_rows is None:
         _logger.error('incorrect number of epi files!')
         print 'ack, exiting...'
+        return
 
     for i in range(0, num_epi_files-1):
         epi_rows.append(epi_in_t1_gifs[i])
@@ -439,13 +440,13 @@ def main():
     _logger.debug('newer_body is : %s' % newer_body)
 
     # FILL-IN THE CODE / VERSION INFO
-    new_html_header = edit_html_chunk(head, 'code', code)
+    new_html_header = edit_html_chunk(head, 'CODE', code)
     new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
     html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
 
-    write_html(html_doc, summary_path)
+    write_html(html_doc, summary_path, title='executive_summary_%s.html' % code)
 
 if __name__ == '__main__':
 
