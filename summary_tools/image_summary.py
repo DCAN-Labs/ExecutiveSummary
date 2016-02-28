@@ -51,9 +51,16 @@ _logger.info('program log: %s\n' % (date_stamp))
 def get_paths(subject_code_path):
 
     sub_path = path.join(subject_code_path)
+    # print sub_path
 
-    if os.path.exists(sub_path):
-        img_path = path.join(sub_path, 'summary')
+    if path.exists(sub_path):
+
+        try:
+            img_path = path.join(sub_path, 'summary')
+
+        except TypeError:
+
+            _logger.error('path does not exist: %s' % sub_path)
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
 
         return img_path, data_path
@@ -95,7 +102,7 @@ def get_subject_info(path_to_nii_file):
     _logger.debug('file string has %d parts' % p_count)
 
     if p_count <= 2:
-        _logger.error('not enough parts for this to be a "good code": %s' % p_count)
+        _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
 
     elif p_count == 3:
 
@@ -138,7 +145,7 @@ def get_subject_info(path_to_nii_file):
 
     elif parts > 5:
         _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        _logger.error('\ncode: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
+        _logger.error('\nsummary_tools: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
 
     return [subject_code, modality, series_num]
@@ -318,21 +325,6 @@ def get_list_of_data(src_folder):
     return data_lists
 
 
-# def make_image_dump(src, dst='./img'):
-#     """
-#     :param src: path to folder of images
-#     :param dst: path to dir where images should be placed (need to be picked up by html)
-#     :return: path to images
-#     """
-#
-#     src = os.path.join(src)
-#
-#     dst = os.path.join(dst)
-#
-#     if not os.path.exists(dst):
-#         os.makedirs(dst)
-
-
 def slice_image_to_ortho_row(file_path, dst):
     """
     Takes path to nifti file and creates an orthogonal row of slices at the mid-lines of brain.
@@ -380,7 +372,7 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     return dst
 
 
-def choose_slices_dict(nifti_file_path):
+def choose_slices_dict(nifti_file_path, subj_code=None):
     """
     Helps decide how to slice-up an image by running 'get_nii_info', which might be a bad idea?
 
@@ -388,9 +380,12 @@ def choose_slices_dict(nifti_file_path):
     :return: dict of x/y/z slice positions (to use for slicer)
     """
 
-    nifti_info = get_nii_info(path.join(nifti_file_path))
+    if not subj_code:
+
+        nifti_info = get_nii_info(path.join(nifti_file_path))
 
     if not nifti_info:
+
         return
 
     T2_slices = {
@@ -449,13 +444,13 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, als
                 os.makedirs(dest_dir)
 
         for datum in list_of_data_paths:
-            # TODO: maybe just grab the subject code in args?
+            # TODO: maybe just grab the subject summary_tools in args?
             if not subject_code:
                 subject_code = get_subject_info(datum)[0]
 
             slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
             if also_xyz:
-                dict = choose_slices_dict(datum)
+                dict = choose_slices_dict(datum, subject_code)
                 for key in dict.keys():
 
                     print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %

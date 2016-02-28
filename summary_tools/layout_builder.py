@@ -2,7 +2,7 @@
 """
 __author__ = 'Shannon Buckley', 2/20/16
 
-Call this program with -s, pointing to a subject-code path, to build the Executive Summary for that subject's processed
+Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's processed
 data.
 """
 
@@ -31,13 +31,13 @@ html_header = """<!DOCTYPE html>
 <html lang = "en">
     <head>
         <meta charset = "utf-8">
-        <title>Executive Summary: code</title>
+        <title>Executive Summary: summary_tools</title>
         <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:250px;height:200px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
         </style>
     </head>
     <body>
         <div class="header">
-            <h1>code</h1>
+            <h1>summary_tools</h1>
             <p>VERSION</p>
             </div>
         </div>"""
@@ -316,12 +316,26 @@ def main():
                 print 'image path is %s' % image_path
 
     if args.subject_path:
-        sub_root = path.join(args.subject_path)
-        img_in_path = path.join(sub_root, 'summary')
-        img_out_path = path.join(img_in_path, 'img')
-        data_in_path = image_summary.get_paths(sub_root)[1]
 
-        gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+        sub_root = path.join(args.subject_path)
+
+        try:
+            summary_path, data_path = image_summary.get_paths(sub_root)
+            if summary_path:
+                img_out_path = path.join(sub_root, 'summary', 'img')
+                img_in_path = summary_path
+                gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+
+                if not path.exists(img_out_path):
+                    os.makedirs(img_out_path)
+
+        except TypeError:
+
+                print 'no summary data! exiting...'
+                return
+
+        except UnboundLocalError:
+            print 'oops, wrong type'
 
     structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
                              'T1-Axial-BasalGangila-Putamen.png',
@@ -339,22 +353,15 @@ def main():
     os.chdir(summary_path) # fail if not?
 
     data = image_summary.get_list_of_data(sub_root)
+
     print 'data are: %s' % data
-    img_out_path = path.join(summary_path, 'img')
-    if not path.exists(img_out_path):
-        os.makedirs(img_out_path)
-
-    # TODO: figure out a better way to extract code
-    code = 'ABCDPILOT_MSC02'
-
-    #code = image_summary.get_subject_info(sub_root)[0] # or [1]?
-
-    print 'PROCESSING code: %s' % code
 
     for list_entry in data['epi-data']:
         print 'slicing up %s' % list_entry
         code, modality, series = image_summary.get_subject_info(list_entry)
         image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
+    print 'PROCESSING summary_tools: %s' % code
 
     for list_entry in data.values():
 
@@ -422,7 +429,7 @@ def main():
     # print 'newer_body is : %s' % newer_body
 
     # FILL-IN THE CODE / VERSION INFO
-    new_html_header = edit_html_chunk(head, 'code', code)
+    new_html_header = edit_html_chunk(head, 'summary_tools', code)
     new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
