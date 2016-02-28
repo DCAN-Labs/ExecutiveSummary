@@ -12,7 +12,7 @@ import argparse
 import image_summary
 from image_summary import _logger
 
-PROG = 'Image Summary'
+PROG = 'Layout Builder'
 VERSION = '0.1.0'
 
 LAST_MOD = '2-27-16'
@@ -270,9 +270,9 @@ def main():
 
     parser = argparse.ArgumentParser(description=program_desc)
 
-    parser.add_argument('-i', '--image-path', action="store", dest='img_path', help="Provide a full path to the "
+    parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the "
                                                                                     "folder containing all summary "
-                                                                                    "images.")
+                                                                                   "images.")
 
     parser.add_argument('-l', '--list_of_images', action="store", dest='images_list')
 
@@ -319,8 +319,9 @@ def main():
 
                     if len(gifs) == 0:
                         _logger.error('no gifs in summary folder')
-                        print '\nNo .gifs were found! Check to make sure the previous scripts have been ran? ' \
-                              'There should be some .gifs and I do not make those!'
+                        print '\nNo .gifs were found! There should be some .gifs and I do not make those! '\
+                            'Check to make sure the proper scripts have been ran? '
+
                         return
 
                 except OSError:
