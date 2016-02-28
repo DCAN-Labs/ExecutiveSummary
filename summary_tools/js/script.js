@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-    $('img[src*=SBRef]').width(300).height(100);
+    $('img[src*=SBRef]').width(300).height(110);
 
     $('.t1_tr').each(function(index, element) {
 
