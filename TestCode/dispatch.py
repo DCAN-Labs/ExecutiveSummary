@@ -9,7 +9,7 @@ import os
 from os import path
 import logging
 from datetime import datetime
-import code.image_summary
+from summary_tools import image_summary
 
 PROG = 'Dispatcher'
 
@@ -36,7 +36,7 @@ nifti_gz_file = path.join('/Users/st_buckls/imageprocessing/Projects/PPMI/data/P
 ##########
 # GRAB INFO TEST
 log.info('retrieving info from nifti file: %s' % nifti_file)
-nii_info = code.image_summary.get_nii_info(nifti_file)
+nii_info = image_summary.get_nii_info(nifti_file)
 
 ###########
 # CALL SUMMARY FROM DISPATCH
@@ -56,7 +56,7 @@ if not os.path.exists(img_out_path):
 
 def choose_slices_dict(nifti_file_path):
 
-    nifti_info = code.image_summary.get_nii_info(path.join(nifti_file_path))
+    nifti_info = image_summary.get_nii_info(path.join(nifti_file_path))
 
     if not nifti_info:
         return
@@ -91,7 +91,7 @@ def choose_slices_dict(nifti_file_path):
 
 log.info('TEST IMAGE SLICER\n' + ('=' * 32))
 print 'TEST IMAGE SLICER\n' + '=' * 32
-slices_dict = code.image_summary.choose_slices_dict(nifti_file)
+slices_dict = image_summary.choose_slices_dict(nifti_file)
 print 'slices dict: %s' % slices_dict
 
 
@@ -105,12 +105,12 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
             dest_dir = path.join('./img')
 
         for datum in list_of_data_paths:
-            info = code.image_summary.get_nii_info(datum)
-            code.image_summary.slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
+            info = image_summary.get_nii_info(datum)
+            image_summary.slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
             dict = choose_slices_dict(datum)
             for key in dict.keys():
 
-                print code.image_summary.super_slice_me(datum, key, dict[key], os.path.join(img_out_path, '%s_%s-%d.png' %
+                print image_summary.super_slice_me(datum, key, dict[key], os.path.join(img_out_path, '%s_%s-%d.png' %
                                                                                             (info[0],
                                                                               key,
                                                                               dict[key])))
@@ -134,9 +134,9 @@ slice_list_of_data(data_list)
 ############
 # TEST ORTHO ROW SLICER
 print '=' * 32 + '\nTEST ORTHO ROW SLICER\n' + '=' * 32
-code.image_summary.slice_image_to_ortho_row(nifti_file, path.join(img_out_path, '%s.png' % nii_info[0]))
-code.image_summary.slice_image_to_ortho_row(nifti_gz_file, path.join(img_out_path, 'gzfile_%s.png' %
-                                                                     code.image_summary.get_nii_info(nifti_gz_file)[0]))
+image_summary.slice_image_to_ortho_row(nifti_file, path.join(img_out_path, '%s.png' % nii_info[0]))
+image_summary.slice_image_to_ortho_row(nifti_gz_file, path.join(img_out_path, 'gzfile_%s.png' %
+                                                                     image_summary.get_nii_info(nifti_gz_file)[0]))
 
 # image_summary.structural_montage_cmd(['./img/REST1_x-55.png', './img/REST1_y-135.png', './img/REST1_z-130.png'],
 #                                      img_out_path)
