@@ -274,8 +274,6 @@ def main():
                                                                                     "folder containing all summary "
                                                                                    "images.")
 
-    parser.add_argument('-l', '--list_of_images', action="store", dest='images_list')
-
     parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='*', help='''
         Path to given subject folder under a given project e.g.
        /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
@@ -300,16 +298,6 @@ def main():
                 return
             else:
                 print 'images found: %s' % image_paths
-                return
-
-    if args.images_list:
-        print args.images_list
-        for image in args.images_list:
-            image_path = path.join('summary', '%s' % image)
-
-            if path.exists(image_path):
-
-                print 'image path is %s' % image_path
                 return
 
     if args.subject_path:
