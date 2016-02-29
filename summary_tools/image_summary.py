@@ -281,6 +281,8 @@ def get_list_of_data(src_folder):
         _logger.debug('dir: %s' % dir_name[0])
 
         for file in dir_name[2]:
+            # TODO: limit which files are used...
+            #if not path.basename(file) in ['d']
 
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
                 continue

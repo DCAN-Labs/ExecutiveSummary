@@ -333,6 +333,8 @@ def main():
 
     else:
         print 'no subject path provided!'
+        _logger.error('no subject path provided!')
+        return
 
     structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
                              'T1-Axial-BasalGangila-Putamen.png',
@@ -349,7 +351,8 @@ def main():
 
     os.chdir(summary_path) # fail if not?
 
-    data = image_summary.get_list_of_data(sub_root)
+    # TODO: filter-out all the stuff we don't want to run this on first...(takes too long)
+    data = image_summary.get_list_of_data(data_path)
 
     print 'data are: %s' % data
 
@@ -358,7 +361,7 @@ def main():
         code, modality, series = image_summary.get_subject_info(list_entry)
         image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
-        print 'PROCESSING summary_tools: %s' % code
+        print 'PROCESSING subject_code: %s' % code
 
     for list_entry in data.values():
 
@@ -399,19 +402,19 @@ def main():
 
     t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
 
-    sb_ref_paths = [path.join('./img', 'SBRef' + img + '.png') for img in pngs]
+    sb_ref_paths = [path.join('./img', img) for img in pngs if 'SBRef' in img]
 
     rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
 
     # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
-
+    print 'Assembling epi-images to build panel...'
     epi_rows = []
 
     num_epi_files = len(epi_in_t1_gifs)
 
-    if num_epi_files % 4 != 0 or epi_rows is None:
-        _logger.error('incorrect number of epi files!')
-        print 'ack, exiting...'
+    if num_epi_files == 0 or epi_rows is None:
+        _logger.error('incorrect number of epi files!\nepi_rows: %s\nnum_epi_files: %s' %(epi_rows, num_epi_files))
+        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
         return
 
     for i in range(0, num_epi_files-1):
