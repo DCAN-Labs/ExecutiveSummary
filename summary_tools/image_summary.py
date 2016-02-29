@@ -503,19 +503,9 @@ def main():
             nii_params = get_nii_info(nifti_path)
 
             print 'parameters are: %s ' % nii_params
-
-    if args.img_path:
-
-        img_in = path.join(args.img_path)
-
-        _logger.info('path to images provided: %s' % img_in)
-
-        _logger.info('list of images found:', os.listdir(img_in))
-
-        img_out_path = os.path.join(img_in, 'img')
-
-    else:
-        img_out_path = path.join('./img')
+            param_table = path.join(nifti_path, 'Params.csv')
+            data_rows.append(nii_params)
+            write_csv(data_rows, param_table)
 
     if args.subject_path:
         sub_root = path.join(args.subject_path)
@@ -524,22 +514,8 @@ def main():
 
         gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
-    if not path.exists(img_out_path):
-        os.makedirs(img_out_path, exist_ok=True)
-
-    param_table = path.join(img_out_path, 'Params.csv')
-
-    write_csv(data_rows, param_table)
-
-    if args.nifti_path:
-
-        nii = path.join(args.nifti_path)
-
-        nifti_data = get_nii_info(nii)
-
-        if nifti_data:
-            data_rows.append(nifti_data)
-            write_csv(data_rows, param_table)
+        if not path.exists(img_out_path):
+            os.makedirs(img_out_path, exist_ok=True)
 
 
 if __name__ == '__main__':

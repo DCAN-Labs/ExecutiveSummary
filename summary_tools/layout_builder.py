@@ -270,9 +270,8 @@ def main():
 
     parser = argparse.ArgumentParser(description=program_desc)
 
-    parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the "
-                                                                                    "folder containing all summary "
-                                                                                   "images.")
+    parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the folder "
+                                                                                   "containing summary images.")
 
     parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='*', help='''
         Path to given subject folder under a given project e.g.
@@ -332,8 +331,8 @@ def main():
                     print 'no summary data within %s \nexiting...' % args.subject_path
                     return
 
-        else:
-            print 'no subject path provided!'
+    else:
+        print 'no subject path provided!'
 
     structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
                              'T1-Axial-BasalGangila-Putamen.png',
