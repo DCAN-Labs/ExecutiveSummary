@@ -3,7 +3,6 @@
 import os
 from os import path
 import subprocess
-from image_summary import _logger
 
 
 def rename_structural(path_to_image_dump):
@@ -77,8 +76,6 @@ def submit_command(cmd):
     :return: output
     """
 
-    _logger.debug(cmd)
-
     proc = subprocess.Popen(
         cmd
         , shell=True
@@ -89,9 +86,9 @@ def submit_command(cmd):
     (output, error) = proc.communicate()
 
     if error:
-        _logger.error(error)
+        print 'error! %s' % error
     if output:
-        _logger.info(output)
+        print 'output: %s' % output
 
     return output
 
@@ -107,8 +104,6 @@ def grab_te_from_dicom(path_to_dicom):
     path_to_dicom = os.path.join(path_to_dicom)
 
     cmd = 'echo `mri_info %s | grep "TE" | awk %s`' % (path_to_dicom, "'{print $5}'")
-
-    #_logger.debug(cmd)
 
     output = submit_command(cmd)
 
