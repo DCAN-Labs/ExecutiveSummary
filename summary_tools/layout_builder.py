@@ -19,7 +19,7 @@ LAST_MOD = '2-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
-Use -s /path/to/subjectfolder/with/summary/subfolder to launch and build a summary page.
+Use -s /path/to/subjectfolder/with/summary_subfolder to launch and build a summary page.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
 
@@ -103,11 +103,11 @@ html_footer = """
 """
 
 
-def convert_image_paths(list_of_images, src_location, ext='.png'):
+def convert_image_paths(list_of_images, src_location):
 
     new_image_paths = []
     for image in list_of_images:
-        img_path = path.join(src_location, image + ext)
+        img_path = path.join(os.path.abspath(path.join(src_location, image)))
         if path.exists(img_path):
             new_image_paths.append(img_path)
         else:
@@ -252,9 +252,9 @@ def write_dvars_panel(dvars_path='./DVARS_and_FD_CONCA.png'):
 def make_img_list(path_to_dir):
 
     images = []
-    for image in path_to_dir:
-        if image.endswith('.png'):
-            image.append(get_image_path(image))
+    for image in os.listdir(path_to_dir):
+        if image.endswith('.png') or image.endswith('gif'):
+            images.append(get_image_path(image))
 
     return images
 
@@ -284,6 +284,7 @@ def main():
 
     args = parser.parse_args()
 
+    # TODO: still need these?
     if args.img_dir:
 
         images_dir = path.join(args.img_dir)
@@ -292,9 +293,14 @@ def main():
 
             image_set = make_img_list(images_dir)
 
-            image_paths = convert_image_paths(image_set, './img')
+            image_paths = convert_image_paths(image_set, images_dir)
 
-            print image_paths
+            if len(image_paths) == 0:
+                print 'no images found! exiting...'
+                return
+            else:
+                print 'images found: %s' % image_paths
+                return
 
     if args.images_list:
         print args.images_list
@@ -304,6 +310,7 @@ def main():
             if path.exists(image_path):
 
                 print 'image path is %s' % image_path
+                return
 
     if args.subject_path:
         for sub in args.subject_path:
