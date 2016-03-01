@@ -101,14 +101,28 @@ def get_subject_info(path_to_nii_file):
 
     _logger.debug('file string has %d parts' % p_count)
 
-    if p_count <= 2:
+    if p_count < 2:
         _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
 
-    elif p_count == 3:
+    elif p_count == 2 and 'REST' in parts:
+        _logger.info('raw REST file: %s' % parts)
+        subject_code = parts[0]
+        modality = parts[1]
+        series_num = parts[1]
 
-        _logger.info('REST file: %s' % parts)
-        subject_code = parts[1]
-        modality = parts[2]
+    # TODO: make sure this parts capturing the correct stuff
+    elif p_count == 3 and 'T1w' in parts:
+
+        _logger.info('T1 file: %s' % parts)
+        subject_code = parts[0]
+        modality = parts[1]
+        series_num = parts[2]
+
+    elif p_count == 3 and 'T2w' in parts:
+
+        _logger.info('T2 file: %s' % parts)
+        subject_code = parts[0]
+        modality = parts[1]
         series_num = parts[2]
 
     elif p_count == 4 and 'SBRef' in parts:
@@ -290,6 +304,8 @@ def get_list_of_data(src_folder):
                 continue
             elif 'cortex' in path.abspath(file):
                 continue
+            elif 'FieldMap' in path.abspath(file):
+                continue
 
             try:
                 # TODO: change this to get_subj_info?
@@ -299,17 +315,17 @@ def get_list_of_data(src_folder):
 
                 if 'T1w' in modality or 'T1' == modality:
 
-                    full_path = os.path.join(dir_name[0], file)
+                    full_path = path.join(dir_name[0], file)
                     t1_data.append(full_path)
 
                 elif 'T2w' in modality or 'T2' == modality:
 
-                    full_path = os.path.join(dir_name[0], file)
+                    full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
                 elif 'SBRef' in modality or 'REST' in modality:
 
-                    full_path = os.path.join(dir_name[0], file)
+                    full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
 
                 else:
