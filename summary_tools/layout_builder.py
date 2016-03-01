@@ -199,6 +199,8 @@ def write_param_table_row(list_of_data):
 def write_epi_panel_row(list_of_img_paths):
 
     if len(list_of_img_paths) < 4:
+        _logger.error('insufficient files to build an epi-panel row!\nCheck your list: %s ' % list_of_img_paths)
+        print 'do not have a full row (4 images) of epi-data for this subject'
         return
 
     epi_panel_row = """
