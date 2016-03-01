@@ -15,7 +15,7 @@ from image_summary import _logger
 PROG = 'Layout Builder'
 VERSION = '0.2.0'
 
-LAST_MOD = '2-28-16'
+LAST_MOD = '2-29-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
