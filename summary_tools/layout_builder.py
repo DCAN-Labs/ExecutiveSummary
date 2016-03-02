@@ -11,6 +11,7 @@ from os import path
 import argparse
 import image_summary
 from image_summary import _logger
+import glob
 
 PROG = 'Layout Builder'
 VERSION = '0.2.0'
@@ -326,7 +327,12 @@ def main():
                     return
 
                 if not path.exists(img_out_path):
-                    os.makedirs(img_out_path)
+                    try:
+                        os.makedirs(img_out_path)
+                    except OSError:
+                        print '\nCheck permissions to write to that path? \npath: %s' % summary_path
+                        _logger.error('cannot make /img within /summary... permissions?')
+                        return
 
             except TypeError:
 
@@ -404,26 +410,27 @@ def main():
 
     t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
 
-    sb_ref_paths = [path.join('./img', img) for img in pngs if 'SBRef' in img]
-
     rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
+
+    sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
     # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
     print 'Assembling epi-images to build panel...'
     epi_rows = []
 
-    num_epi_files = len(epi_in_t1_gifs)
+    num_epi_gifs = len(t1_in_epi_gifs)
 
-    if num_epi_files == 0 or epi_rows is None:
-        _logger.error('incorrect number of epi files!\nepi_rows: %s\nnum_epi_files: %s' %(epi_rows, num_epi_files))
+    if num_epi_gifs == 0 or sb_ref_paths is None:
+        _logger.error('incorrect number of epi files!\nepi_rows: %s\nnum_epi_files: %s' %(epi_rows, num_epi_gifs))
         print 'ack, something went wrong while trying to assemble epi-data! exiting...'
         return
 
-    for i in range(0, num_epi_files-1):
+    # TODO: fix below so no stack trace is thrown when epi_rows empty?
+    for i in range(0, num_epi_gifs-1):
         epi_rows.append(epi_in_t1_gifs[i])
         epi_rows.append(t1_in_epi_gifs[i])
-        epi_rows.append(sb_ref_paths[i])
         epi_rows.append(rest_raw_paths[i])
+        epi_rows.append(sb_ref_paths[i])
 
     _logger.debug(epi_rows)
 

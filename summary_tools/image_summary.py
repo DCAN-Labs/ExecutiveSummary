@@ -11,9 +11,10 @@ from os import path
 import logging
 import logging.handlers
 from datetime import datetime
+from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -93,24 +94,31 @@ def get_subject_info(path_to_nii_file):
     elif filename.endswith('.nii'):
         filename = filename.strip('.nii')
     else:
-        print('%s is neither .nii nor nii.gz' % filename)
+        print '%s is neither .nii nor nii.gz' % filename
+        return
 
     parts = filename.split('_')
 
     p_count = len(parts)
 
-    _logger.debug('file string has %d parts' % p_count)
+    _logger.debug('file string has %d parts: %s' % (p_count, parts))
 
     if p_count < 2:
         _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
 
-    elif p_count == 2 and 'REST' in parts:
+    # TODO: handle the processed SBRef, which has 2 parts and no subjcode
+    elif p_count == 2 and 'SBRef' in parts[1]:
+        _logger.info('raw REST file: %s' % parts)
+        # subject_code = parts[0]
+        modality = parts[1]
+        series_num = parts[0]
+
+    elif p_count == 2 and 'REST' in parts[1][0:4]:
         _logger.info('raw REST file: %s' % parts)
         subject_code = parts[0]
         modality = parts[1]
         series_num = parts[1]
 
-    # TODO: make sure this parts capturing the correct stuff
     elif p_count == 3 and 'T1w' in parts:
 
         _logger.info('T1 file: %s' % parts)
@@ -212,40 +220,13 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
     cmd += '`fslval %s pixdim3`,' % path_to_nii  # z
     cmd += '`fslval %s pixdim4`,' % path_to_nii  # TR
-    cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE
+    cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE via mri_info
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
-    cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")
+    cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
 
     output = submit_command(cmd)
 
     data = output.strip("\n").split(',')
-
-    return data
-
-
-def get_dcm_info(path_to_dicom, modality):
-    """
-    Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
-
-    :param path_to_dicom: full-path to any single .dcm file
-    :param modality: string you want used as a label for this dicom file
-    :return: list of data with length 8
-    """
-
-    path_to_dicom = path.join(path_to_dicom)
-
-    cmd = 'echo %s,' % modality
-    cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
-    cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
-    cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
-
-    output = submit_command(cmd)
-
-    data = output.strip("\n").split(',')
-
-    data = [item for item in data if not item == '']
 
     return data
 
@@ -295,8 +276,7 @@ def get_list_of_data(src_folder):
         _logger.debug('dir: %s' % dir_name[0])
 
         for file in dir_name[2]:
-            # TODO: limit which files are used...
-            #if not path.basename(file) in ['d']
+            # limit which files are processed...
 
             if not file.endswith('.nii.gz') and not file.endswith('.nii'):
                 continue
@@ -308,7 +288,7 @@ def get_list_of_data(src_folder):
                 continue
 
             try:
-                # TODO: change this to get_subj_info?
+
                 _logger.info('processing nifti file: %s' % file)
                 data_info = get_nii_info(path.join(dir_name[0], file))
                 modality = data_info[0]
@@ -511,7 +491,7 @@ def main():
     if args.dicom_path:
         dcm_path = path.join(args.dicom_path)
         if path.exists(dcm_path):
-            dcm_params = get_dcm_info(dcm_path)
+            dcm_params = shenanigans.get_dcm_info(dcm_path)
 
             print 'parameters are: %s ' % dcm_params
 

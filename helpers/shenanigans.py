@@ -43,6 +43,33 @@ def rename_image(img_path):
         return new_file_path
 
 
+def get_dcm_info(path_to_dicom, modality):
+    """
+    Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
+
+    :param path_to_dicom: full-path to any single .dcm file
+    :param modality: string you want used as a label for this dicom file
+    :return: list of data with length 8
+    """
+
+    path_to_dicom = path.join(path_to_dicom)
+
+    cmd = 'echo %s,' % modality
+    cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
+    cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
+    cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
+
+    output = submit_command(cmd)
+
+    data = output.strip("\n").split(',')
+
+    data = [item for item in data if not item == '']
+
+    return data
+
+
 def structural_montage_cmd(list_in, path_out, label=False):
     """
     list_in is a list of image paths
