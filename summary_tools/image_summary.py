@@ -262,7 +262,7 @@ def get_list_of_data(src_folder):
     """
     Walk through the given directory to find all the nifti data, crudely, to fill lists of t1, t2 and epi-data.
 
-    :param src_folder: directory
+    :param src_folder: directory (the /summary folder for a given participant's data)
     :return: dictionary of lists with full paths to nifti files of interest: t1, t2, epi
     """
 
@@ -317,6 +317,10 @@ def get_list_of_data(src_folder):
                 continue
 
     data_lists = {'t1-data': t1_data, 't2-data': t2_data, 'epi-data': epi_data}
+
+    if 'SBRef' not in data_lists['epi-data'][-1:]:  # either of the last two paths in list
+        print 'no SBRef data in epi-data list'
+        _logger.info('missing SBRef data from /unprocessed/NIFTI... pulling from alternative')
 
     _logger.debug('\ndata_lists: %s' % data_lists)
 
