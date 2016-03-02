@@ -229,7 +229,7 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     return epi_panel_html
 
 
-def write_dvars_panel(dvars_path='./DVARS_and_FD_CONCA.png'):
+def write_dvars_panel(dvars_input_path='./DVARS_and_FD_CONCA.png'):
 
     dvars_panel_html_string = """
             <div class="grayords">
@@ -247,7 +247,7 @@ def write_dvars_panel(dvars_path='./DVARS_and_FD_CONCA.png'):
                     </tr>
                     </tbody>
                 </table>
-            </div>""" % {'dvars_path' : dvars_path}
+            </div>""" % {'dvars_path' : dvars_input_path}
 
     return dvars_panel_html_string
 
@@ -276,7 +276,7 @@ def main():
     parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the folder "
                                                                                    "containing summary images.")
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='*', help='''
+    parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='+', help='''
         Path to given subject folder under a given project e.g.
        /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
 
@@ -357,19 +357,30 @@ def main():
     # MAKE SOME REAL DATA PATHS
     summary_path, data_path = image_summary.get_paths(sub_root)
 
-    os.chdir(summary_path) # fail if not?
+    os.chdir(summary_path)  # fail if not?
 
     # TODO: filter-out all the stuff we don't want to run this on first...(takes too long)
     data = image_summary.get_list_of_data(data_path)
 
     print 'data are: %s' % data
 
+    if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+        _logger.error('odd number of epi files were found...')
+        alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
+        pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
+        more_epi = glob.glob(pattern)
+        for sbref in more_epi:
+            data['epi-data'].append(sbref)
+
     for list_entry in data['epi-data']:
         print 'slicing up %s' % list_entry
         code, modality, series = image_summary.get_subject_info(list_entry)
-        image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+        if 'REST' in modality:
+            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+        elif 'SBRef' in modality:
+            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
 
-        print 'PROCESSING subject_code: %s' % code
+        print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
 
     for list_entry in data.values():
 
@@ -420,26 +431,34 @@ def main():
 
     num_epi_gifs = len(t1_in_epi_gifs)
 
-    if num_epi_gifs == 0 or sb_ref_paths is None:
-        _logger.error('incorrect number of epi files!\nepi_rows: %s\nnum_epi_files: %s' %(epi_rows, num_epi_gifs))
+    if num_epi_gifs != len(epi_in_t1_gifs):
+        _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
         print 'ack, something went wrong while trying to assemble epi-data! exiting...'
         return
+    elif num_epi_gifs != len(rest_raw_paths):
+        _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
+        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+        return
+    elif num_epi_gifs != len(sb_ref_paths):
+        _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
+        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+        return
+    else:
+        newer_body = new_body + epi_panel_header
+        for i in range(0, num_epi_gifs):
+            epi_rows.append(epi_in_t1_gifs.pop(0))
+            epi_rows.append(t1_in_epi_gifs.pop(0))
+            epi_rows.append(rest_raw_paths.pop(0))
+            epi_rows.append(sb_ref_paths.pop(0))
+            newer_body += write_epi_panel_row(epi_rows[:4])
+            _logger.debug('epi_rows were: %s' % epi_rows)
+            epi_rows = []
 
-    # TODO: fix below so no stack trace is thrown when epi_rows empty?
-    for i in range(0, num_epi_gifs-1):
-        epi_rows.append(epi_in_t1_gifs[i])
-        epi_rows.append(t1_in_epi_gifs[i])
-        epi_rows.append(rest_raw_paths[i])
-        epi_rows.append(sb_ref_paths[i])
-
-    _logger.debug(epi_rows)
+        #print newer_body
 
     head = html_header
 
-    # TODO: adjust this more.
     # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
-    newer_body = new_body + epi_panel_header + write_epi_panel_row(epi_rows[:4]) + write_epi_panel_row(epi_rows[4:8]) \
-                 + write_epi_panel_row(epi_rows[8:12]) + write_epi_panel_row(epi_rows[12:16]) + write_epi_panel_row(epi_rows[16:20]) \
 
     newer_body += epi_panel_footer
 
@@ -450,7 +469,9 @@ def main():
     new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
-    html_doc = new_html_header + newer_body + write_dvars_panel() + html_footer
+    dvars_path = path.join('./DVARS_and_FD_CONCA.png')
+
+    html_doc = new_html_header + newer_body + write_dvars_panel(dvars_path) + html_footer
 
     write_html(html_doc, summary_path, title='executive_summary_%s.html' % code)
 
