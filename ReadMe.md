@@ -24,7 +24,7 @@
   
 ## Summary Tools
 ### 1. layout_builder
-        - main mode of launch is via command-line, or within a shell-script, using -s and paths to subject folders
+        - launch via command-line, or within a shell-script, using -s and paths to subject folders
         - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
 ### 2. image_summary
         - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices

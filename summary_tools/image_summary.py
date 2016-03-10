@@ -52,19 +52,19 @@ _logger.info('program log: %s\n' % (date_stamp))
 def get_paths(subject_code_path):
 
     sub_path = path.join(subject_code_path)
-    # print sub_path
+    print sub_path
 
     if path.exists(sub_path):
 
-        try:
-            img_path = path.join(sub_path, 'summary')
+        img_in_path = path.join(sub_path, 'summary')
+        print 'images in : %s' % img_in_path
 
-        except TypeError:
-
-            _logger.error('path does not exist: %s' % sub_path)
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
+        print 'data are in : %s' % data_path
 
-        return img_path, data_path
+        return img_in_path, data_path
+    else:
+        _logger.error('path does not exist: %s' % sub_path)
 
 
 def get_subject_info(path_to_nii_file):

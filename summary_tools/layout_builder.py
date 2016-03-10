@@ -14,9 +14,9 @@ from image_summary import _logger
 import glob
 
 PROG = 'Layout Builder'
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
-LAST_MOD = '2-29-16'
+LAST_MOD = '3-10-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -50,7 +50,6 @@ html_header = """<!DOCTYPE html>
             <p>vVERSION</p>
             </div>
         </div>"""
-
 
 param_table_html_header = """
         <div class="bottom-row">
@@ -271,16 +270,18 @@ def append_html_with_chunk(existing_html, string_to_insert):
 
 def main():
 
-    parser = argparse.ArgumentParser(description=program_desc)
+    parser = argparse.ArgumentParser(description=program_desc, prog=PROG)
 
     parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the folder "
                                                                                    "containing summary images.")
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', nargs='+', help='''
+    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append', nargs='+', help='''
         Path to given subject folder under a given project e.g.
        /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
+
+    parser.add_argument('--version', dest="verbose", action="version", version="%(prog)s_v" + VERSION)
 
     args = parser.parse_args()
 
@@ -304,176 +305,174 @@ def main():
 
     if args.subject_path:
         for sub in args.subject_path:
-            sub_root = path.join(sub)
+            sub_root = path.join(sub)[0]
 
             try:
                 summary_path, data_path = image_summary.get_paths(sub_root)
                 if path.exists(summary_path):
                     img_out_path = path.join(sub_root, 'summary', 'img')
                     img_in_path = summary_path
-                try:
-                    gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
-
-                    if len(gifs) == 0:
-                        _logger.error('no gifs in summary folder')
-                        print '\nNo .gifs were found! There should be some .gifs and I do not make those! '\
-                            'Check to make sure the proper scripts have been ran? '
-
-                        return
-
-                except OSError:
-
-                    print 'Path does not exist because the summary folder is not there...'
-                    return
-
-                if not path.exists(img_out_path):
-                    try:
-                        os.makedirs(img_out_path)
-                    except OSError:
-                        print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                        _logger.error('cannot make /img within /summary... permissions?')
-                        return
-
+                    os.chdir(summary_path)  # fail if not?
+                    if not path.exists(img_out_path):
+                        try:
+                            os.makedirs(img_out_path)
+                        except OSError:
+                            print '\nCheck permissions to write to that path? \npath: %s' % summary_path
+                            _logger.error('cannot make /img within /summary... permissions?')
+                            return
             except TypeError:
 
-                    print 'no summary data within %s \nexiting...' % args.subject_path
+                print 'no summary data within %s \nexiting...' % args.subject_path
+
+            try:
+                gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
+
+                if len(gifs) == 0:
+                    _logger.error('no gifs in summary folder')
+                    print '\nNo .gifs were found! There should be some .gifs and I do not make those! '\
+                        'Check to make sure the proper scripts have been ran? '
+
+                    return
+                else:
+                    data = image_summary.get_list_of_data(data_path)
+
+                    print 'data are: %s' % data
+
+            except:
+
+                    print 'Images_in_Path does not exist because the summary folder is not there...'
                     return
 
-    else:
-        print 'no subject path provided!'
-        _logger.error('no subject path provided!')
-        return
 
-    structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
-                             'T1-Axial-BasalGangila-Putamen.png',
-                             'T1-Coronal-Caudate-Amygdala.png',
-                             'T2-Sagittal-Insula-FrontoTemporal.png',
-                             'T2-Axial-BasalGangila-Putamen.png',
-                             'T2-Coronal-Caudate-Amygdala.png'
-                             ]
 
-    real_data = []
+            real_data = []
 
-    # MAKE SOME REAL DATA PATHS
-    summary_path, data_path = image_summary.get_paths(sub_root)
+            # MAKE SOME REAL DATA PATHS
+            #summary_path, data_path = image_summary.get_paths(sub_root)
 
-    os.chdir(summary_path)  # fail if not?
+            if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+                _logger.error('odd number of epi files were found...')
+                alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
+                pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
+                more_epi = glob.glob(pattern)
+                for sbref in more_epi:
+                    data['epi-data'].append(sbref)
 
-    # TODO: filter-out all the stuff we don't want to run this on first...(takes too long)
-    data = image_summary.get_list_of_data(data_path)
+            for list_entry in data['epi-data']:
+                print 'slicing up %s' % list_entry
+                code, modality, series = image_summary.get_subject_info(list_entry)
+                if 'REST' in modality:
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+                elif 'SBRef' in modality:
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
 
-    print 'data are: %s' % data
+                print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
 
-    if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
-        _logger.error('odd number of epi files were found...')
-        alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-        pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
-        more_epi = glob.glob(pattern)
-        for sbref in more_epi:
-            data['epi-data'].append(sbref)
+            for list_entry in data.values():
 
-    for list_entry in data['epi-data']:
-        print 'slicing up %s' % list_entry
-        code, modality, series = image_summary.get_subject_info(list_entry)
-        if 'REST' in modality:
-            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
-        elif 'SBRef' in modality:
-            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
+                list_entry = sorted(list_entry)
 
-        print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
+                for item in list_entry:
 
-    for list_entry in data.values():
+                    print '\nadding %s to list of data, for which we need parameters...\n' % item
+                    _logger.debug('data_list is: %s' % data)
+                    params_row = image_summary.get_nii_info(item)
+                    real_data.append(params_row)
 
-        list_entry = sorted(list_entry)
+            # START TO BUILD THE LAYOUT
 
-        for item in list_entry:
+            html_params_panel = param_table_html_header
 
-            print '\nadding %s to list of data, for which we need parameters...\n' % item
-            _logger.debug('data_list is: %s' % data)
-            params_row = image_summary.get_nii_info(item)
-            real_data.append(params_row)
+            # BUILD PARAM PANEL
 
-    # START TO BUILD THE LAYOUT
+            for data_row in real_data:
+                html_params_panel += write_param_table_row(data_row)
 
-    html_params_panel = param_table_html_header
+            html_params_panel += param_table_footer
 
-    # BUILD PARAM PANEL
+            # BUILD & WRITE THE STRUCTURAL PANEL
 
-    for data_row in real_data:
-        html_params_panel += write_param_table_row(data_row)
+            structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
+                                     'T1-Axial-BasalGangila-Putamen.png',
+                                     'T1-Coronal-Caudate-Amygdala.png',
+                                     'T2-Sagittal-Insula-FrontoTemporal.png',
+                                     'T2-Axial-BasalGangila-Putamen.png',
+                                     'T2-Coronal-Caudate-Amygdala.png'
+                                     ]
+            body = write_structural_panel(structural_img_labels)
 
-    html_params_panel += param_table_footer
+            # APPEND WITH PARAMS PANEL
 
-    # BUILD & WRITE THE STRUCTURAL PANEL
+            new_body = body + html_params_panel
 
-    body = write_structural_panel(structural_img_labels)
+            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
-    # APPEND WITH PARAMS PANEL
+            # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-    new_body = body + html_params_panel
+            epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
+                                                         gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-    pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
+            t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
 
-    # BUILD THE LISTS NEEDED FOR EPI-PANEL
+            rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
 
-    epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
-                                                 gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
-    t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
-
-    rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
-
-    sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
-
-    # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
-    print 'Assembling epi-images to build panel...'
-    epi_rows = []
-
-    num_epi_gifs = len(t1_in_epi_gifs)
-
-    if num_epi_gifs != len(epi_in_t1_gifs):
-        _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
-        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-        return
-    elif num_epi_gifs != len(rest_raw_paths):
-        _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
-        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-        return
-    elif num_epi_gifs != len(sb_ref_paths):
-        _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
-        print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-        return
-    else:
-        newer_body = new_body + epi_panel_header
-        for i in range(0, num_epi_gifs):
-            epi_rows.append(epi_in_t1_gifs.pop(0))
-            epi_rows.append(t1_in_epi_gifs.pop(0))
-            epi_rows.append(rest_raw_paths.pop(0))
-            epi_rows.append(sb_ref_paths.pop(0))
-            newer_body += write_epi_panel_row(epi_rows[:4])
-            _logger.debug('epi_rows were: %s' % epi_rows)
+            # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
+            print 'Assembling epi-images to build panel...'
             epi_rows = []
 
-        #print newer_body
+            num_epi_gifs = len(t1_in_epi_gifs)
 
-    head = html_header
+            if num_epi_gifs != len(epi_in_t1_gifs):
+                _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                return
+            elif num_epi_gifs != len(rest_raw_paths):
+                _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                return
+            elif num_epi_gifs != len(sb_ref_paths):
+                _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                return
+            else:
+                newer_body = new_body + epi_panel_header
+                for i in range(0, num_epi_gifs):
+                    epi_rows.append(epi_in_t1_gifs.pop(0))
+                    epi_rows.append(t1_in_epi_gifs.pop(0))
+                    epi_rows.append(rest_raw_paths.pop(0))
+                    epi_rows.append(sb_ref_paths.pop(0))
+                    newer_body += write_epi_panel_row(epi_rows[:4])
+                    _logger.debug('epi_rows were: %s' % epi_rows)
+                    epi_rows = []
 
-    # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
+                #print newer_body
 
-    newer_body += epi_panel_footer
+            head = html_header
 
-    _logger.debug('newer_body is : %s' % newer_body)
+            # TODO: adjust this more so that we can build more dynamically and not hard-coded numbers of rows
+            # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
 
-    # FILL-IN THE CODE / VERSION INFO
-    new_html_header = edit_html_chunk(head, 'CODE', code)
-    new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
+            newer_body += epi_panel_footer
 
-    # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
-    dvars_path = path.join('./DVARS_and_FD_CONCA.png')
+            _logger.debug('newer_body is : %s' % newer_body)
 
-    html_doc = new_html_header + newer_body + write_dvars_panel(dvars_path) + html_footer
+            # FILL-IN THE CODE / VERSION INFO
+            new_html_header = edit_html_chunk(head, 'CODE', code)
+            new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
 
-    write_html(html_doc, summary_path, title='executive_summary_%s.html' % code)
+            # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
+            dvars_path = path.join('./DVARS_and_FD_CONCA.png')
+
+            html_doc = new_html_header + newer_body + write_dvars_panel(dvars_path) + html_footer
+
+            write_html(html_doc, summary_path, title='executive_summary_%s.html' % code)
+
+        else:
+            print 'no subject path provided!'
+            _logger.error('no subject path provided!')
+            return
 
 if __name__ == '__main__':
 
