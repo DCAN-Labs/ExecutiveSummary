@@ -108,8 +108,8 @@ def get_subject_info(path_to_nii_file):
 
     # TODO: handle the processed SBRef, which has 2 parts and no subjcode
     elif p_count == 2 and 'SBRef' in parts[1]:
-        _logger.info('raw REST file: %s' % parts)
-        # subject_code = parts[0]
+        _logger.info('raw SBRef file: %s' % parts)
+        # subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
         modality = parts[1]
         series_num = parts[0]
 
