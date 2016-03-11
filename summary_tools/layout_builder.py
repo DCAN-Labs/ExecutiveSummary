@@ -336,19 +336,16 @@ def main():
                 else:
                     data = image_summary.get_list_of_data(data_path)
 
-                    print 'data are: %s' % data
+                    #print 'data are: %s' % data
 
             except:
 
                     print 'Images_in_Path does not exist because the summary folder is not there...'
                     return
 
-
-
             real_data = []
 
             # MAKE SOME REAL DATA PATHS
-            #summary_path, data_path = image_summary.get_paths(sub_root)
 
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
                 _logger.error('odd number of epi files were found...')
@@ -399,6 +396,7 @@ def main():
                                      'T2-Axial-BasalGangila-Putamen.png',
                                      'T2-Coronal-Caudate-Amygdala.png'
                                      ]
+
             body = write_structural_panel(structural_img_labels)
 
             # APPEND WITH PARAMS PANEL
