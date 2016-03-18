@@ -159,3 +159,13 @@ images_dict = {
     'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
 }
+
+
+def make_img_list(path_to_dir):
+
+    images = []
+    for image in os.listdir(path_to_dir):
+        if image.endswith('.png') or image.endswith('gif'):
+            images.append(path.join(image))
+
+    return images
