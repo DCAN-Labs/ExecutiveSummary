@@ -1,15 +1,15 @@
 # Executive Summary 
 
 ## Program Launch:
-- from Linux: _python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s
-/path/to/processed_subject_folder_ [/another/subject ... /another...]
+### Call summary_tools/layout_builder.py from the command-line with -s and a path to processed data for one subject.
+- wrap in a bash script for multiple subjects
 
 ## Requirements: 
-- Software Packages that need to be installed on the system: slicer, fsl, freesurfer
+- Software Packages: slicer, fsl, freesurfer
 - Environment: python 2.7
 - Folder Structure: 
   - /subject_with_processed_data/summary/
-    - all .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and coregistrations with functional_)
+    - all .gif and .png images produced via FNL_PreProc: T1/T2 segmentations and coregistrations with functional
   - /subject_with_processed_data/summary/unprocessed/NIFTI
     - all _raw_ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
     
@@ -21,19 +21,15 @@
     -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
     -  Functional Data Panel _(raw and structurally registered image slices)_
     -  Concatenated Grayordinates Plot
-
-## File Structure:
-## /summary_tools
+  
+## Summary Tools
 ### 1. layout_builder
-   - launch via command-line, or within a shell-script, using -s and paths to subject folders
-   - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
+        - launch via command-line, or within a shell-script, using -s and paths to subject folders
+        - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
 ### 2. image_summary
-   - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices
-   - contains lots of useful functions for flexibility
-## /helpers
-### 1. shenanigans.py
-   - various helper functions
-## /TestCode
-  - test_summary.py
-  - dispatch.py
-  - table_template.html
+        - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices
+        - contains lots of useful functions for flexibility
+
+## Versions:
+- layout_builder.py - v0.2.0
+- image_summary.py - v0.2.0

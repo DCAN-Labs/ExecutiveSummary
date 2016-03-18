@@ -15,7 +15,7 @@ import glob
 import shutil
 
 PROG = 'Layout Builder'
-VERSION = '1.0.0'
+VERSION = '0.3.0'
 
 LAST_MOD = '3-10-16'
 
@@ -34,8 +34,6 @@ def write_html(template, dest_dir, title="summary_out.html"):
     try:
         f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
-    except IOError:
-        print 'cannot write there for some reason...'
     finally:
         f.close()
 
@@ -111,6 +109,10 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     for image in list_of_images:
         img_path = path.join(src_dir, image)
         shutil.copyfile(img_path, path.join(dst_dir, image))
+
+
+def get_image_path(image_string):
+    return path.join(image_string)
 
 
 def write_structural_panel(list_of_image_paths):
@@ -249,6 +251,16 @@ def write_dvars_panel(dvars_input_path='./DVARS_and_FD_CONCA.png'):
             </div>""" % {'dvars_path' : dvars_input_path}
 
     return dvars_panel_html_string
+
+
+def make_img_list(path_to_dir):
+
+    images = []
+    for image in os.listdir(path_to_dir):
+        if image.endswith('.png') or image.endswith('gif'):
+            images.append(get_image_path(image))
+
+    return images
 
 
 def append_html_with_chunk(existing_html, string_to_insert):
