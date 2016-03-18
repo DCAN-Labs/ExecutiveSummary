@@ -43,7 +43,7 @@ def rename_image(img_path):
         return new_file_path
 
 
-def get_dcm_info(path_to_dicom, modality):
+def get_dcm_info(path_to_dicom, modality=None):
     """
     Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
 

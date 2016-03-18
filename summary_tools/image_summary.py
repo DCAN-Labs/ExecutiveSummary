@@ -52,15 +52,16 @@ _logger.info('program log: %s\n' % (date_stamp))
 def get_paths(subject_code_path):
 
     sub_path = path.join(subject_code_path)
-    print sub_path
+    _logger.debug('subject path is %s' % sub_path)
 
     if path.exists(sub_path):
 
         img_in_path = path.join(sub_path, 'summary')
-        print 'images in : %s' % img_in_path
+
+        _logger.debug('images in : %s' % img_in_path)
 
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
-        print 'data are in : %s' % data_path
+        _logger.debug('data are in : %s' % data_path)
 
         return img_in_path, data_path
     else:
@@ -84,6 +85,7 @@ def get_subject_info(path_to_nii_file):
     if not path.join(path_to_nii_file).endswith('/'):
 
         filename = path.basename(path_to_nii_file)
+        dirname = path.dirname(path_to_nii_file)
     else:
         print '%s is not a file and I reeeally needed a file, not a dir' % filename
         _logger.error('\n%s is not a file...' % filename)
@@ -99,6 +101,9 @@ def get_subject_info(path_to_nii_file):
 
     parts = filename.split('_')
 
+    subject_code = dirname.split('/')[-1]
+    print '\nsubject code is: %s ' % subject_code
+
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
@@ -110,12 +115,13 @@ def get_subject_info(path_to_nii_file):
     elif p_count == 2 and 'SBRef' in parts[1]:
         _logger.info('raw SBRef file: %s' % parts)
         # subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
+        subject_code = subject_code
         modality = parts[1]
         series_num = parts[0]
 
     elif p_count == 2 and 'REST' in parts[1][0:4]:
         _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0]
+        subject_code = subject_code
         modality = parts[1]
         series_num = parts[1]
 
@@ -167,7 +173,7 @@ def get_subject_info(path_to_nii_file):
 
     elif parts > 5:
         _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        _logger.error('\nsummary_tools: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
+        _logger.error('\nimage_summary: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
 
     return [subject_code, modality, series_num]
@@ -220,6 +226,9 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
     cmd += '`fslval %s pixdim3`,' % path_to_nii  # z
     cmd += '`fslval %s pixdim4`,' % path_to_nii  # TR
+
+    # TODO: the TE-grabber is failing on some files... may need dicoms after all
+
     cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE via mri_info
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info

@@ -12,6 +12,7 @@ import argparse
 import image_summary
 from image_summary import _logger
 import glob
+import shutil
 
 PROG = 'Layout Builder'
 VERSION = '0.3.0'
@@ -103,17 +104,11 @@ html_footer = """
 """
 
 
-def convert_image_paths(list_of_images, src_location):
+def copy_images(src_dir, list_of_images, dst_dir='./img/'):
 
-    new_image_paths = []
     for image in list_of_images:
-        img_path = path.join(os.path.abspath(path.join(src_location, image)))
-        if path.exists(img_path):
-            new_image_paths.append(img_path)
-        else:
-            continue
-
-    return new_image_paths
+        img_path = path.join(src_dir, image)
+        shutil.copyfile(img_path, path.join(dst_dir, image))
 
 
 def get_image_path(image_string):
@@ -121,6 +116,12 @@ def get_image_path(image_string):
 
 
 def write_structural_panel(list_of_image_paths):
+    """
+    Builds a panel of orthogonally sliced T1 and T2 images with pial and white matter surface overlays from Freesurfer.
+
+    :param list_of_image_paths:
+    :return: string of html to create a table of images containing an
+    """
 
     if len(list_of_image_paths) < 6:
         _logger.error('not enough structural images!')
@@ -169,7 +170,8 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
 
 def write_param_table_row(list_of_data):
 
-    if len(list_of_data) != 8:
+    if len(list_of_data) != 8 or list_of_data[5] == '':
+        _logger.error('list of data is incomplete:\n%s' % list_of_data)
         return
 
     param_table_html_row = """
@@ -272,36 +274,16 @@ def main():
 
     parser = argparse.ArgumentParser(description=program_desc, prog=PROG)
 
-    parser.add_argument('-i', '--image-path', action="store", dest='img_dir', help="Provide a full path to the folder "
-                                                                                   "containing summary images.")
-
-    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append', nargs='+', help='''
-        Path to given subject folder under a given project e.g.
-       /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
+    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append',
+                        help='''Expects path to a subject-level directory of processed data, which should have a
+                        'summary' folder within (e.g./remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/)''')
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
-    parser.add_argument('--version', dest="verbose", action="version", version="%(prog)s_v" + VERSION)
+    parser.add_argument('--version', dest="verbose", action="version", version="%(prog)s_v" + VERSION,
+                        help="Tell me all about it.")
 
     args = parser.parse_args()
-
-    # TODO: still need these?
-    if args.img_dir:
-
-        images_dir = path.join(args.img_dir)
-
-        if path.exists(images_dir):
-
-            image_set = make_img_list(images_dir)
-
-            image_paths = convert_image_paths(image_set, images_dir)
-
-            if len(image_paths) == 0:
-                print 'no images found! exiting...'
-                return
-            else:
-                print 'images found: %s' % image_paths
-                return
 
     if args.subject_path:
         for sub in args.subject_path:
@@ -348,7 +330,7 @@ def main():
             # MAKE SOME REAL DATA PATHS
 
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
-                _logger.error('odd number of epi files were found...')
+                _logger.warning('odd number of epi files were found...')
                 alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
                 pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
                 more_epi = glob.glob(pattern)
