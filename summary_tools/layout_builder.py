@@ -105,6 +105,14 @@ html_footer = """
 </html>
 """
 
+structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
+                                     'T1-Axial-BasalGangila-Putamen.png',
+                                     'T1-Coronal-Caudate-Amygdala.png',
+                                     'T2-Sagittal-Insula-FrontoTemporal.png',
+                                     'T2-Axial-BasalGangila-Putamen.png',
+                                     'T2-Coronal-Caudate-Amygdala.png'
+                                     ]
+
 
 def copy_images(src_dir, list_of_images, dst_dir='./img/'):
 
@@ -275,7 +283,7 @@ def main():
 
     if args.subject_path:
         for sub in args.subject_path:
-            sub_root = path.join(sub)[0]
+            sub_root = path.join(sub)
 
             try:
                 summary_path, data_path = image_summary.get_paths(sub_root)
@@ -306,7 +314,7 @@ def main():
                 else:
                     data = image_summary.get_list_of_data(data_path)
 
-                    #print 'data are: %s' % data
+                    _logger.debug('data are: %s' % data)
 
             except:
 
@@ -358,14 +366,6 @@ def main():
             html_params_panel += param_table_footer
 
             # BUILD & WRITE THE STRUCTURAL PANEL
-
-            structural_img_labels = ['T1-Sagittal-Insula-FrontoTemporal.png',
-                                     'T1-Axial-BasalGangila-Putamen.png',
-                                     'T1-Coronal-Caudate-Amygdala.png',
-                                     'T2-Sagittal-Insula-FrontoTemporal.png',
-                                     'T2-Axial-BasalGangila-Putamen.png',
-                                     'T2-Coronal-Caudate-Amygdala.png'
-                                     ]
 
             body = write_structural_panel(structural_img_labels)
 
