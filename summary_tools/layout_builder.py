@@ -304,6 +304,7 @@ def main():
 
                     return
                 else:
+                    copy_images(img_in_path, gifs, img_out_path)
                     data = image_summary.get_list_of_data(data_path)
 
                     #print 'data are: %s' % data
@@ -329,7 +330,8 @@ def main():
                 print 'slicing up %s' % list_entry
                 code, modality, series = image_summary.get_subject_info(list_entry)
                 if 'REST' in modality:
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+                    image_summary.slice_list_of_data(list_entry, dest_dir=path.join(img_out_path, '%s.png' %
+                                                                                    modality), also_xyz=True)
                 elif 'SBRef' in modality:
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
 
@@ -366,6 +368,8 @@ def main():
                                      'T2-Axial-BasalGangila-Putamen.png',
                                      'T2-Coronal-Caudate-Amygdala.png'
                                      ]
+
+            copy_images(img_in_path, structural_img_labels, img_out_path)
 
             body = write_structural_panel(structural_img_labels)
 

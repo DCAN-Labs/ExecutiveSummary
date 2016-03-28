@@ -30,8 +30,9 @@ log = logging.getLogger('%(prog)s_v%(ver)s' % {'prog': PROG, 'ver': VERSION, 'da
 
 #############
 # TEST DATA PATHS
-nifti_file = path.join('/Users/st_buckls/imageprocessing/Projects/PPMI/data/PPMI/rPPMI_088_S_3551m00_i226427_REST1_brain.nii')
-nifti_gz_file = path.join('/Users/st_buckls/imageprocessing/Projects/PPMI/data/PPMI/rPPMI_088_S_3551m00_i226427_REST2_brain.nii.gz')
+nifti_file = path.join('/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI/pipeline/rPPMI_088_S_3551m00_i226427_REST1_brain.nii')
+nifti_gz_file = path.join('/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI/pipeline'
+                          '/rPPMI_088_S_3551m00_i226427_REST2_brain.nii.gz')
 
 ##########
 # GRAB INFO TEST
@@ -119,7 +120,7 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
 data_list = [nifti_file, nifti_gz_file]
 print '=' * 32 + '\nSLICING DATA LIST %s' % data_list
 
-slice_list_of_data(data_list)
+image_summary.slice_list_of_data(data_list, also_xyz=True, dest_dir=img_out_path)
 
 #image_summary.super_slice_me(nifti_file, 'x', slices_dict['x'], os.path.join(img_out_path, '%s_x-%d.png' % (
 # nii_info[0],

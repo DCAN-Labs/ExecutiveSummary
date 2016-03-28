@@ -383,7 +383,7 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
     return dst
 
 
-def choose_slices_dict(nifti_file_path, subj_code=None):
+def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
     """
     Helps decide how to slice-up an image by running 'get_nii_info', which might be a bad idea?
 
@@ -392,13 +392,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None):
     :return: dict of x/y/z slice positions (to use for slicer)
     """
 
-    if not subj_code:
-
-        nifti_info = get_nii_info(path.join(nifti_file_path))
-
-    if not nifti_info:
-
-        return
+    nifti_info = get_nii_info(path.join(nifti_file_path))
 
     T2_slices = {
         'x': 55,
@@ -434,6 +428,9 @@ def choose_slices_dict(nifti_file_path, subj_code=None):
         slices_dict = T2_slices
     elif 'T1' in nifti_info[0]:
         slices_dict = T1_slices
+    else:
+        print 'not in the standard set of slices...\nDefaulting to T1 slices'
+        slices_dict = T1_slices
 
     return slices_dict
 
@@ -450,7 +447,7 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, als
 
     num = 0
 
-    for i in range(num, len(list_of_data_paths)-1):
+    for i in range(num, len(list_of_data_paths)):
 
         if not dest_dir:
             dest_dir = path.join('./img')
