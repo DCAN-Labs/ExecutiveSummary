@@ -46,7 +46,7 @@ handler.setFormatter(formatter)
 
 _logger.addHandler(handler)
 
-_logger.info('program log: %s\n' % (date_stamp))
+_logger.info('\nprogram log: %s' % (date_stamp))
 
 
 def get_paths(subject_code_path):
@@ -101,8 +101,8 @@ def get_subject_info(path_to_nii_file):
 
     parts = filename.split('_')
 
-    subject_code = dirname.split('/')[-1]
-    print '\nsubject code is: %s ' % subject_code
+    # subject_code = dirname.split('/')[-1]
+    # print '\nsubject code is: %s ' % subject_code
 
     p_count = len(parts)
 
@@ -114,14 +114,14 @@ def get_subject_info(path_to_nii_file):
     # TODO: handle the processed SBRef, which has 2 parts and no subjcode
     elif p_count == 2 and 'SBRef' in parts[1]:
         _logger.info('raw SBRef file: %s' % parts)
-        # subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        subject_code = subject_code
+        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
+
         modality = parts[1]
         series_num = parts[0]
 
     elif p_count == 2 and 'REST' in parts[1][0:4]:
         _logger.info('raw REST file: %s' % parts)
-        subject_code = subject_code
+        subject_code = parts[0]
         modality = parts[1]
         series_num = parts[1]
 
@@ -225,11 +225,8 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
     cmd += '`fslval %s pixdim3`,' % path_to_nii  # z
-    cmd += '`fslval %s pixdim4`,' % path_to_nii  # TR
-
-    # TODO: the TE-grabber is failing on some files... may need dicoms after all
-
     cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE via mri_info
+    cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
 

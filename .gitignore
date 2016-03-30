@@ -3,3 +3,5 @@
 out/Image_And_Text_Test.pdf
 out/
 *.orig
+summary_tools/_log
+*.pyc
