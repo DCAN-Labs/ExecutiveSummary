@@ -82,7 +82,7 @@ param_table_footer = """
 
 epi_panel_header = """
             <div class="epi">
-                <table class="epi">
+                <table id="epi">
                     <thead>
                         <th colspan="4">
                             Resting State Data
@@ -275,44 +275,65 @@ def main():
     args = parser.parse_args()
 
     if args.subject_path:
+
         for sub in args.subject_path:
+
             sub_root = path.join(sub)[0]
 
-            try:
-                summary_path, data_path = image_summary.get_paths(sub_root)
-                if path.exists(summary_path):
-                    img_out_path = path.join(sub_root, 'summary', 'img')
-                    img_in_path = summary_path
-                    os.chdir(summary_path)  # fail if not?
-                    if not path.exists(img_out_path):
-                        try:
-                            os.makedirs(img_out_path)
-                        except OSError:
-                            print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                            _logger.error('cannot make /img within /summary... permissions?')
-                            return
-            except TypeError:
+            if path.exists(sub_root):
 
-                print 'no summary data within %s \nexiting...' % args.subject_path
+                summary_path, data_path = image_summary.get_paths(sub_root)
+
+            if path.exists(summary_path):
+
+                img_out_path = path.join(sub_root, 'summary', 'img')
+                img_in_path = summary_path
+
+                # os.chdir(summary_path)  # fail if not?
+
+            if not path.exists(img_out_path):
+
+                try:
+
+                    os.makedirs(img_out_path)
+
+                except OSError:
+
+                    print '\nCheck permissions to write to that path? \npath: %s' % summary_path
+                    _logger.error('cannot make /img within /summary... permissions?')
+
+                    return
+
+            else:
+
+                print 'no summary directory within %s \nexiting...' % args.subject_path
+                _logger.error('no summary directory within %s \nexiting...' % args.subject_path)
+
+                return
 
             try:
                 gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
                 if len(gifs) == 0:
-                    _logger.error('no gifs in summary folder')
-                    print '\nNo .gifs were found! There should be some .gifs and I do not make those! '\
+
+                    _logger.error('no .gifs in summary folder')
+                    print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
                         'Check to make sure the proper scripts have been ran? '
 
                     return
+
                 else:
+
                     copy_images(img_in_path, gifs, img_out_path)
+
                     data = image_summary.get_list_of_data(data_path)
 
-                    #print 'data are: %s' % data
+                    _logger.debug('data are: %s' % data)
 
-            except:
+            except OSError:
 
-                    print 'Images_in_Path does not exist because the summary folder is not there...'
+                    print 'Unable to locate image sources...'
+
                     return
 
             real_data = []
@@ -453,7 +474,6 @@ def main():
         else:
             print 'no subject path provided!'
             _logger.error('no subject path provided!')
-            return
 
 if __name__ == '__main__':
 
