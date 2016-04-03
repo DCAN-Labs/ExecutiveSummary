@@ -2,6 +2,8 @@ $(document).ready(function() {
 
     $('img[src*=SBRef]').width(300).height(110);
 
+    $('img').filter('.raw_rest_img').width(280).height(140);
+
     $('.t1_tr').each(function(index, element) {
 
          if ( $(element).text() != '2400.0') {

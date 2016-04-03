@@ -46,6 +46,11 @@ table, td {
     height: 150px;
 }
 
+.raw_rest_img img {
+    width: 280px;
+    height: 140px;
+}
+
 .epi td {
     border: none;
 }
