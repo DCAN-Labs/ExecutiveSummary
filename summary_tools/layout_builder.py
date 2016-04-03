@@ -15,7 +15,7 @@ import glob
 import shutil
 
 PROG = 'Layout Builder'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 LAST_MOD = '3-10-16'
 
@@ -43,7 +43,7 @@ html_header = """<!DOCTYPE html>
 <html lang = "en">
     <head>
         <meta charset = "utf-8">
-        <title>Executive Summary: summary_tools</title>
+        <title>Executive Summary: CODE</title>
         <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:250px;height:200px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
         </style>
     </head>
@@ -136,14 +136,14 @@ def write_structural_panel(list_of_image_paths):
                     </thead>
                 <tbody>
                     <tr>
-                        <td><a href="%(T1-left)s" target="_blank"><img src="./%(T1-left)s"></a></td>
-                        <td><a href="%(T1-middle)s" target="_blank"><img src="./%(T1-middle)s"></a></td>
-                        <td><a href="%(T1-right)s" target="_blank"><img src="./%(T1-right)s"></a></td>
+                        <td><a href=img/"%(T1-left)s" target="_blank"><img src="img/%(T1-left)s"></a></td>
+                        <td><a href=img/"%(T1-middle)s" target="_blank"><img src="img/%(T1-middle)s"></a></td>
+                        <td><a href=img/"%(T1-right)s" target="_blank"><img src="img/%(T1-right)s"></a></td>
                     </tr>
                     <tr>
-                        <td><a href="%(T2-left)s" target="_blank"><img src="./%(T2-left)s"></a></td>
-                        <td><a href="%(T2-middle)s" target="_blank"><img src="./%(T2-middle)s"></a></td>
-                        <td><a href="%(T2-right)s" target="_blank"><img src="./%(T2-right)s"></a></td>
+                        <td><a href=img/"%(T2-left)s" target="_blank"><img src="img/%(T2-left)s"></a></td>
+                        <td><a href=img/"%(T2-middle)s" target="_blank"><img src="img/%(T2-middle)s"></a></td>
+                        <td><a href=img/"%(T2-right)s" target="_blank"><img src="img/%(T2-right)s"></a></td>
                     </tr>
                 </tbody>
             </table>
@@ -208,7 +208,8 @@ def write_epi_panel_row(list_of_img_paths):
                         <td><a href="%(rest_in_t1)s"><img src="%(rest_in_t1)s"></a></td>
                         <td><a href="%(t1_in_rest)s"><img src="%(t1_in_rest)s"></a></td>
                         <td><a href="%(sb_ref)s"><img src="%(sb_ref)s"></a></td>
-                        <td><a href="%(rest_nonlin_norm)s"><img src="%(rest_nonlin_norm)s"></a></td>
+                        <td><a href="%(rest_nonlin_norm)s"><img src="%(rest_nonlin_norm)s"
+                            class="raw_rest_img"></a></td>
                     </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
                                 't1_in_rest'        : list_of_img_paths[1],
                                 'sb_ref'            : list_of_img_paths[2],
@@ -319,16 +320,23 @@ def main():
             # MAKE SOME REAL DATA PATHS
 
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+
                 _logger.warning('odd number of epi files were found...')
                 alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
                 pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
                 more_epi = glob.glob(pattern)
+
                 for sbref in more_epi:
                     data['epi-data'].append(sbref)
 
+            # SLICING UP EPI DATA
+
             for list_entry in data['epi-data']:
+
                 print 'slicing up %s' % list_entry
+
                 code, modality, series = image_summary.get_subject_info(list_entry)
+
                 if 'REST' in modality:
                     image_summary.slice_list_of_data(list_entry, dest_dir=path.join(img_out_path, '%s.png' %
                                                                                     modality), also_xyz=True)
@@ -348,7 +356,10 @@ def main():
                     params_row = image_summary.get_nii_info(item)
                     real_data.append(params_row)
 
-            # START TO BUILD THE LAYOUT
+            ##################
+            #  START TO BUILD THE LAYOUT
+
+            head = html_header
 
             html_params_panel = param_table_html_header
 
@@ -409,6 +420,7 @@ def main():
                 print 'ack, something went wrong while trying to assemble epi-data! exiting...'
                 return
             else:
+                # APPEND NEW EPI-PANEL SECTIONS
                 newer_body = new_body + epi_panel_header
                 for i in range(0, num_epi_gifs):
                     epi_rows.append(epi_in_t1_gifs.pop(0))
@@ -421,10 +433,7 @@ def main():
 
                 #print newer_body
 
-            head = html_header
-
-            # TODO: adjust this more so that we can build more dynamically and not hard-coded numbers of rows
-            # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
+            # COMPLETE EPI PANEL
 
             newer_body += epi_panel_footer
 
@@ -432,7 +441,7 @@ def main():
 
             # FILL-IN THE CODE / VERSION INFO
             new_html_header = edit_html_chunk(head, 'CODE', code)
-            new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
+            new_html_header = edit_html_chunk(new_html_header, 'VERSION', VERSION)
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
             dvars_path = path.join('./DVARS_and_FD_CONCA.png')
