@@ -13,7 +13,7 @@ from summary_tools import image_summary
 
 PROG = 'Dispatcher'
 
-VERSION = '0.0.0'
+VERSION = '0.1.1'
 
 date_stamp = "{:%Y_%m_%d_%H:%M:%S}".format(datetime.now())
 
@@ -54,42 +54,6 @@ img_out_path = os.path.join(os.getcwd(), 'img')
 if not os.path.exists(img_out_path):
     os.makedirs(img_out_path)
 
-
-def choose_slices_dict(nifti_file_path):
-
-    nifti_info = image_summary.get_nii_info(path.join(nifti_file_path))
-
-    if not nifti_info:
-        return
-
-    T2_slices = {
-        'x': 55,
-        'y': 115,
-        'z': 145
-    }
-
-    T1_slices = {
-        'x': 55,
-        'y': 115,
-        'z': 145
-
-    }
-
-    epi_slices = {
-        'x': 55,
-        'y': 135,
-        'z': 130
-    }
-
-    if 'REST' in nifti_info[0]:
-        slices_dict = epi_slices
-    elif 'T2' in nifti_info[0]:
-        slices_dict = T2_slices
-    elif 'T1' in nifti_info[0]:
-        slices_dict = T1_slices
-
-    return slices_dict
-
 log.info('TEST IMAGE SLICER\n' + ('=' * 32))
 print 'TEST IMAGE SLICER\n' + '=' * 32
 slices_dict = image_summary.choose_slices_dict(nifti_file)
@@ -108,7 +72,7 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
         for datum in list_of_data_paths:
             info = image_summary.get_nii_info(datum)
             image_summary.slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
-            dict = choose_slices_dict(datum)
+            dict = image_summary.choose_slices_dict(datum)
             for key in dict.keys():
 
                 print image_summary.super_slice_me(datum, key, dict[key], os.path.join(img_out_path, '%s_%s-%d.png' %
