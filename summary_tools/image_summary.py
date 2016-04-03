@@ -14,7 +14,7 @@ from datetime import datetime
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -112,14 +112,16 @@ def get_subject_info(path_to_nii_file):
         _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
 
     # TODO: handle the processed SBRef, which has 2 parts and no subjcode
+
     elif p_count == 2 and 'SBRef' in parts[1]:
+
         _logger.info('raw SBRef file: %s' % parts)
         subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-
         modality = parts[1]
         series_num = parts[0]
 
     elif p_count == 2 and 'REST' in parts[1][0:4]:
+
         _logger.info('raw REST file: %s' % parts)
         subject_code = parts[0]
         modality = parts[1]
@@ -142,23 +144,19 @@ def get_subject_info(path_to_nii_file):
     elif p_count == 4 and 'SBRef' in parts:
 
         _logger.info('SBRef file: %s' % parts)
-
         modality = parts[3]
-
         series_num = parts[2]
-
         subject_code = parts[1]
-
         modality += series_num
 
     elif p_count == 4 and 'SBRef' not in parts:
+
         _logger.info('file string parts were: %s' % parts)
-
         series_num = parts.pop()
-
         modality = parts.pop()
 
         if modality == 'T2w' or modality == 'T1w':
+
             modality += series_num
 
         if len(parts) == 2:  # parts now 2 fewer and we check what's left
@@ -166,7 +164,8 @@ def get_subject_info(path_to_nii_file):
             subject_code = parts[1]
 
     elif p_count == 5:
-        _logger.debug('file parts: %s' % parts)
+
+        _logger.info('file parts: %s' % parts)
         subject_code = parts[1]
         modality = parts[3]
         series_num = parts[4]
@@ -217,8 +216,11 @@ def get_nii_info(path_to_nii, info=None):
     _logger.debug('data-info is: %s' % info)
 
     try:
+
         modality = info[1]
+
     except TypeError:
+
         print '%s is the wrong file type ' % path.join(path_to_nii)
 
     cmd = 'echo %s,' % modality
@@ -293,10 +295,12 @@ def get_list_of_data(src_folder):
             elif 'FieldMap' in path.abspath(file):
                 continue
 
+            _logger.info('processing nifti file: %s' % file)
+
             try:
 
-                _logger.info('processing nifti file: %s' % file)
                 data_info = get_nii_info(path.join(dir_name[0], file))
+
                 modality = data_info[0]
 
                 if 'T1w' in modality or 'T1' == modality:
@@ -335,7 +339,7 @@ def get_list_of_data(src_folder):
 
 def slice_image_to_ortho_row(file_path, dst):
     """
-    Takes path to nifti file and creates an orthogonal row of slices at the mid-lines of brain.
+    Takes path to nifti file and creates an orthogonal row of slices at the mid-points of the image volume.
 
     :param file_path: full path to nifti data
     :param dst: full path including extension
@@ -404,7 +408,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
 
     }
 
-    epi_slices = {
+    raw_rest_slices = {
         'x': 55,
         'y': 135,
         'z': 130
@@ -417,10 +421,10 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
 
     }
 
-    if 'SBRef' in nifti_info[0]:
+    if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
         slices_dict = sb_ref_slices
-    elif 'REST' in nifti_info[0]:
-        slices_dict = epi_slices
+    elif 'REST' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
+        slices_dict = raw_rest_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices
     elif 'T1' in nifti_info[0]:
@@ -477,10 +481,6 @@ def main():
     parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Uses fslval to grab params via the given full "
                                                                     "path to any nii or nii.gz file.")
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', help='''
-        Path to given PROCESSED subject folder, with underlying 'summary' folder & contents.
-        e.g. /remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/''')
-
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     args = parser.parse_args()
@@ -501,6 +501,10 @@ def main():
             dcm_params = shenanigans.get_dcm_info(dcm_path)
 
             print 'parameters are: %s ' % dcm_params
+            return dcm_params
+        else:
+            _logger.error('path does not exist: \n\t%s ' % dcm_path)
+            print 'oops that path is no good!'
 
     if args.nifti_path:
         nifti_path = path.join(args.nifti_path)
@@ -511,16 +515,9 @@ def main():
             param_table = path.join(nifti_path, 'Params.csv')
             data_rows.append(nii_params)
             write_csv(data_rows, param_table)
-
-    if args.subject_path:
-        sub_root = path.join(args.subject_path)
-        img_in_path = path.join(sub_root, 'summary')
-        img_out_path = path.join(img_in_path, 'img')
-
-        gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
-
-        if not path.exists(img_out_path):
-            os.makedirs(img_out_path, exist_ok=True)
+        else:
+            _logger.error('path does not exist: \n\t%s ' % nifti_path)
+            print 'oops that path is no good!'
 
 
 if __name__ == '__main__':
