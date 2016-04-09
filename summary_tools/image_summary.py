@@ -101,17 +101,12 @@ def get_subject_info(path_to_nii_file):
 
     parts = filename.split('_')
 
-    # subject_code = dirname.split('/')[-1]
-    # print '\nsubject code is: %s ' % subject_code
-
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
 
     if p_count < 2:
         _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
-
-    # TODO: handle the processed SBRef, which has 2 parts and no subjcode
 
     elif p_count == 2 and 'SBRef' in parts[1]:
 
@@ -147,7 +142,7 @@ def get_subject_info(path_to_nii_file):
         modality = parts[3]
         series_num = parts[2]
         subject_code = parts[1]
-        modality += series_num
+        modality += '_' + series_num
 
     elif p_count == 4 and 'SBRef' not in parts:
 
@@ -227,6 +222,9 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
     cmd += '`fslval %s pixdim3`,' % path_to_nii  # z
+
+    # TODO: need to point mri_info at a .dcm file in order to pull TE
+
     cmd += '`mri_info %s | grep TE | awk %s`,' % (path_to_nii, "'{print $5}'")  # TE via mri_info
     cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
@@ -436,7 +434,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
     return slices_dict
 
 
-def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, also_xyz=False):
+def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, dest_dir=None, also_xyz=False):
     """
 
     :param list_of_data_paths: a list containing full-path strings
@@ -458,15 +456,20 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, dest_dir=None, als
         for datum in list_of_data_paths:
 
             if not subject_code:
-                subject_code = get_subject_info(datum)[0]
+                subject_code = get_subject_info(datum)
 
-            slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
+            if modality:
+                slice_image_to_ortho_row(datum, path.join(dest_dir, '%s_%s.png' % (subject_code, modality)))
+            else:
+                slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
+
             if also_xyz:
                 dict = choose_slices_dict(datum, subject_code)
                 for key in dict.keys():
 
-                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
+                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s_%s-%d.png' %
                                                                                  (subject_code,
+                                                                                  modality,
                                                                                   key,
                                                                                   dict[key])))
 
