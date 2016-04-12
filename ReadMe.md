@@ -1,8 +1,10 @@
 # Executive Summary 
 
+## Version: 
+
 ## Program Launch:
 - from Linux: _python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s
-/path/to/processed_subject_folder_ [/another/subject ... /another...]
+/path/to/processed_subject_folder_ [-s /another/subject ... -s /another...]
 
 ## Requirements: 
 - Software Packages that need to be installed on the system: slicer, fsl, freesurfer
@@ -12,6 +14,7 @@
     - all .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and coregistrations with functional_)
   - /subject_with_processed_data/summary/unprocessed/NIFTI
     - all _raw_ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
+  - /subject_with_processed_data/MNINonLinear
     
 ## What It Makes:
 - a sub-folder 'img' within /summary, containing:
@@ -29,11 +32,9 @@
    - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
 ### 2. image_summary
    - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices
-   - contains lots of useful functions for flexibility
 ## /helpers
 ### 1. shenanigans.py
    - various helper functions
 ## /TestCode
-  - test_summary.py
   - dispatch.py
   - table_template.html

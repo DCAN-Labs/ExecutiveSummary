@@ -217,31 +217,31 @@ def make_img_list(path_to_dir):
             images.append(path.join(image))
 
     return images
-
-print '#' * 24 + '\nTESTING SHENANIGANS\n' + '#' * 24
-print 'TESTING get_searchable_parts_from_processed_path\n' + '#' * 24
-get_searchable_parts_from_processed_path('/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI/pipeline')
-print '\nDONE\n' + '#' * 24
-
-t1_pattern = r'\w+_T1[\w.]+'
-t1_matches = re.findall(t1_pattern, ' '.join(os.listdir(
-    '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
-                                            '/pipeline')))
-
-rest_pattern = r'\w+_REST\d_[\w.]+'
-
-epi_matches = re.findall(rest_pattern, ' '.join(os.listdir(
-    '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
-                                            '/pipeline')))
-
-print '\ndata: ' + ' '.join(os.listdir(
-    '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
-                                            '/pipeline'))
-
-if t1_matches:
-    print '\nt1 matches: \n%s' % t1_matches
-
-if epi_matches:
-    print '\nrest matches: \n%s' % epi_matches
-else:
-    print 'no epi match'
+#
+# print '#' * 24 + '\nTESTING SHENANIGANS\n' + '#' * 24
+# print 'TESTING get_searchable_parts_from_processed_path\n' + '#' * 24
+# get_searchable_parts_from_processed_path('/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI/pipeline')
+# print '\nDONE\n' + '#' * 24
+#
+# t1_pattern = r'\w+_T1[\w.]+'
+# t1_matches = re.findall(t1_pattern, ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline')))
+#
+# rest_pattern = r'\w+_REST\d_[\w.]+'
+#
+# epi_matches = re.findall(rest_pattern, ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline')))
+#
+# print '\ndata: ' + ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline'))
+#
+# if t1_matches:
+#     print '\nt1 matches: \n%s' % t1_matches
+#
+# if epi_matches:
+#     print '\nrest matches: \n%s' % epi_matches
+# else:
+#     print 'no epi match'
