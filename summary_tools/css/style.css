@@ -46,6 +46,11 @@ table, td {
     height: 150px;
 }
 
+.raw_rest_img img {
+    width: 280px;
+    height: 140px;
+}
+
 .epi td {
     border: none;
 }
@@ -77,8 +82,8 @@ table, td {
 }
 
 .grayords img {
-    width: 250px;
-    height: 200px;
+    width: 350px;
+    height: 300px;
 }
 
 .out-of-range {

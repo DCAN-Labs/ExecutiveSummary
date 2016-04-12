@@ -15,7 +15,7 @@ import glob
 import shutil
 
 PROG = 'Layout Builder'
-VERSION = '0.3.0'
+VERSION = '1.0.1'
 
 LAST_MOD = '3-10-16'
 
@@ -34,6 +34,8 @@ def write_html(template, dest_dir, title="summary_out.html"):
     try:
         f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
+    except IOError:
+        print 'cannot write there for some reason...'
     finally:
         f.close()
 
@@ -41,8 +43,8 @@ html_header = """<!DOCTYPE html>
 <html lang = "en">
     <head>
         <meta charset = "utf-8">
-        <title>Executive Summary: summary_tools</title>
-        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:250px;height:200px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
+        <title>Executive Summary: CODE</title>
+        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.raw_rest_img img {width: 280px;height: 140px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:350px;height:300px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
         </style>
     </head>
     <body>
@@ -80,7 +82,7 @@ param_table_footer = """
 
 epi_panel_header = """
             <div class="epi">
-                <table class="epi">
+                <table id="epi">
                     <thead>
                         <th colspan="4">
                             Resting State Data
@@ -97,11 +99,21 @@ epi_panel_footer = """
 html_footer = """
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-        <script>$(document).ready(function(){$("img[src*=SBRef]").width(300).height(110),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
+        <script>$(document).ready(function(){$("img[src*=SBRef]").width(300).height(110),$('img').filter('.raw_rest_img').width(280).height(140),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
         </script>
     </body>
 </html>
 """
+
+
+def get_subject_code(src_path):
+
+    if path.exists(path.join(src_path)):
+        path.relpath(src_path)
+
+    subjID = ''
+
+    return subjID
 
 
 def copy_images(src_dir, list_of_images, dst_dir='./img/'):
@@ -109,10 +121,6 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     for image in list_of_images:
         img_path = path.join(src_dir, image)
         shutil.copyfile(img_path, path.join(dst_dir, image))
-
-
-def get_image_path(image_string):
-    return path.join(image_string)
 
 
 def write_structural_panel(list_of_image_paths):
@@ -138,14 +146,14 @@ def write_structural_panel(list_of_image_paths):
                     </thead>
                 <tbody>
                     <tr>
-                        <td><a href="%(T1-left)s" target="_blank"><img src="./%(T1-left)s"></a></td>
-                        <td><a href="%(T1-middle)s" target="_blank"><img src="./%(T1-middle)s"></a></td>
-                        <td><a href="%(T1-right)s" target="_blank"><img src="./%(T1-right)s"></a></td>
+                        <td><a href=img/%(T1-left)s target="_blank"><img src=img/%(T1-left)s></a></td>
+                        <td><a href=img/%(T1-middle)s target="_blank"><img src=img/%(T1-middle)s></a></td>
+                        <td><a href=img/%(T1-right)s target="_blank"><img src=img/%(T1-right)s></a></td>
                     </tr>
                     <tr>
-                        <td><a href="%(T2-left)s" target="_blank"><img src="./%(T2-left)s"></a></td>
-                        <td><a href="%(T2-middle)s" target="_blank"><img src="./%(T2-middle)s"></a></td>
-                        <td><a href="%(T2-right)s" target="_blank"><img src="./%(T2-right)s"></a></td>
+                        <td><a href=img/%(T2-left)s target="_blank"><img src=img/%(T2-left)s></a></td>
+                        <td><a href=img/%(T2-middle)s target="_blank"><img src=img/%(T2-middle)s></a></td>
+                        <td><a href=img/%(T2-right)s target="_blank"><img src=img/%(T2-right)s></a></td>
                     </tr>
                 </tbody>
             </table>
@@ -210,7 +218,8 @@ def write_epi_panel_row(list_of_img_paths):
                         <td><a href="%(rest_in_t1)s"><img src="%(rest_in_t1)s"></a></td>
                         <td><a href="%(t1_in_rest)s"><img src="%(t1_in_rest)s"></a></td>
                         <td><a href="%(sb_ref)s"><img src="%(sb_ref)s"></a></td>
-                        <td><a href="%(rest_nonlin_norm)s"><img src="%(rest_nonlin_norm)s"></a></td>
+                        <td><a href="%(rest_nonlin_norm)s"><img src="%(rest_nonlin_norm)s"
+                            class="raw_rest_img"></a></td>
                     </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
                                 't1_in_rest'        : list_of_img_paths[1],
                                 'sb_ref'            : list_of_img_paths[2],
@@ -253,16 +262,6 @@ def write_dvars_panel(dvars_input_path='./DVARS_and_FD_CONCA.png'):
     return dvars_panel_html_string
 
 
-def make_img_list(path_to_dir):
-
-    images = []
-    for image in os.listdir(path_to_dir):
-        if image.endswith('.png') or image.endswith('gif'):
-            images.append(get_image_path(image))
-
-    return images
-
-
 def append_html_with_chunk(existing_html, string_to_insert):
 
     new_html_string = existing_html + string_to_insert
@@ -286,63 +285,118 @@ def main():
     args = parser.parse_args()
 
     if args.subject_path:
+
         for sub in args.subject_path:
-            sub_root = path.join(sub)[0]
 
-            try:
+            sub_root = path.join(sub)
+
+            if path.exists(sub_root):
+
                 summary_path, data_path = image_summary.get_paths(sub_root)
-                if path.exists(summary_path):
-                    img_out_path = path.join(sub_root, 'summary', 'img')
-                    img_in_path = summary_path
-                    os.chdir(summary_path)  # fail if not?
-                    if not path.exists(img_out_path):
-                        try:
-                            os.makedirs(img_out_path)
-                        except OSError:
-                            print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                            _logger.error('cannot make /img within /summary... permissions?')
-                            return
-            except TypeError:
 
-                print 'no summary data within %s \nexiting...' % args.subject_path
+            else:
+
+                print 'no subject directory found within %s \nexiting...' % sub
+                _logger.error('no subject directory within %s \nexiting...' % sub)
+
+                return
+
+            if path.exists(summary_path):
+
+                img_out_path = path.join(sub_root, 'summary', 'img')
+                img_in_path = summary_path
+            else:
+                print '\nMake sure a "summary" folder exists or this will not work...\n\tcheck in here: %s' % sub_root
+                _logger.error('no Summary folder exists within %s' % sub_root)
+                continue
+
+            if not path.exists(img_out_path):
+
+                try:
+
+                    os.makedirs(img_out_path)
+
+                except OSError:
+
+                    print '\nCheck permissions to write to that path? \npath: %s' % summary_path
+                    _logger.error('cannot make /img within /summary... permissions?')
+
+                    return
 
             try:
                 gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
                 if len(gifs) == 0:
-                    _logger.error('no gifs in summary folder')
-                    print '\nNo .gifs were found! There should be some .gifs and I do not make those! '\
+
+                    _logger.error('no .gifs in summary folder')
+                    print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
                         'Check to make sure the proper scripts have been ran? '
 
                     return
+
                 else:
+
+                    copy_images(img_in_path, gifs, img_out_path)
+
                     data = image_summary.get_list_of_data(data_path)
 
-                    #print 'data are: %s' % data
+                    _logger.debug('data are: %s' % data)
 
-            except:
+            except OSError:
 
-                    print 'Images_in_Path does not exist because the summary folder is not there...'
+                    print 'Unable to locate image sources...'
+
                     return
 
             real_data = []
+            epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
+                                                         gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
+            t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
+
+            split_gif = t1_in_epi_gifs[0].split('_')
+
+            if len(split_gif) == 4:
+                code = split_gif[0]
+                print 'CODE IS %s: ' % code
+            elif len(split_gif) == 5:
+                code = '_'.join(split_gif[0:2])
+            else:
+                code = ''
+
+            global subject_code
+            subject_code = code
+
+            print 'CODE IS %s: ' % code
             # MAKE SOME REAL DATA PATHS
 
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+
                 _logger.warning('odd number of epi files were found...')
                 alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
                 pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
                 more_epi = glob.glob(pattern)
+
                 for sbref in more_epi:
                     data['epi-data'].append(sbref)
 
+            # SLICING UP EPI DATA
+
             for list_entry in data['epi-data']:
+
                 print 'slicing up %s' % list_entry
-                code, modality, series = image_summary.get_subject_info(list_entry)
-                if 'REST' in modality:
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
+                modality = image_summary.get_subject_info(list_entry)[1]
+
+                if 'REST' in modality and 'SBRef' not in modality:
+                    # global subject_code
+                    # subject_code = code
+
+                    image_summary.slice_list_of_data([list_entry], subject_code=subject_code, modality=modality,
+                                                     dest_dir=img_out_path, also_xyz=True)
+
                 elif 'SBRef' in modality:
+                    code, modality, series = image_summary.get_subject_info(list_entry)
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
 
                 print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
@@ -358,7 +412,10 @@ def main():
                     params_row = image_summary.get_nii_info(item)
                     real_data.append(params_row)
 
-            # START TO BUILD THE LAYOUT
+            ##################
+            #  START TO BUILD THE LAYOUT
+
+            head = html_header
 
             html_params_panel = param_table_html_header
 
@@ -389,13 +446,11 @@ def main():
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-            epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
-                                                         gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            raw_rest_img_pattern = path.join(img_out_path, '*_REST?.png')
+            raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
-
-            rest_raw_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' not in img])
-
+            rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list])
+            # print rest_raw_paths
             sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
@@ -407,16 +462,17 @@ def main():
             if num_epi_gifs != len(epi_in_t1_gifs):
                 _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
                 print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-                return
+                continue
             elif num_epi_gifs != len(rest_raw_paths):
                 _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
                 print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-                return
+                continue
             elif num_epi_gifs != len(sb_ref_paths):
                 _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
                 print 'ack, something went wrong while trying to assemble epi-data! exiting...'
-                return
+                continue
             else:
+                # APPEND NEW EPI-PANEL SECTIONS
                 newer_body = new_body + epi_panel_header
                 for i in range(0, num_epi_gifs):
                     epi_rows.append(epi_in_t1_gifs.pop(0))
@@ -427,32 +483,35 @@ def main():
                     _logger.debug('epi_rows were: %s' % epi_rows)
                     epi_rows = []
 
-                #print newer_body
-
-            head = html_header
-
-            # TODO: adjust this more so that we can build more dynamically and not hard-coded numbers of rows
-            # APPEND OLD BODY WITH NEW EPI-PANEL SECTIONS
+            # COMPLETE EPI PANEls
 
             newer_body += epi_panel_footer
 
             _logger.debug('newer_body is : %s' % newer_body)
 
             # FILL-IN THE CODE / VERSION INFO
-            new_html_header = edit_html_chunk(head, 'CODE', code)
-            new_html_header = edit_html_chunk(new_html_header, 'VERSION', image_summary.VERSION)
+            try:
+                copy_images(img_in_path, structural_img_labels, img_out_path)  # /summary/img/<blah>
+            except IOError:
+                _logger.warning('unable to locate structural images. Do they even exist?')
+                print 'Make sure you have the strucural .png available for this subject: %s' % subject_code
+                print 'Expected path to Structural images: %s' % img_in_path
+
+            new_html_header = edit_html_chunk(head, 'CODE', subject_code)
+            new_html_header = edit_html_chunk(new_html_header, 'VERSION', VERSION)
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
             dvars_path = path.join('./DVARS_and_FD_CONCA.png')
 
             html_doc = new_html_header + newer_body + write_dvars_panel(dvars_path) + html_footer
 
-            write_html(html_doc, summary_path, title='executive_summary_%s.html' % code)
+            write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
-        else:
-            print 'no subject path provided!'
-            _logger.error('no subject path provided!')
-            return
+            shutil.copy('../helpers/copy_summary_data.sh', summary_path)
+
+    else:
+        print 'no subject path provided!'
+        _logger.error('no subject path provided!')
 
 if __name__ == '__main__':
 

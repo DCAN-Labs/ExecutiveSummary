@@ -3,12 +3,13 @@
 import os
 from os import path
 import subprocess
+import re
 
 
 def rename_structural(path_to_image_dump):
     """
     :param path_to_image_dump: directory containing inputs (will also serve as output dir)
-    :return: list of new image (paths)
+    :return: list of new image paths
     """
     structural_imgs = ['temp_13', 'temp_3', 'temp_9', 'temp_14', 'temp_4', 'temp_10']
 
@@ -48,7 +49,7 @@ def get_dcm_info(path_to_dicom, modality=None):
     Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
 
     :param path_to_dicom: full-path to any single .dcm file
-    :param modality: string you want used as a label for this dicom file
+    :param modality: optional string you want used as a label for this dicom file
     :return: list of data with length 8
     """
 
@@ -122,8 +123,6 @@ def submit_command(cmd):
 
 def grab_te_from_dicom(path_to_dicom):
     """
-    We probably do not need this.
-
     :param path_to_dicom:
     :return: echo time
     """
@@ -137,6 +136,55 @@ def grab_te_from_dicom(path_to_dicom):
     echo_time = output.strip("\n").split(',')
 
     return echo_time
+
+
+def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
+
+    # TODO: needs testing on airc, wrote this in the dark...
+
+    pipeline_folder_path = path.join(path_to_processed_subject_data)
+
+    os.chdir(pipeline_folder_path)
+
+    print os.getcwd()
+    os.chdir('../')
+    print os.getcwd()
+    print 'pardir is\n %s' % path.abspath(path.pardir)
+    study_folder = os.getcwd()
+    os.chdir('../')
+
+    subject_encoded_folder = os.getcwd()
+
+    study_folder_root = path.basename(study_folder)
+
+    year = path.basename(study_folder).split('_')[0][:4]
+
+    month = path.basename(study_folder).split('_')[0][4:6]
+
+    day = path.basename(study_folder).split('_')[0][6:8]
+
+    print 'subject data path:\n %s \nstudy_folder:\n %s\nsubject-coded-path:\n %s' % (pipeline_folder_path,
+                                                                                      study_folder,
+                                                                               subject_encoded_folder)
+    print 'year month day == %s %s %s' % (year, month, day)
+
+    subject_code = path.basename(subject_encoded_folder).split('_')[0]
+
+    print subject_code
+
+    dicom_root = '/dicom/%(year)s/%(month)s/%(subject_ID)s_blah_blah/%(day)s_1234/' % {'year': year,
+                                                                  'month': month,
+                                                                  'day' : day,
+                                                                  'subject_ID': subject_code}
+
+    print dicom_root
+
+    if path.exists(dicom_root):
+        print os.listdir(path.join(dicom_root))[0]
+
+    # TODO: once we know where each series is located, we can find the series we need from the list of directories
+    # TODO: then we can find any dicom in each, and send that absolute path to 'grab_te_from_dicom'
+    return dicom_root
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
@@ -159,3 +207,41 @@ images_dict = {
     'temp_17': 'T1-Sagittal-Insula-Temporal-HippocampalSulcus',
     'temp_18': 'T2-Sagittal-Insula-Temporal-HippocampalSulcus'
 }
+
+
+def make_img_list(path_to_dir):
+
+    images = []
+    for image in os.listdir(path_to_dir):
+        if image.endswith('.png') or image.endswith('gif'):
+            images.append(path.join(image))
+
+    return images
+#
+# print '#' * 24 + '\nTESTING SHENANIGANS\n' + '#' * 24
+# print 'TESTING get_searchable_parts_from_processed_path\n' + '#' * 24
+# get_searchable_parts_from_processed_path('/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI/pipeline')
+# print '\nDONE\n' + '#' * 24
+#
+# t1_pattern = r'\w+_T1[\w.]+'
+# t1_matches = re.findall(t1_pattern, ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline')))
+#
+# rest_pattern = r'\w+_REST\d_[\w.]+'
+#
+# epi_matches = re.findall(rest_pattern, ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline')))
+#
+# print '\ndata: ' + ' '.join(os.listdir(
+#     '/Users/st_buckls/imageprocessing/Projects/PPMI/088m00_PPMI/20121104_PPMI'
+#                                             '/pipeline'))
+#
+# if t1_matches:
+#     print '\nt1 matches: \n%s' % t1_matches
+#
+# if epi_matches:
+#     print '\nrest matches: \n%s' % epi_matches
+# else:
+#     print 'no epi match'
