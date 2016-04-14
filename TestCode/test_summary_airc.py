@@ -8,7 +8,7 @@ testing the dicom-info grabber, mostly.
 from summary_tools import image_summary
 import os
 from helpers import shenanigans
-
+import re
 
 test_sub_path = '/remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02'
 
@@ -34,7 +34,7 @@ more_data = image_summary.get_list_of_data(os.path.dirname(
 for list_entry in more_data:
     if len(list_entry) > 0:
         for item in list_entry:
-            data_rows.append(code.image_summary.get_nii_info(item))
+            data_rows.append(image_summary.get_nii_info(item))
 
 # DICOM tests
 
