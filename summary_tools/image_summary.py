@@ -122,6 +122,14 @@ def get_subject_info(path_to_nii_file):
         modality = parts[1]
         series_num = parts[1]
 
+    # to support ABCDPILOT_MSC02 type of subjectIDs with raw REST data... we hack
+    elif p_count == 3 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
+
+        _logger.info('raw REST file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1]
+        modality = parts[2]
+        series_num = parts[2]
+
     elif p_count == 3 and 'T1w' in parts:
 
         _logger.info('T1 file: %s' % parts)
@@ -459,7 +467,7 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                 subject_code = get_subject_info(datum)
 
             if modality:
-                slice_image_to_ortho_row(datum, path.join(dest_dir, '%s_%s.png' % (subject_code, modality)))
+                slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % (modality)))
             else:
                 slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
 
@@ -467,9 +475,8 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                 dict = choose_slices_dict(datum, subject_code)
                 for key in dict.keys():
 
-                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s_%s-%d.png' %
-                                                                                 (subject_code,
-                                                                                  modality,
+                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
+                                                                                 (modality,
                                                                                   key,
                                                                                   dict[key])))
 
