@@ -15,9 +15,9 @@ import glob
 import shutil
 
 PROG = 'Layout Builder'
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
-LAST_MOD = '3-10-16'
+LAST_MOD = '4-13-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -34,10 +34,9 @@ def write_html(template, dest_dir, title="summary_out.html"):
     try:
         f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
+        f.close()
     except IOError:
         print 'cannot write there for some reason...'
-    finally:
-        f.close()
 
 html_header = """<!DOCTYPE html>
 <html lang = "en">
@@ -50,7 +49,7 @@ html_header = """<!DOCTYPE html>
     <body>
         <div class="header">
             <h1>CODE</h1>
-            <p>vVERSION</p>
+            <p>VERSION</p>
             </div>
         </div>"""
 
@@ -118,9 +117,14 @@ def get_subject_code(src_path):
 
 def copy_images(src_dir, list_of_images, dst_dir='./img/'):
 
-    for image in list_of_images:
-        img_path = path.join(src_dir, image)
-        shutil.copyfile(img_path, path.join(dst_dir, image))
+    if type(list_of_images) == str:
+        img_path = path.join(src_dir, list_of_images)
+        shutil.copyfile(img_path, dst_dir)
+
+    elif type(list_of_images) == list:
+        for image in list_of_images:
+            img_path = path.join(src_dir, image)
+            shutil.copyfile(img_path, path.join(dst_dir, image))
 
 
 def write_structural_panel(list_of_image_paths):
@@ -239,7 +243,7 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     return epi_panel_html
 
 
-def write_dvars_panel(dvars_input_path='./DVARS_and_FD_CONCA.png'):
+def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
 
     dvars_panel_html_string = """
             <div class="grayords">
@@ -349,27 +353,30 @@ def main():
                     return
 
             real_data = []
-            epi_in_t1_gifs = sorted([path.basename(path.join(summary_path,
-                                                         gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            epi_in_t1_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-            t1_in_epi_gifs = sorted([path.basename(path.join(summary_path, gif)) for gif in gifs if '_t1_in_REST' in gif])
+            t1_in_epi_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
 
+
+            # now hack that subject_code on outa there
             split_gif = t1_in_epi_gifs[0].split('_')
 
             if len(split_gif) == 4:
-                code = split_gif[0]
+                code = path.basename(split_gif[0])
                 print 'CODE IS %s: ' % code
             elif len(split_gif) == 5:
-                code = '_'.join(split_gif[0:2])
+                code = path.basename('_'.join(split_gif[0:2]))
             else:
                 code = ''
 
+            # Tell the people of this code from atop the mountain
             global subject_code
             subject_code = code
 
             print 'CODE IS %s: ' % code
-            # MAKE SOME REAL DATA PATHS
 
+            # Check list of epi-data to ensure even numbers of files...
+            # TODO: improve this section with a more specific test
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
 
                 _logger.warning('odd number of epi files were found...')
@@ -384,23 +391,21 @@ def main():
 
             for list_entry in data['epi-data']:
 
+                # get modality so we can know how to slice it...
+                modality = image_summary.get_subject_info(list_entry)[1]
+                print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
                 print 'slicing up %s' % list_entry
 
-                modality = image_summary.get_subject_info(list_entry)[1]
-
                 if 'REST' in modality and 'SBRef' not in modality:
-                    # global subject_code
-                    # subject_code = code
 
                     image_summary.slice_list_of_data([list_entry], subject_code=subject_code, modality=modality,
                                                      dest_dir=img_out_path, also_xyz=True)
 
-                elif 'SBRef' in modality:
-                    code, modality, series = image_summary.get_subject_info(list_entry)
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s_%s.png' % (series, modality)))
+                elif 'SBRef' in modality and 'REST' in modality:
+                    modality, series = image_summary.get_subject_info(list_entry)[1], image_summary.get_subject_info(list_entry)[2]
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % (modality)))
 
-                print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
-
+            # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
             for list_entry in data.values():
 
                 list_entry = sorted(list_entry)
@@ -442,11 +447,11 @@ def main():
 
             new_body = body + html_params_panel
 
-            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
+            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]  # does not include DVARS
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, '*_REST?.png')
+            raw_rest_img_pattern = path.join(img_out_path, 'REST?.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
             rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list])
@@ -489,21 +494,26 @@ def main():
 
             _logger.debug('newer_body is : %s' % newer_body)
 
-            # FILL-IN THE CODE / VERSION INFO
+            # TODO: fix this
+            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
+            dvars_path = path.join(img_out_path, 'DVARS_and_FD_CONCA.png')
+
             try:
                 copy_images(img_in_path, structural_img_labels, img_out_path)  # /summary/img/<blah>
-            except IOError:
-                _logger.warning('unable to locate structural images. Do they even exist?')
-                print 'Make sure you have the strucural .png available for this subject: %s' % subject_code
-                print 'Expected path to Structural images: %s' % img_in_path
 
+            except IOError:
+                _logger.warning('unable to locate some images. Do they even exist?')
+                print 'Make sure you have the structural .png available for this subject: %s' % subject_code
+                print 'Expected path to Structural images: %s' % img_in_path
+                print 'DVARS expected here: %s' % img_in_path
+
+            # FILL-IN THE CODE / VERSION INFO
             new_html_header = edit_html_chunk(head, 'CODE', subject_code)
-            new_html_header = edit_html_chunk(new_html_header, 'VERSION', VERSION)
+            new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
-            dvars_path = path.join('./DVARS_and_FD_CONCA.png')
 
-            html_doc = new_html_header + newer_body + write_dvars_panel(dvars_path) + html_footer
+            html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path))) + html_footer
 
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
