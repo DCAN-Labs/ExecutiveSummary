@@ -15,9 +15,11 @@
 - FNL_PreProc MUST be completed
 - Folder Structures:
   - /path/to/processed/pipeline/subjectID/summary/
-    - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and epi coregistrations with functional_)
+     - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and epi coregistrations with functional_)
   - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
-    - all _raw_ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
+     - all __raw__ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
+     - _Note: expected naming convention for structural imaging data is_ `StudyName_SubjectID_T1w_(modality)(series_num).nii.gz`,  for resting-state & SBRef: `StudyName_SubjectID_REST(series_num)_[SBRef].nii.gz`
+     - __e.g. ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2_SBRef.nii.gz,  ADHD-Youth_1234-1_REST3.nii.gz__ 
   - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
 
 ## Program Launch
