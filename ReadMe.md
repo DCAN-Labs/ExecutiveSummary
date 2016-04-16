@@ -3,20 +3,28 @@
 ## Version: 1.0.2
 
 ## System Requirements:
-- Software Packages Required: fsl (4.1.9 or later presumed), freesurfer (v5.3)
-- Environment: python 2.7.x
+- Imaging Software Packages Required: 
+  - fsl v4.1.9 or later
+  - freesurfer v5.3
+- Environment: python 2.7.x 
+  - argparse
+  
+## Intended Usage:
+- run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been ran
+- _Note: you can move the HTML to any other directory, but it needs its 'img' folder along with it to view the images!_
 
 ## Processed and RAW Data Structures Required:
 - FNL_PreProc MUST be completed
 - Folder Structures:
-  - /path/to/subjectID/summary/
+  - /path/to/processed/pipeline/subjectID/summary/
     - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and epi coregistrations with functional_)
-  - /path/to/subjectID/unprocessed/NIFTI/
+  - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
     - all _raw_ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
-  - /path/to/subjectID/MNINonLinear/Results/
+  - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
 
 ## Program Launch:
-- from Linux: _python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s /path/to/processed_subject_folder_ [-s /another/subject ... -s /another...]
+- from any beast or qlogin-session to the AIRC, open a terminal and enter: 
+  `python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s </path/to/processed/pipeline/subjectID/>  [ -s /another/subject ... -s /another...]`
 
 ## What It Makes:
 - a sub-directory 'img' within /summary, containing:
@@ -27,7 +35,7 @@
     -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
     -  Functional Data Panel _(raw and structurally registered image slices)_
     -  Concatenated Grayordinates Plot
-- some _log files for debugging
+- some _\_log_ files for debugging
 
 ## Package Organization:
 ## /group_shares/PSYCH/code/release/utilities/executive_summary
@@ -35,21 +43,23 @@
 ### 1. layout_builder.py
    - launches via command-line, or within a shell-script, using -s and paths to subject folders, separated by spaces
    - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
-   - __e.g. python layout_builder.py -s /path/SUBJID_1/ -s /path/SUBJID_2__
+   - __e.g. python layout_builder.py -s /path/SUBJID_1/ -s /path/SUBJID_2__ 
+
 ### 2. image_summary.py
    - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices
 ## /helpers
 ### 1. shenanigans.py
-   - various helper functions
+   - various helper functions, some are used, some are place-holders
 ## /TestCode
+  - table_template.html: Executive Summary mock-up
   - dispatch.py: used in testing, may disappear...
-  - table_template.html: for viewing the Executive Summary layout in general
   - test_summary_airc.py: may delete this, but contains some simple tests
 
 ## Known Issues:
   - TE displayed as 0.00
-  - image sizing for some raw data sets kinda small
-  - extra zeroes in parameters panel rows
+  - image sizing for some raw data sets may be small and require zooming-in on your browser to view
+  - non-significant zeroes in some parameters panel rows
+  - TI displayed as 1 for all modalities
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project
