@@ -1,17 +1,17 @@
 # Executive Summary v1.0.2
 
-## System Requirements:
+## System Requirements
 - Imaging Software Packages Required: 
   - fsl v4.1.9 or later
   - freesurfer v5.3
 - Environment: python 2.7.x 
   - argparse
   
-## Intended Usage:
+## Intended Usage
 - run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been ran
 - _Note: you can move the HTML to any other directory, but it needs its 'img' folder along with it to view the images!_
 
-## Processed and RAW Data Structures Required:
+## Processed and RAW Data Structures Required
 - FNL_PreProc MUST be completed
 - Folder Structures:
   - /path/to/processed/pipeline/subjectID/summary/
@@ -20,11 +20,11 @@
     - all _raw_ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
   - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
 
-## Program Launch:
+## Program Launch
 - from any beast or qlogin-session to the AIRC, open a terminal and enter: 
   `python /group_shares/PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s </path/to/processed/pipeline/subjectID/>  [ -s /another/subject ... -s /another...]`
 
-## What It Makes:
+## What It Makes
 - a sub-directory 'img' (/summary/img):
     - new _.pngs_ of orthogonally sliced image rows for each raw and single-band reference, resting-state acquisition series
     - copies of all .gifs from /summary placed in inside a new ./img directory, within the /summary directory
@@ -36,25 +36,30 @@
     -  Concatenated Grayordinates Plot
 - some _\_log_ files for debugging
 
-## Package Organization:
-## /group_shares/PSYCH/code/release/utilities/executive_summary
-## /summary_tools
-### 1. layout_builder.py
+## Package Organization
+### /group_shares/PSYCH/code/release/utilities/executive_summary
+### /summary_tools
+#### layout_builder.py
    - launches via command-line, or within a shell-script, using -s and paths to subject folders, separated by spaces 
    
-### 2. image_summary.py
+#### image_summary.py
    - relies heavily upon mri_info, fslval, and slicer to extract data and create new .png slices
    
-## /helpers
-### 1. shenanigans.py
+### /helpers
+#### shenanigans.py
    - various helper functions, some are used, some are place-holders 
   
-## /TestCode
-  - table_template.html: Executive Summary mock-up
-  - dispatch.py: used in testing, may disappear...
-  - test_summary_airc.py: may delete this, but contains some simple tests
+### /TestCode
+#### table_template.html
+  - Executive Summary mock-up 
+  
+#### dispatch.py 
+  - used in testing, may disappear...
+  
+#### test_summary_airc.py
+  - may delete this, but contains some simple tests
 
-## Known Issues:
+## Known Issues
   - TE displayed as 0.00
   - image sizing for some raw data sets may be small and require zooming-in on your browser to view
   - non-significant zeroes in some parameters panel rows
