@@ -22,7 +22,7 @@
 
 ## Program Launch:
 - from any beast or qlogin-session to the AIRC, open a terminal and enter: 
-  `python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s </path/to/processed/pipeline/subjectID/>  [ -s /another/subject ... -s /another...]`
+  `python /group_shares/PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s </path/to/processed/pipeline/subjectID/>  [ -s /another/subject ... -s /another...]`
 
 ## What It Makes:
 - a sub-directory 'img' (/summary/img):
