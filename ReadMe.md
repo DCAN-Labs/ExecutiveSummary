@@ -1,6 +1,4 @@
-# Executive Summary
-
-## Version: 1.0.2
+# Executive Summary v1.0.2
 
 ## System Requirements:
 - Imaging Software Packages Required: 
@@ -27,9 +25,10 @@
   `python /PSYCH/code/release/executive_summary/summary_tools/layout_builder.py -s </path/to/processed/pipeline/subjectID/>  [ -s /another/subject ... -s /another...]`
 
 ## What It Makes:
-- a sub-directory 'img' within /summary, containing:
-    - new _.pngs_ of orthogonal slices for each raw and single-band reference, resting-state acquisition
-    - copies of all .gifs from /summary placed in inside new ./img directory
+- a sub-directory 'img' (/summary/img):
+    - new _.pngs_ of orthogonally sliced image rows for each raw and single-band reference, resting-state acquisition series
+    - copies of all .gifs from /summary placed in inside a new ./img directory, within the /summary directory
+    - new _.png_ images of each resting-state volume with othogonal slice-positions in regions known to be affected by susceptibility artifacts, or other issues that commonly occur during processing
 - _executive\_summary\_(code).html_: a layout of 4 panels for cursory quality assurance
     -  T1/T2 Structural Segmentation Slices Panel
     -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
@@ -41,15 +40,15 @@
 ## /group_shares/PSYCH/code/release/utilities/executive_summary
 ## /summary_tools
 ### 1. layout_builder.py
-   - launches via command-line, or within a shell-script, using -s and paths to subject folders, separated by spaces
-   - relies heavily upon functions in image_summary.py to build the layout components and extract parameters
-   - __e.g. python layout_builder.py -s /path/SUBJID_1/ -s /path/SUBJID_2__ 
-
+   - launches via command-line, or within a shell-script, using -s and paths to subject folders, separated by spaces 
+   
 ### 2. image_summary.py
-   - relies heavily upon mri_info, fslval, and slicer to extract data information and create new slices
+   - relies heavily upon mri_info, fslval, and slicer to extract data and create new .png slices
+   
 ## /helpers
 ### 1. shenanigans.py
-   - various helper functions, some are used, some are place-holders
+   - various helper functions, some are used, some are place-holders 
+  
 ## /TestCode
   - table_template.html: Executive Summary mock-up
   - dispatch.py: used in testing, may disappear...
