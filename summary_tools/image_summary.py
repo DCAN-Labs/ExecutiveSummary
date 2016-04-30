@@ -11,7 +11,7 @@ from os import path
 import logging
 import logging.handlers
 from datetime import datetime
-from executive_summary.helpers import shenanigans
+from helpers import shenanigans
 
 PROG = 'Image Summary'
 VERSION = '0.4.0'
