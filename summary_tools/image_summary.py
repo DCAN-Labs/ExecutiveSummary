@@ -11,10 +11,12 @@ from os import path
 import logging
 import logging.handlers
 from datetime import datetime
+import sys
+sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed

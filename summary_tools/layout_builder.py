@@ -15,7 +15,7 @@ import glob
 import shutil
 
 PROG = 'Layout Builder'
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 
 LAST_MOD = '4-13-16'
 
@@ -43,7 +43,7 @@ html_header = """<!DOCTYPE html>
     <head>
         <meta charset = "utf-8">
         <title>Executive Summary: CODE</title>
-        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.raw_rest_img img {width: 280px;height: 140px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:350px;height:300px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
+        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.raw_rest_img img {width: 300px;height: 110px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:350px;height:300px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
         </style>
     </head>
     <body>
@@ -98,7 +98,7 @@ epi_panel_footer = """
 html_footer = """
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-        <script>$(document).ready(function(){$("img[src*=SBRef]").width(300).height(110),$('img').filter('.raw_rest_img').width(280).height(140),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
+        <script>$(document).ready(function(){$("img[src*=SBRef]").width(300).height(110),$('img').filter('.raw_rest_img').width(300).height(110),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
         </script>
     </body>
 </html>
@@ -219,10 +219,10 @@ def write_epi_panel_row(list_of_img_paths):
 
     epi_panel_row = """
                     <tr>
-                        <td><a href="%(rest_in_t1)s"><img src="%(rest_in_t1)s"></a></td>
-                        <td><a href="%(t1_in_rest)s"><img src="%(t1_in_rest)s"></a></td>
-                        <td><a href="%(sb_ref)s"><img src="%(sb_ref)s"></a></td>
-                        <td><a href="%(rest_nonlin_norm)s"><img src="%(rest_nonlin_norm)s"
+                        <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
+                        <td><a href="%(t1_in_rest)s" target="_blank"><img src="%(t1_in_rest)s"></a></td>
+                        <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s"></a></td>
+                        <td><a href="%(rest_nonlin_norm)s" target="_blank"><img src="%(rest_nonlin_norm)s"
                             class="raw_rest_img"></a></td>
                     </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
                                 't1_in_rest'        : list_of_img_paths[1],
@@ -482,8 +482,9 @@ def main():
                 for i in range(0, num_epi_gifs):
                     epi_rows.append(epi_in_t1_gifs.pop(0))
                     epi_rows.append(t1_in_epi_gifs.pop(0))
-                    epi_rows.append(rest_raw_paths.pop(0))
                     epi_rows.append(sb_ref_paths.pop(0))
+                    epi_rows.append(rest_raw_paths.pop(0))
+
                     newer_body += write_epi_panel_row(epi_rows[:4])
                     _logger.debug('epi_rows were: %s' % epi_rows)
                     epi_rows = []
@@ -517,7 +518,9 @@ def main():
 
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
-            shutil.copy('../helpers/copy_summary_data.sh', summary_path)
+            summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
+            copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
+            shutil.copy(copy_script_location, summary_path)
 
     else:
         print 'no subject path provided!'
