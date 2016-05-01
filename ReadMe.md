@@ -1,4 +1,4 @@
-# Executive Summary v1.0.2
+# Executive Summary v1.0.3
 
 ## System Requirements
 - Imaging Software Packages Required: 
@@ -65,7 +65,7 @@
   - TE displayed as 0.00
   - image sizing for some raw data sets may be small and require zooming-in on your browser to view
   - non-significant zeroes in some parameters panel rows
-  - TI displayed as 1 for all modalities
+  - TI displayed not accurate for all modalities
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project
