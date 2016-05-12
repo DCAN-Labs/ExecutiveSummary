@@ -375,6 +375,9 @@ def main():
 
             print 'CODE IS %s: ' % code
 
+            subject_code_folder = path.join(summary_path, code)
+            os.makedirs(subject_code_folder)
+
             # Check list of epi-data to ensure even numbers of files...
             # TODO: improve this section with a more specific test
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
@@ -519,7 +522,13 @@ def main():
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
             summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
+
+            move_cmd = "mv *.png ./%(sub_code_folder)s; mv *.gif ./%(sub_code_folder)s; mv *.html ./%(sub_code_folder)s; " \
+                       "mv ./img ./%(sub_code_folder)s" % {'sub_code_folder': subject_code_folder}
+
+            image_summary.submit_command(move_cmd)
             copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
+
             shutil.copy(copy_script_location, summary_path)
 
     else:
