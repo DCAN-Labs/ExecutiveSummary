@@ -539,9 +539,10 @@ def main():
             path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s.html' % subject_code)
 
             try:
-                webbrowser.open_new_tab(path_to_ex_sum_out)
+                webbrowser.open(path_to_ex_sum_out)
 
             except Exception:
+
                 print 'no browser ability detected... check your outputs folder to review the HTML'
 
             qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s' %
@@ -550,9 +551,6 @@ def main():
             if not path.exists(qc_folder_out):
 
                 shutil.copytree(subject_code_folder, qc_folder_out)
-            #copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
-
-            #shutil.copy(copy_script_location, summary_path)
 
     else:
         print 'no subject path provided!'
