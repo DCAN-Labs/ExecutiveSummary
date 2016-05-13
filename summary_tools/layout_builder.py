@@ -528,11 +528,10 @@ def main():
 
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
-            summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
-
-            move_cmd = "mv %(data_path)s/*.html %(sub_code_folder)s; mv %(data_path)s/img %(sub_code_folder)s" % {
+            # PREPARE QC PACKET
+            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
                         'sub_code_folder': subject_code_folder,
-                        'data_path'      : img_in_path}
+                        'img_in_path'      : img_in_path}
 
             image_summary.submit_command(move_cmd)
 
@@ -553,7 +552,8 @@ def main():
 
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
-                    qc_folder_out = user_out_path
+                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp)
+
                     print qc_folder_out
 
                 else:
