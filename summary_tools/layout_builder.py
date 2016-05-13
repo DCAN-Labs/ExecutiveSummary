@@ -303,9 +303,14 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
-                visit_id = sub_root.split('/')[-3]
+                visit_id = sub_root.split('/')[-4]
 
-                print 'visit_id is : %s' % visit_id
+                pipeline_version = sub_root.split('/')[-3]
+
+                if 'release' not in pipeline_version:
+                    print 'this may or may not workout if this is not a standard HCP_release! *fingers crossed*'
+
+                print 'visit_id is : %s\npipeline_version is: %s\n' % (visit_id, pipeline_version)
 
             else:
 
