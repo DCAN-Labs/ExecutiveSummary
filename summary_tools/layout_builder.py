@@ -27,19 +27,7 @@ Use -s /path/to/subjectfolder/with/summary_subfolder to launch and build a summa
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
 
-
-def write_html(template, dest_dir, title="summary_out.html"):
-
-    if not title.endswith('.html'):
-        title += '.html'
-
-    try:
-        f = open(path.join(dest_dir, title), 'w')
-        f.writelines(template)
-        f.close()
-    except IOError:
-        print 'cannot write there for some reason...'
-
+# HTML BUILDING BLOCKS
 html_header = """<!DOCTYPE html>
 <html lang = "en">
     <head>
@@ -107,17 +95,36 @@ html_footer = """
 """
 
 
-def get_subject_code(src_path):
+def write_html(template, dest_dir, title="summary_out.html"):
+    """
+    Takes an html template string and a destination, then writes it out to a default title.
 
-    if path.exists(path.join(src_path)):
-        path.relpath(src_path)
+    :param template:
+    :param dest_dir:
+    :param title:
+    :return: None
+    """
 
-    subjID = ''
+    if not title.endswith('.html'):
+        title += '.html'
 
-    return subjID
+    try:
+        f = open(path.join(dest_dir, title), 'w')
+        f.writelines(template)
+        f.close()
+    except IOError:
+        print 'cannot write there for some reason...'
 
 
 def copy_images(src_dir, list_of_images, dst_dir='./img/'):
+    """
+    Takes a source dir and a list of images, copies them to a default destination ./img.
+
+    :param src_dir:
+    :param list_of_images:
+    :param dst_dir:
+    :return: None
+    """
 
     if type(list_of_images) == str:
         img_path = path.join(src_dir, list_of_images)
@@ -176,6 +183,14 @@ def write_structural_panel(list_of_image_paths):
 
 
 def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
+    """
+    takes some html string, does a find/replace on it
+
+    :param html_string:
+    :param thing_to_find:
+    :param thing_that_replaces_it:
+    :return:
+    """
 
     new_html_string = html_string.replace(thing_to_find, thing_that_replaces_it)
 
@@ -183,6 +198,12 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
 
 
 def write_param_table_row(list_of_data):
+    """
+    takes a list of data and fills in one row in the parameter table per datum
+
+    :param list_of_data:
+    :return: param_table_row
+    """
 
     if len(list_of_data) != 8 or list_of_data[5] == '':
         _logger.error('list of data is incomplete:\n%s' % list_of_data)
@@ -213,6 +234,12 @@ def write_param_table_row(list_of_data):
 
 
 def write_epi_panel_row(list_of_img_paths):
+    """
+    Takes a list of image paths and builds one row of epi_images for the panel.
+
+    :param list_of_img_paths:
+    :return: one row of an html table, with epi-images for a give sequence
+    """
 
     if len(list_of_img_paths) < 4:
         _logger.error('insufficient files to build an epi-panel row!\nCheck your list: %s ' % list_of_img_paths)
@@ -235,6 +262,14 @@ def write_epi_panel_row(list_of_img_paths):
 
 
 def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_footer):
+    """
+    Takes a list of panel rows (html_strings), a header and footer to build the full epi-panel.
+
+    :param epi_rows_list:
+    :param header:
+    :param footer:
+    :return: html string for the whole epi-panel of images (one row per REST)
+    """
 
     epi_panel_html = header
 
@@ -246,6 +281,12 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
 
 
 def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
+    """
+    Takes a path to a specific image and writes up a div for it
+
+    :param dvars_input_path:
+    :return: string of html for DVARS
+    """
 
     dvars_panel_html_string = """
             <div class="grayords">
@@ -269,6 +310,13 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
 
 
 def append_html_with_chunk(existing_html, string_to_insert):
+    """
+    Takes some html string, appends a chunk to it, returns the new chunk+extension.
+
+    :param existing_html:
+    :param string_to_insert:
+    :return: appended html string
+    """
 
     new_html_string = existing_html + string_to_insert
 
