@@ -4,6 +4,7 @@ __author__ = 'Shannon Buckley', 2/20/16
 
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
+-o for optional output_directory; (default = /group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo)
 """
 
 import os
