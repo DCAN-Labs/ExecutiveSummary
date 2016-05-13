@@ -54,20 +54,22 @@ _logger.info('\nprogram log: %s' % (date_stamp))
 def get_paths(subject_code_path):
 
     sub_path = path.join(subject_code_path)
-    _logger.debug('subject path is %s' % sub_path)
+    _logger.debug('\nsubject path is %s\n' % sub_path)
+
+    print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
 
     if path.exists(sub_path):
 
         img_in_path = path.join(sub_path, 'summary')
 
-        _logger.debug('images in : %s' % img_in_path)
+        _logger.debug('\nimages in : %s\n' % img_in_path)
 
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
-        _logger.debug('data are in : %s' % data_path)
+        _logger.debug('\ndata are in : %s\n' % data_path)
 
         return img_in_path, data_path
     else:
-        _logger.error('path does not exist: %s' % sub_path)
+        _logger.error('\npath does not exist: %s' % sub_path)
 
 
 def get_subject_info(path_to_nii_file):
@@ -210,15 +212,15 @@ def get_nii_info(path_to_nii, info=None):
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
         if not path.basename(path_to_nii).endswith('.nii'):
-            _logger.error('wrong file type: %s' % path.basename(path_to_nii))
+            _logger.error('\nwrong file type: %s' % path.basename(path_to_nii))
             return
 
-    _logger.info("getting params on %s\n" % path_to_nii)
+    _logger.info("\ngetting params on %s\n" % path_to_nii)
 
     if not info:
         info = get_subject_info(path_to_nii)
 
-    _logger.debug('data-info is: %s' % info)
+    _logger.debug('\ndata-info is: %s\n' % info)
 
     try:
 
@@ -226,7 +228,7 @@ def get_nii_info(path_to_nii, info=None):
 
     except TypeError:
 
-        print '%s is the wrong file type ' % path.join(path_to_nii)
+        print '\n--->%s... is the wrong file type<---' % path.join(path_to_nii)
 
     cmd = 'echo %s,' % modality
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
