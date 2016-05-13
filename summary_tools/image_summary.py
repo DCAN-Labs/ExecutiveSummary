@@ -56,7 +56,7 @@ def get_paths(subject_code_path):
     sub_path = path.join(subject_code_path)
     _logger.debug('\nsubject path is %s\n' % sub_path)
 
-    print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
+    #print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
 
     if path.exists(sub_path):
 

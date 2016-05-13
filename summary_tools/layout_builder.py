@@ -535,7 +535,7 @@ def main():
 
             html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path))) + html_footer
 
-            write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
+            write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subject_code, visit_id))
 
             # PREPARE QC PACKET
             move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
@@ -544,8 +544,8 @@ def main():
 
             image_summary.submit_command(move_cmd)
 
-            path_to_ex_sum_out = path.join(subject_code_folder,'executive_summary_%s_%s.html' % (subject_code,
-                                                                                                 visit_id))
+            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s_%s.html' % (subject_code,
+                                                                                                  visit_id))
 
             if args.output_path:
 
