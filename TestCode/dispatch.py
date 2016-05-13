@@ -67,12 +67,17 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
     for i in range(num, len(list_of_data_paths)-1):
 
         if not dest_dir:
+
             dest_dir = path.join('./img')
 
         for datum in list_of_data_paths:
+
             info = image_summary.get_nii_info(datum)
+
             image_summary.slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % info[0]))
+
             dict = image_summary.choose_slices_dict(datum)
+
             for key in dict.keys():
 
                 print image_summary.super_slice_me(datum, key, dict[key], os.path.join(img_out_path, '%s_%s-%d.png' %
@@ -84,8 +89,10 @@ def slice_list_of_data(list_of_data_paths, dest_dir=False):
 data_list = [nifti_file, nifti_gz_file]
 print '=' * 32 + '\nSLICING DATA LIST %s' % data_list
 
+# TEST SLICE-LIST
 image_summary.slice_list_of_data(data_list, also_xyz=True, dest_dir=img_out_path)
 
+# TEST SUPER SLICEING
 #image_summary.super_slice_me(nifti_file, 'x', slices_dict['x'], os.path.join(img_out_path, '%s_x-%d.png' % (
 # nii_info[0],
 #                                                                                                    slices_dict['x'])))
