@@ -13,6 +13,7 @@ import image_summary
 from image_summary import _logger
 import glob
 import shutil
+import webbrowser
 
 PROG = 'Layout Builder'
 VERSION = '1.0.3'
@@ -534,6 +535,10 @@ def main():
             _logger.debug(move_cmd)
 
             image_summary.submit_command(move_cmd)
+
+            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s.html' % subject_code)
+
+            webbrowser.open_new_tab(path_to_ex_sum_out)
             #copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
 
             #shutil.copy(copy_script_location, summary_path)
