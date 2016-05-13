@@ -24,7 +24,7 @@ structural and functional images, and grayordinates results into one file for ef
 FNL_preproc pipeline).
 """ % {'prog': PROG, 'ver': VERSION}
 
-date_stamp = "{:%Y_%m_%d %H:%M}".format(datetime.now())
+date_stamp = "{:%Y_%m_%d_%H_%M}".format(datetime.now())
 
 if not path.exists(path.join(os.getcwd(), 'logs')):
     os.makedirs('logs')
