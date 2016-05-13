@@ -545,9 +545,10 @@ def main():
 
                 print 'no browser ability detected... check your outputs folder to review the HTML'
 
-            if args.output_path:
+            if path.exists(path.join(args.output_path)):
 
                 qc_folder_out = path.join(args.output_path)
+
             else:
 
                 qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s' %
