@@ -13,9 +13,10 @@ import image_summary
 from image_summary import _logger
 import glob
 import shutil
+import webbrowser
 
 PROG = 'Layout Builder'
-VERSION = '1.0.3'
+VERSION = '1.1.0'
 
 LAST_MOD = '4-13-16'
 
@@ -375,6 +376,11 @@ def main():
 
             print 'CODE IS %s: ' % code
 
+            subject_code_folder = path.join(summary_path, code)
+
+            if not path.exists(subject_code_folder):
+                os.makedirs(subject_code_folder)
+
             # Check list of epi-data to ensure even numbers of files...
             # TODO: improve this section with a more specific test
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
@@ -519,8 +525,32 @@ def main():
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
             summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
-            copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
-            shutil.copy(copy_script_location, summary_path)
+
+            move_cmd = "mv %(data_path)s/*.html %(sub_code_folder)s; mv %(data_path)s/img %(sub_code_folder)s" % {
+                        'sub_code_folder': subject_code_folder,
+                        'data_path'      : img_in_path}
+
+            #print '\n %s' % move_cmd
+
+            _logger.debug(move_cmd)
+
+            image_summary.submit_command(move_cmd)
+
+            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s.html' % subject_code)
+
+            try:
+                webbrowser.open(path_to_ex_sum_out)
+
+            except Exception:
+
+                print 'no browser ability detected... check your outputs folder to review the HTML'
+
+            qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s' %
+                                      image_summary.date_stamp)
+
+            if not path.exists(qc_folder_out):
+
+                shutil.copytree(subject_code_folder, qc_folder_out)
 
     else:
         print 'no subject path provided!'
