@@ -547,13 +547,6 @@ def main():
             path_to_ex_sum_out = path.join(subject_code_folder,'executive_summary_%s_%s.html' % (subject_code,
                                                                                                  visit_id))
 
-            try:
-                webbrowser.open(path_to_ex_sum_out)
-
-            except Exception:
-
-                print 'no browser ability detected... check your outputs folder to review the HTML'
-
             if args.output_path:
 
                 user_out_path = path.join(args.output_path)
@@ -579,6 +572,12 @@ def main():
 
                 shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
+            try:
+                webbrowser.open_new_tab(path_to_ex_sum_out)
+
+            except Exception:
+
+                print 'no browser ability detected... check your outputs folder to review the HTML'
     else:
         print 'no subject path provided!'
         _logger.error('no subject path provided!')
