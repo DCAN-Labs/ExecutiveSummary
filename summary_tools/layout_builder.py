@@ -13,9 +13,10 @@ import image_summary
 from image_summary import _logger
 import glob
 import shutil
+import webbrowser
 
 PROG = 'Layout Builder'
-VERSION = '1.0.3'
+VERSION = '1.1.0'
 
 LAST_MOD = '4-13-16'
 
@@ -281,6 +282,10 @@ def main():
                         help='''Expects path to a subject-level directory of processed data, which should have a
                         'summary' folder within (e.g./remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/)''')
 
+    parser.add_argument('-o', '--output_path', dest='output_path', action='store',
+                        help='''Expects path to a folder you can write to in order to copy final outputs there. Final
+                        goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
+
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     parser.add_argument('--version', dest="verbose", action="version", version="%(prog)s_v" + VERSION,
@@ -374,6 +379,11 @@ def main():
             subject_code = code
 
             print 'CODE IS %s: ' % code
+
+            subject_code_folder = path.join(summary_path, code)
+
+            if not path.exists(subject_code_folder):
+                os.makedirs(subject_code_folder)
 
             # Check list of epi-data to ensure even numbers of files...
             # TODO: improve this section with a more specific test
@@ -519,8 +529,35 @@ def main():
             write_html(html_doc, summary_path, title='executive_summary_%s.html' % subject_code)
 
             summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
-            copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
-            shutil.copy(copy_script_location, summary_path)
+
+            move_cmd = "mv %(data_path)s/*.html %(sub_code_folder)s; mv %(data_path)s/img %(sub_code_folder)s" % {
+                        'sub_code_folder': subject_code_folder,
+                        'data_path'      : img_in_path}
+
+            image_summary.submit_command(move_cmd)
+
+            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s.html' % subject_code)
+
+            try:
+                webbrowser.open(path_to_ex_sum_out)
+
+            except Exception:
+
+                print 'no browser ability detected... check your outputs folder to review the HTML'
+
+            if args.output_path:
+
+                qc_folder_out = path.join(args.output_path)
+            else:
+
+                qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s' %
+                                          image_summary.date_stamp)
+
+                print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
+
+            if not path.exists(qc_folder_out):
+
+                shutil.copytree(subject_code_folder, qc_folder_out)
 
     else:
         print 'no subject path provided!'
