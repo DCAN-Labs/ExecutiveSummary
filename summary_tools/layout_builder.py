@@ -525,10 +525,9 @@ def main():
 
             summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
 
-            move_cmd = "mv %(data_path)s/*.png %(sub_code_folder)s; mv %(data_path)s/*.gif %(sub_code_folder)s; " \
-                       "mv %(data_path)s/*.html %(sub_code_folder)s; mv %(data_path)s./img %(sub_code_folder)s" % {
+            move_cmd = "mv %(data_path)s/*.html %(sub_code_folder)s; mv %(data_path)s/img %(sub_code_folder)s" % {
                         'sub_code_folder': subject_code_folder,
-                        'data_path'      : summary_path}
+                        'data_path'      : img_in_path}
 
             print '\n %s' % move_cmd
 
