@@ -523,13 +523,20 @@ def main():
 
             summary_root = path.join('/group_shares/PSYCH/code/release/utilities/executive_summary')
 
-            move_cmd = "mv *.png ./%(sub_code_folder)s; mv *.gif ./%(sub_code_folder)s; mv *.html ./%(sub_code_folder)s; " \
-                       "mv ./img ./%(sub_code_folder)s" % {'sub_code_folder': subject_code_folder}
+
+            move_cmd = "mv %(data_path)s/*.png ./%(sub_code_folder)s; mv %(data_path)s/*.gif ./%(sub_code_folder)s; " \
+                       "mv %(data_path)s/*.html ./%(sub_code_folder)s; mv %(data_path)s./img ./%(sub_code_folder)s" % {
+                        'sub_code_folder': subject_code_folder,
+                        'data_path'      : data_path}
+
+            print '\n %s' % move_cmd
+
+            _logger.debug(move_cmd)
 
             image_summary.submit_command(move_cmd)
-            copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
+            #copy_script_location = path.join(summary_root, 'helpers/copy_summary_data.sh')
 
-            shutil.copy(copy_script_location, summary_path)
+            #shutil.copy(copy_script_location, summary_path)
 
     else:
         print 'no subject path provided!'
