@@ -352,6 +352,8 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
+                subj_id = sub_root.split('/')[-1]
+
                 visit_id = sub_root.split('/')[-4]
 
                 pipeline_version = sub_root.split('/')[-3]
@@ -422,23 +424,23 @@ def main():
 
 
             # now hack that subject_code on outa there
-            split_gif = t1_in_epi_gifs[0].split('_')
+            # split_gif = t1_in_epi_gifs[0].split('_')
 
-            if len(split_gif) == 4:
-                code = path.basename(split_gif[0])
-                print 'CODE IS %s: ' % code
-            elif len(split_gif) == 5:
-                code = path.basename('_'.join(split_gif[0:2]))
-            else:
-                code = ''
+            # if len(split_gif) == 4:
+            #     code = path.basename(split_gif[0])
+            #     print 'CODE IS %s: ' % code
+            # elif len(split_gif) == 5:
+            #     code = path.basename('_'.join(split_gif[0:2]))
+            # else:
+            #     code = ''
 
             # Tell the people of this code from atop the mountain
-            global subject_code
-            subject_code = code
+            # global subject_code
+            # subject_code = code
 
-            print 'CODE IS %s: ' % code
+            print 'CODE IS %s: ' % subj_id
 
-            subject_code_folder = path.join(summary_path, code)
+            subject_code_folder = path.join(summary_path, subj_id)
 
             if not path.exists(subject_code_folder):
                 os.makedirs(subject_code_folder)
@@ -461,12 +463,12 @@ def main():
 
                 # get modality so we can know how to slice it...
                 modality = image_summary.get_subject_info(list_entry)[1]
-                print 'PROCESSING subject_code: %s, modality: %s ' % (code, modality)
+                print 'PROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
                 print 'slicing up %s' % list_entry
 
                 if 'REST' in modality and 'SBRef' not in modality:
 
-                    image_summary.slice_list_of_data([list_entry], subject_code=subject_code, modality=modality,
+                    image_summary.slice_list_of_data([list_entry], subject_code=subj_id, modality=modality,
                                                      dest_dir=img_out_path, also_xyz=True)
 
                 elif 'SBRef' in modality and 'REST' in modality:
@@ -572,19 +574,19 @@ def main():
 
             except IOError:
                 _logger.warning('unable to locate some images. Do they even exist?')
-                print 'Make sure you have the structural .png available for this subject: %s' % subject_code
+                print 'Make sure you have the structural .png available for this subject: %s' % subj_id
                 print 'Expected path to Structural images: %s' % img_in_path
                 print 'DVARS expected here: %s' % img_in_path
 
             # FILL-IN THE CODE / VERSION INFO
-            new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subject_code, visit_id))
+            new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subj_id, visit_id))
             new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
 
             html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path))) + html_footer
 
-            write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subject_code, visit_id))
+            write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subj_id, visit_id))
 
             # PREPARE QC PACKET
             move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
@@ -593,7 +595,7 @@ def main():
 
             image_summary.submit_command(move_cmd)
 
-            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s_%s.html' % (subject_code,
+            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s_%s.html' % (subj_id,
                                                                                                   visit_id))
 
             if args.output_path:
