@@ -303,6 +303,10 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
+                visit_id = sub_root.split('/')[-3]
+
+                print 'visit_id is : %s' % visit_id
+
             else:
 
                 print 'no subject directory found within %s \nexiting...' % sub
