@@ -19,7 +19,7 @@ import webbrowser
 PROG = 'Layout Builder'
 VERSION = '1.1.0'
 
-LAST_MOD = '4-13-16'
+LAST_MOD = '5-12-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -184,7 +184,7 @@ def write_structural_panel(list_of_image_paths):
 
 def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
     """
-    takes some html string, does a find/replace on it
+    Takes some html string, does a find/replace on it
 
     :param html_string:
     :param thing_to_find:
@@ -199,7 +199,7 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
 
 def write_param_table_row(list_of_data):
     """
-    takes a list of data and fills in one row in the parameter table per datum
+    Takes a list of data and fills in one row in the parameter table per datum
 
     :param list_of_data:
     :return: param_table_row
