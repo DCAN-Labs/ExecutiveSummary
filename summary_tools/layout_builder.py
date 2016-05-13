@@ -14,6 +14,7 @@ import image_summary
 from image_summary import _logger
 import glob
 import shutil
+import logging
 import webbrowser
 
 PROG = 'Layout Builder'
@@ -337,10 +338,15 @@ def main():
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
-    parser.add_argument('--version', dest="verbose", action="version", version="%(prog)s_v" + VERSION,
+    parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
                         help="Tell me all about it.")
-
+# -------------------------> END ARGS TO PARSE <------------------------#
     args = parser.parse_args()
+
+    if args.verbose:
+        _logger.setLevel(logging.DEBUG)
+    else:
+        _logger.setLevel(logging.INFO)
 
     if args.subject_path:
 
@@ -353,15 +359,31 @@ def main():
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
                 subj_id = sub_root.split('/')[-1]
+                print '\nCODE IS %s: \n\n' % subj_id
 
                 visit_id = sub_root.split('/')[-4]
 
                 pipeline_version = sub_root.split('/')[-3]
 
+                date = image_summary.date_stamp
+
                 if 'release' not in pipeline_version:
                     print '\nthis may or may not workout if this is not a standard HCP_release! *fingers crossed*'
 
                 print 'visit_id is : %s\npipeline_version is: %s\n' % (visit_id, pipeline_version)
+
+                with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
+
+                    info = '''
+                            Executive Summary ran %s
+                            pipeline %s was detected
+                            Subject Path provide: %s
+                            Subject Code: %s
+                            Visti_ID: %s
+                            ''' % (date, pipeline_version, sub_root, subj_id, visit_id)
+
+                    f.write(info)
+                    f.close()
 
             else:
 
@@ -374,9 +396,13 @@ def main():
 
                 img_out_path = path.join(sub_root, 'summary', 'img')
                 img_in_path = summary_path
+                subject_code_folder = path.join(summary_path, subj_id)
+
             else:
+
                 print '\nMake sure a "summary" folder exists or this will not work...\n\tcheck in here: %s' % sub_root
-                _logger.error('no Summary folder exists within %s' % sub_root)
+                _logger.error('\nno Summary folder exists within %s\n' % sub_root)
+
                 continue
 
             if not path.exists(img_out_path):
@@ -422,27 +448,8 @@ def main():
 
             t1_in_epi_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
 
-
-            # now hack that subject_code on outa there
-            # split_gif = t1_in_epi_gifs[0].split('_')
-
-            # if len(split_gif) == 4:
-            #     code = path.basename(split_gif[0])
-            #     print 'CODE IS %s: ' % code
-            # elif len(split_gif) == 5:
-            #     code = path.basename('_'.join(split_gif[0:2]))
-            # else:
-            #     code = ''
-
-            # Tell the people of this code from atop the mountain
-            # global subject_code
-            # subject_code = code
-
-            print 'CODE IS %s: ' % subj_id
-
-            subject_code_folder = path.join(summary_path, subj_id)
-
             if not path.exists(subject_code_folder):
+
                 os.makedirs(subject_code_folder)
 
             # Check list of epi-data to ensure even numbers of files...
@@ -580,6 +587,7 @@ def main():
 
             # FILL-IN THE CODE / VERSION INFO
             new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subj_id, visit_id))
+
             new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!

@@ -38,15 +38,19 @@
     -  Concatenated Grayordinates Plot
 - some _\_log_ files for debugging
 
-## Package Organization
+## Architecture
 ### /group_shares/PSYCH/code/release/utilities/executive_summary
 ### /summary_tools
 #### layout_builder.py
-   - launches via command-line, or within a shell-script, using -s and paths to subject folders, separated by spaces 
-   
+   - use -s and paths to subject folders, separated by spaces
+   - add -o </output/path> to control where the final product is copied for review
+   -
 #### image_summary.py
    - relies heavily upon mri_info, fslval, and slicer to extract data and create new .png slices
-   
+   - use -n to print parameters for any single nifti
+   - use -d to print parameters for any single dicom
+   - use -v to do extra logging (verbose mode)
+
 ### /helpers
 #### shenanigans.py
    - various helper functions, some are used, some are place-holders 
