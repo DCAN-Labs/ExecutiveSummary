@@ -563,11 +563,11 @@ def main():
 
                     print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
-            if not path.exists(qc_folder_out):
+                if not path.exists(qc_folder_out):
 
-                print '\ncopying to QC_folder\n\n'
+                    print '\ncopying to QC_folder\n\n'
 
-                shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
+                    shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
     else:
         print 'no subject path provided!'
