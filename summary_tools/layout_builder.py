@@ -377,7 +377,7 @@ def main():
 
             subject_code_folder = path.join(summary_path, code)
 
-            if not path.exists():
+            if not path.exists(subject_code_folder):
                 os.makedirs(subject_code_folder)
 
             # Check list of epi-data to ensure even numbers of files...
