@@ -554,6 +554,7 @@ def main():
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
                     qc_folder_out = user_out_path
+                    print qc_folder_out
 
                 else:
 
