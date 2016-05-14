@@ -358,7 +358,7 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
-                subj_id = sub_root.split('/')[-1]
+                subj_id = sub_root.split('/')[-2]
                 print '\nCODE IS %s: \n\n' % subj_id
 
                 visit_id = sub_root.split('/')[-4]
@@ -592,7 +592,9 @@ def main():
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
 
-            html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path))) + html_footer
+            html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path)))
+
+            html_doc += html_footer
 
             write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subj_id, visit_id))
 
@@ -621,7 +623,7 @@ def main():
             else:
 
                 qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s/%s' %
-                                          image_summary.date_stamp, subj_id)
+                                          (image_summary.date_stamp, subj_id))
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
