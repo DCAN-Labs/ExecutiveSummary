@@ -614,14 +614,14 @@ def main():
 
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
-                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp)
+                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
 
                     print qc_folder_out
 
             else:
 
-                qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s' %
-                                          image_summary.date_stamp)
+                qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s/%s' %
+                                          image_summary.date_stamp, subj_id)
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
@@ -631,12 +631,12 @@ def main():
 
                 shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
-            try:
-                webbrowser.open_new_tab(path_to_ex_sum_out)
-
-            except Exception:
-
-                print 'no browser ability detected... check your outputs folder to review the HTML'
+            # try:
+            #     webbrowser.open_new_tab(path_to_ex_sum_out)
+            #
+            # except Exception:
+            #
+            #     print 'no browser ability detected... check your outputs folder to review the HTML'
     else:
         print 'no subject path provided!'
         _logger.error('no subject path provided!')
