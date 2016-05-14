@@ -18,7 +18,7 @@ import logging
 import webbrowser
 
 PROG = 'Layout Builder'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 LAST_MOD = '5-12-16'
 
@@ -96,7 +96,7 @@ html_footer = """
 """
 
 
-def write_html(template, dest_dir, title="summary_out.html"):
+def write_html(template, dest_dir, title="executive_summary.html"):
     """
     Takes an html template string and a destination, then writes it out to a default title.
 
@@ -340,7 +340,7 @@ def main():
 
     parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
                         help="Tell me all about it.")
-# -------------------------> END ARGS TO PARSE <------------------------#
+# -------------------------> END ARGS TO PARSE <------------------------ #
     args = parser.parse_args()
 
     if args.verbose:
