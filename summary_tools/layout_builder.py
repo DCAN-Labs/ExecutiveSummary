@@ -15,12 +15,11 @@ from image_summary import _logger
 import glob
 import shutil
 import logging
-import webbrowser
 
 PROG = 'Layout Builder'
 VERSION = '1.1.1'
 
-LAST_MOD = '5-12-16'
+LAST_MOD = '5-15-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -100,9 +99,9 @@ def write_html(template, dest_dir, title="executive_summary.html"):
     """
     Takes an html template string and a destination, then writes it out to a default title.
 
-    :param template:
-    :param dest_dir:
-    :param title:
+    :param template: path to html template
+    :param dest_dir: output path for final .html file
+    :param title: string to apply to output
     :return: None
     """
 
@@ -117,32 +116,12 @@ def write_html(template, dest_dir, title="executive_summary.html"):
         print 'cannot write there for some reason...'
 
 
-def copy_images(src_dir, list_of_images, dst_dir='./img/'):
-    """
-    Takes a source dir and a list of images, copies them to a default destination ./img.
-
-    :param src_dir:
-    :param list_of_images:
-    :param dst_dir:
-    :return: None
-    """
-
-    if type(list_of_images) == str:
-        img_path = path.join(src_dir, list_of_images)
-        shutil.copyfile(img_path, dst_dir)
-
-    elif type(list_of_images) == list:
-        for image in list_of_images:
-            img_path = path.join(src_dir, image)
-            shutil.copyfile(img_path, path.join(dst_dir, image))
-
-
 def write_structural_panel(list_of_image_paths):
     """
     Builds a panel of orthogonally sliced T1 and T2 images with pial and white matter surface overlays from Freesurfer.
 
-    :param list_of_image_paths:
-    :return: string of html to create a table of images containing an
+    :param list_of_image_paths: list of 6 image paths for the structural image panel
+    :return: string of html containing a div row with an images table
     """
 
     if len(list_of_image_paths) < 6:
@@ -185,12 +164,12 @@ def write_structural_panel(list_of_image_paths):
 
 def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
     """
-    Takes some html string, does a find/replace on it
+    Takes some html string, does a find/replace on it.
 
-    :param html_string:
-    :param thing_to_find:
-    :param thing_that_replaces_it:
-    :return:
+    :param html_string: any string, really
+    :param thing_to_find: any string
+    :param thing_that_replaces_it: replacement string
+    :return: new string with replacement
     """
 
     new_html_string = html_string.replace(thing_to_find, thing_that_replaces_it)
@@ -202,8 +181,8 @@ def write_param_table_row(list_of_data):
     """
     Takes a list of data and fills in one row in the parameter table per datum
 
-    :param list_of_data:
-    :return: param_table_row
+    :param list_of_data: list of data with 8 elements
+    :return: param_table_row with specific metrics (8 columns)
     """
 
     if len(list_of_data) != 8 or list_of_data[5] == '':
@@ -238,8 +217,8 @@ def write_epi_panel_row(list_of_img_paths):
     """
     Takes a list of image paths and builds one row of epi_images for the panel.
 
-    :param list_of_img_paths:
-    :return: one row of an html table, with epi-images for a give sequence
+    :param list_of_img_paths: list of paths
+    :return: one row of an html table, <tr> to </tr> with epi-images for a given series
     """
 
     if len(list_of_img_paths) < 4:
@@ -266,10 +245,10 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     """
     Takes a list of panel rows (html_strings), a header and footer to build the full epi-panel.
 
-    :param epi_rows_list:
-    :param header:
-    :param footer:
-    :return: html string for the whole epi-panel of images (one row per REST)
+    :param epi_rows_list: list of data rows (strings)
+    :param header: div section opener
+    :param footer: dev section closer
+    :return: html string for the whole epi-panel div (one row of images per REST)
     """
 
     epi_panel_html = header
@@ -285,8 +264,8 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
     """
     Takes a path to a specific image and writes up a div for it
 
-    :param dvars_input_path:
-    :return: string of html for DVARS
+    :param dvars_input_path: path to DVARS image.png expected
+    :return: div section string for DVARS
     """
 
     dvars_panel_html_string = """
@@ -314,14 +293,34 @@ def append_html_with_chunk(existing_html, string_to_insert):
     """
     Takes some html string, appends a chunk to it, returns the new chunk+extension.
 
-    :param existing_html:
-    :param string_to_insert:
-    :return: appended html string
+    :param existing_html: string
+    :param string_to_insert: another string
+    :return: appended string
     """
 
     new_html_string = existing_html + string_to_insert
 
     return new_html_string
+
+
+def copy_images(src_dir, list_of_images, dst_dir='./img/'):
+    """
+    Takes a source dir and a list of images, copies them to a default destination ./img.
+
+    :param src_dir: copy from path
+    :param list_of_images: list of image names to copy (full paths not expected)
+    :param dst_dir: copy to  path
+    :return: None
+    """
+
+    if type(list_of_images) == str:
+        img_path = path.join(src_dir, list_of_images)
+        shutil.copyfile(img_path, dst_dir)
+
+    elif type(list_of_images) == list:
+        for image in list_of_images:
+            img_path = path.join(src_dir, image)
+            shutil.copyfile(img_path, path.join(dst_dir, image))
 
 
 def main():
@@ -338,15 +337,19 @@ def main():
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
+    parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me more...")
+
     parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
                         help="Tell me all about it.")
 # -------------------------> END ARGS TO PARSE <------------------------ #
     args = parser.parse_args()
 
     if args.verbose:
+        _logger.setLevel(logging.INFO)
+    elif args.very_verbose:
         _logger.setLevel(logging.DEBUG)
     else:
-        _logger.setLevel(logging.INFO)
+        _logger.setLevel(logging.ERROR)
 
     if args.subject_path:
 
@@ -359,9 +362,10 @@ def main():
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
                 subj_id = sub_root.split('/')[-2]
-                print '\nCODE IS %s: \n\n' % subj_id
 
                 visit_id = sub_root.split('/')[-4]
+
+                print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
 
                 pipeline_version = sub_root.split('/')[-3]
 
@@ -396,7 +400,7 @@ def main():
 
                 img_out_path = path.join(sub_root, 'summary', 'img')
                 img_in_path = summary_path
-                subject_code_folder = path.join(summary_path, subj_id)
+                subject_code_folder = path.join(summary_path, subj_id, '_' + visit_id)
 
             else:
 
@@ -443,11 +447,13 @@ def main():
 
                     return
 
+            # Make lists of paths to be used in the epi-panel
             real_data = []
             epi_in_t1_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
             t1_in_epi_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
 
+            # setup an output directory
             if not path.exists(subject_code_folder):
 
                 os.makedirs(subject_code_folder)
@@ -457,6 +463,7 @@ def main():
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
 
                 _logger.warning('odd number of epi files were found...')
+                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
                 alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
                 pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
                 more_epi = glob.glob(pattern)
@@ -464,7 +471,7 @@ def main():
                 for sbref in more_epi:
                     data['epi-data'].append(sbref)
 
-            # SLICING UP EPI DATA
+            # SLICING UP IMAGES FOR EPI DATA LIST
 
             for list_entry in data['epi-data']:
 
@@ -479,7 +486,9 @@ def main():
                                                      dest_dir=img_out_path, also_xyz=True)
 
                 elif 'SBRef' in modality and 'REST' in modality:
-                    modality, series = image_summary.get_subject_info(list_entry)[1], image_summary.get_subject_info(list_entry)[2]
+                    # TODO: verify whether this extra call to get_subj_info is really needed
+                    # modality, series = image_summary.get_subject_info(list_entry)[1],
+                    # image_summary.get_subject_info(list_entry)[2]
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % (modality)))
 
             # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
@@ -494,8 +503,7 @@ def main():
                     params_row = image_summary.get_nii_info(item)
                     real_data.append(params_row)
 
-            ##################
-            #  START TO BUILD THE LAYOUT
+            # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
 
             head = html_header
 
@@ -573,17 +581,18 @@ def main():
             _logger.debug('newer_body is : %s' % newer_body)
 
             # TODO: fix this
-            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
+            # shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
             dvars_path = path.join(img_out_path, 'DVARS_and_FD_CONCA.png')
 
             try:
-                copy_images(img_in_path, structural_img_labels, img_out_path)  # /summary/img/<blah>
+                structural_img_labels += 'DVARS_and_FD_CONCA.png'
+                copy_images(img_in_path, structural_img_labels, img_out_path)  # out: /summary/img/<blah>
 
             except IOError:
+
                 _logger.warning('unable to locate some images. Do they even exist?')
-                print 'Make sure you have the structural .png available for this subject: %s' % subj_id
-                print 'Expected path to Structural images: %s' % img_in_path
-                print 'DVARS expected here: %s' % img_in_path
+                print 'Make sure you have all 6 structural .png and DVARS available for this subject: %s' % subj_id
+                print 'Expected path to required images: %s' % img_in_path
 
             # FILL-IN THE CODE / VERSION INFO
             new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subj_id, visit_id))
@@ -598,15 +607,13 @@ def main():
 
             write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subj_id, visit_id))
 
+            # -------------------------> END LAYOUT <------------------------- #
             # PREPARE QC PACKET
             move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
-                        'sub_code_folder': subject_code_folder,
+                        'sub_code_folder'  : subject_code_folder,
                         'img_in_path'      : img_in_path}
 
             image_summary.submit_command(move_cmd)
-
-            path_to_ex_sum_out = path.join(subject_code_folder, 'executive_summary_%s_%s.html' % (subj_id,
-                                                                                                  visit_id))
 
             if args.output_path:
 
@@ -618,7 +625,7 @@ def main():
 
                     qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
 
-                    print qc_folder_out
+                    print '\nFind your images here: \n\t%s' % qc_folder_out
 
             else:
 
@@ -633,12 +640,6 @@ def main():
 
                 shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
-            # try:
-            #     webbrowser.open_new_tab(path_to_ex_sum_out)
-            #
-            # except Exception:
-            #
-            #     print 'no browser ability detected... check your outputs folder to review the HTML'
     else:
         print 'no subject path provided!'
         _logger.error('no subject path provided!')
