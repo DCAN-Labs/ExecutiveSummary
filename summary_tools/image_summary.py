@@ -16,7 +16,7 @@ sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.4.1'
+VERSION = '0.5.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -31,7 +31,7 @@ if not path.exists(path.join(os.getcwd(), 'logs')):
 
 logfile = os.path.join(os.getcwd(), 'logs', 'log-%s.log' % date_stamp)
 
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.ERROR)
 
 _logger = logging.getLogger('Image_Summary_v%s' % VERSION)
 
@@ -52,6 +52,11 @@ _logger.info('\nprogram log: %s' % (date_stamp))
 
 
 def get_paths(subject_code_path):
+    """
+    PLACEHOLDER Takes subj_path and returns all relevant paths
+    :param subject_code_path:
+    :return: list or dict for all paths needed for processing exec summary
+    """
 
     sub_path = path.join(subject_code_path)
     _logger.debug('\nsubject path is %s\n' % sub_path)
@@ -74,11 +79,11 @@ def get_paths(subject_code_path):
 
 def get_subject_info(path_to_nii_file):
     """
-    Much relies upon this function figuring out what sort of file it has been given via file strings.
+    Takes path to nii or nii.gz file and returns a list of 3 elements: subjID, modality, series.
 
     Super hacky!
     :param path_to_nii_file: full-path to .nii or .nii.gz
-    :return: tuple of subject_code, modality, series
+    :return: list of subject_code, modality, series
     """
 
     filename = path.join(path_to_nii_file)
@@ -187,7 +192,7 @@ def get_subject_info(path_to_nii_file):
 
 def write_csv(data, filepath):
     """
-    takes a list of data rows and writes out a csv file to the path provided.
+    Takes a list of data rows and writes out a csv file to the path provided.
 
     :param data: list of lists, with each inner-list being one row of data
     :param filepath: path to file-out.csv
@@ -204,7 +209,7 @@ def get_nii_info(path_to_nii, info=None):
     Runs fslval on a given nifti file and can take an optional info set.
 
     :param path_to_nii: full path to nii or nii.gz
-    :param info: optional info 3-tuple of subject_code, modality, series
+    :param info: optional info list of subject_code, modality, series
     :return: row of data in a list, length 8
     """
 
@@ -254,7 +259,7 @@ def submit_command(cmd):
     Takes a string (command-line) and runs it in a sub-shell, collecting either errors or info (output) in logger.
 
     :param cmd: string (command-line you might otherwise run in a terminal)
-    :return: output
+    :return: output from the command that ran
     """
 
     _logger.debug(cmd)
@@ -278,7 +283,7 @@ def submit_command(cmd):
 
 def get_list_of_data(src_folder):
     """
-    Walk through the given directory to find all the nifti data, crudely, to fill lists of t1, t2 and epi-data.
+    Walks through the given directory to find all the nifti data, crudely, to fill lists of t1, t2 and epi-data.
 
     :param src_folder: directory (the /summary folder for a given participant's data)
     :return: dictionary of lists with full paths to nifti files of interest: t1, t2, epi
@@ -349,7 +354,7 @@ def get_list_of_data(src_folder):
 
 def slice_image_to_ortho_row(file_path, dst):
     """
-    Takes path to nifti file and creates an orthogonal row of slices at the mid-points of the image volume.
+    Takes path to nifti file and writes out an orthogonal row of slices at the mid-points of the image volume to dst.
 
     :param file_path: full path to nifti data
     :param dst: full path including extension
@@ -415,20 +420,19 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
         'x': 55,
         'y': 115,
         'z': 145
-
     }
 
+    # TODO: choose better slices!
     raw_rest_slices = {
-        'x': 55,
-        'y': 135,
-        'z': 130
+        'x': 65,
+        'y': 55,
+        'z': 45
     }
 
     sb_ref_slices = {
         'x': 65,
         'y': 55,
         'z': 45
-
     }
 
     if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
@@ -448,6 +452,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
 
 def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, dest_dir=None, also_xyz=False):
     """
+    Takes list of data paths and other options to decide how to slice them all up.
 
     :param list_of_data_paths: a list containing full-path strings
     :param subject_code: optional string. faster function if known & can pass?
@@ -497,6 +502,8 @@ def main():
 
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
+    parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
+
     args = parser.parse_args()
 
     _logger.debug('args are: %s' % args)
@@ -505,9 +512,11 @@ def main():
     data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
 
     if args.verbose:
+        _logger.setLevel(logging.INFO)
+    elif args.very_verbose:
         _logger.setLevel(logging.DEBUG)
     else:
-        _logger.setLevel(logging.INFO)
+        _logger.setLevel(logging.ERROR)
 
     if args.dicom_path:
         dcm_path = path.join(args.dicom_path)
