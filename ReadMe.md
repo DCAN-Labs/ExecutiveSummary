@@ -56,6 +56,7 @@
    - add -v for verbose output to _log file
    - add -vv for debugging output to _log file
    - use --version to print version and exit
+   
 #### image_summary.py
    - relies heavily upon mri_info, fslval, and slicer to extract data and create new .png slices
    - use -n to print parameters for any single nifti
