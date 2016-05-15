@@ -4,7 +4,8 @@ __author__ = 'Shannon Buckley', 2/20/16
 
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
--o for optional output_directory; (default = /group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo)
+-o for optional output_directory; (default =
+/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/<date>/subjID_visit)
 """
 
 import os
@@ -17,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 LAST_MOD = '5-15-16'
 
@@ -374,14 +375,14 @@ def main():
                 if 'release' not in pipeline_version:
                     print '\nthis may or may not workout if this is not a standard HCP_release! *fingers crossed*'
 
-                print 'visit_id is : %s\npipeline_version is: %s\n' % (visit_id, pipeline_version)
+                print '\npipeline_version is: %s\n' % pipeline_version
 
                 with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
 
                     info = '''
-                            Executive Summary ran %s
+                            Executive Summary ran on %s
                             pipeline %s was detected
-                            Subject Path provide: %s
+                            Subject Path provided: \n%s
                             Subject Code: %s
                             Visti_ID: %s
                             ''' % (date, pipeline_version, sub_root, subj_id, visit_id)
@@ -391,8 +392,8 @@ def main():
 
             else:
 
-                print 'no subject directory found within %s \nexiting...' % sub
-                _logger.error('no subject directory within %s \nexiting...' % sub)
+                print '\nNo subject directory found within %s \nexiting...' % sub
+                _logger.error('\nNo subject directory within %s \nexiting...' % sub)
 
                 return
 
@@ -400,7 +401,7 @@ def main():
 
                 img_out_path = path.join(sub_root, 'summary', 'img')
                 img_in_path = summary_path
-                subject_code_folder = path.join(summary_path, subj_id, '_' + visit_id)
+                subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
 
             else:
 
@@ -429,7 +430,7 @@ def main():
 
                     _logger.error('no .gifs in summary folder')
                     print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
-                        'Check to make sure the proper scripts have been ran? '
+                        'Check to make sure FNL_preproc has been ran? '
 
                     return
 
@@ -443,7 +444,7 @@ def main():
 
             except OSError:
 
-                    print 'Unable to locate image sources...'
+                    print '\n\tUnable to locate image sources...'
 
                     return
 
@@ -477,8 +478,8 @@ def main():
 
                 # get modality so we can know how to slice it...
                 modality = image_summary.get_subject_info(list_entry)[1]
-                print 'PROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
-                print 'slicing up %s' % list_entry
+                print '\nPROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
+                print 'slicing images for: \n%s' % list_entry
 
                 if 'REST' in modality and 'SBRef' not in modality:
 
@@ -544,7 +545,7 @@ def main():
             sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
-            print 'Assembling epi-images to build panel...'
+            print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
             num_epi_gifs = len(t1_in_epi_gifs)
@@ -571,7 +572,7 @@ def main():
                     epi_rows.append(rest_raw_paths.pop(0))
 
                     newer_body += write_epi_panel_row(epi_rows[:4])
-                    _logger.debug('epi_rows were: %s' % epi_rows)
+                    _logger.debug('\nepi_rows were: %s' % epi_rows)
                     epi_rows = []
 
             # COMPLETE EPI PANEls
@@ -580,19 +581,20 @@ def main():
 
             _logger.debug('newer_body is : %s' % newer_body)
 
-            # TODO: fix this
-            # shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
+            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
             dvars_path = path.join(img_out_path, 'DVARS_and_FD_CONCA.png')
 
             try:
-                structural_img_labels += 'DVARS_and_FD_CONCA.png'
+
                 copy_images(img_in_path, structural_img_labels, img_out_path)  # out: /summary/img/<blah>
 
             except IOError:
 
-                _logger.warning('unable to locate some images. Do they even exist?')
-                print 'Make sure you have all 6 structural .png and DVARS available for this subject: %s' % subj_id
-                print 'Expected path to required images: %s' % img_in_path
+                _logger.warning('\nUnable to locate some structural images. Do they exist?')
+                print '\nMake sure you have all 6 structural .png and DVARS available for this subject: %s_%s' % (
+                    subj_id, visit_id)
+
+                print '\nExpected path to required images: %s' % img_in_path
 
             # FILL-IN THE CODE / VERSION INFO
             new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subj_id, visit_id))
