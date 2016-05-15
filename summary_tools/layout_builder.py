@@ -625,14 +625,14 @@ def main():
 
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
-                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
+                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id + '_' + visit_id)
 
                     print '\nFind your images here: \n\t%s' % qc_folder_out
 
             else:
 
                 qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s/%s' %
-                                          (image_summary.date_stamp, subj_id))
+                                          (image_summary.date_stamp, subj_id + '_' + visit_id))
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
