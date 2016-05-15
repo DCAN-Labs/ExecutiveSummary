@@ -342,6 +342,7 @@ def main():
 
     parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
                         help="Tell me all about it.")
+
 # -------------------------> END ARGS TO PARSE <------------------------ #
     args = parser.parse_args()
 
@@ -360,6 +361,8 @@ def main():
 
             if path.exists(sub_root):
 
+                # ------------------------- > GATHER BASIC INFO < ------------------------- #
+
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
                 subj_id = sub_root.split('/')[-2]
@@ -377,6 +380,7 @@ def main():
 
                 print '\npipeline_version is: %s\n' % pipeline_version
 
+                # ------------------------- > WRITE OUT SUMMARY REPORT < ------------------------- #
                 with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
 
                     info = '''
@@ -385,7 +389,8 @@ def main():
                             Subject Path provided: \n%s
                             Subject Code: %s
                             Visti_ID: %s
-                            ''' % (date, pipeline_version, sub_root, subj_id, visit_id)
+                            Args: \n%s
+                            ''' % (date, pipeline_version, sub_root, subj_id, visit_id, args)
 
                     f.write(info)
                     f.close()
@@ -409,7 +414,7 @@ def main():
                 _logger.error('\nno Summary folder exists within %s\n' % sub_root)
 
                 continue
-
+            # ------------------------- > MAKE /img or quit ... CHECK IMAGES < ------------------------- #
             if not path.exists(img_out_path):
 
                 try:
@@ -448,7 +453,7 @@ def main():
 
                     return
 
-            # Make lists of paths to be used in the epi-panel
+            # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
             epi_in_t1_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
@@ -459,8 +464,9 @@ def main():
 
                 os.makedirs(subject_code_folder)
 
-            # Check list of epi-data to ensure even numbers of files...
+            # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
             # TODO: improve this section with a more specific test
+
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
 
                 _logger.warning('odd number of epi files were found...')
@@ -472,7 +478,7 @@ def main():
                 for sbref in more_epi:
                     data['epi-data'].append(sbref)
 
-            # SLICING UP IMAGES FOR EPI DATA LIST
+            # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
             for list_entry in data['epi-data']:
 
@@ -487,9 +493,7 @@ def main():
                                                      dest_dir=img_out_path, also_xyz=True)
 
                 elif 'SBRef' in modality and 'REST' in modality:
-                    # TODO: verify whether this extra call to get_subj_info is really needed
-                    # modality, series = image_summary.get_subject_info(list_entry)[1],
-                    # image_summary.get_subject_info(list_entry)[2]
+
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % (modality)))
 
             # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
@@ -610,7 +614,8 @@ def main():
             write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subj_id, visit_id))
 
             # -------------------------> END LAYOUT <------------------------- #
-            # PREPARE QC PACKET
+
+            # -------------------------> PREPARE QC PACKET <------------------------- #
             move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
                         'sub_code_folder'  : subject_code_folder,
                         'img_in_path'      : img_in_path}
@@ -643,8 +648,8 @@ def main():
                 shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
     else:
-        print 'no subject path provided!'
-        _logger.error('no subject path provided!')
+        print '\nNo subject path provided!'
+        _logger.error('No subject path provided!')
 
 if __name__ == '__main__':
 
