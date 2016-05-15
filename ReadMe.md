@@ -1,4 +1,4 @@
-# Executive Summary v1.1.2
+# Executive Summary v1.1.3
 
 ## System Requirements
 - Imaging Software Packages Required: 
@@ -84,3 +84,6 @@
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project
+ 
+## Additional Documentation (under construction)
+ - https://fair_lab.gitlab.io/executivesummary/index.html
