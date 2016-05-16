@@ -28,11 +28,12 @@
 - from any beast or qlogin-session to the AIRC, open a terminal and enter: 
  `python /group_shares/PSYCH/code/release/executive_summary/summary_tools/layout_builder.py`
   - flags to add:
-    - `-s /path/to/study/processed/subjID/visitID/pipeline/subjID/`
+    - `-s /share/path/study/processed/subjID/visitID/pipeline/subjID/`
     - `[-s /another/subject ... -s /another...] `
     - `[-o /path/for/outputs/for_review]`
     - `[-v or -vv]`
     - `[--version]`
+    - `[-h for help]`
 
 ## What It Makes
 - _executive\_summary\_(code).html_: a layout of 4 panels for cursory quality assurance
@@ -54,14 +55,15 @@
    - use -s and paths to subject folders, separated by spaces
    - add -o </output/path> to control where the final product is copied for review
    - add -v for verbose output to _log file
-   - add -vv for debugging output to _log file
+   - add -vv for extra debugging output to _log file
    - use --version to print version and exit
+   - use -h to print usage
    
 #### image_summary.py
-   - relies heavily upon mri_info, fslval, and slicer to extract data and create new .png slices
    - use -n to print parameters for any single nifti
    - use -d to print parameters for any single dicom
    - use -v to do extra logging (verbose mode)
+   - use -h to print usage
 
 ### /helpers
 #### shenanigans.py
