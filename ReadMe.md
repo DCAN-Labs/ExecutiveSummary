@@ -18,14 +18,15 @@
      - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and epi coregistrations with functional_)
   - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
      - all __raw__ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
-     - _Note: expected naming convention for structural imaging data is:_ `StudyName_SubjectID_T1w_(modality)
-     (series_num).nii.gz`,
-     - for resting-state and SBRef: `StudyName_SubjectID_REST(series_num)_[SBRef].nii.gz`
-     - e.g. _ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2_SBRef.nii.gz,  ADHD-Youth_1234-1_REST3.nii.gz_
   - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
-
+  
+### Expected naming convention for imaging data 
+  - Structural: `StudyName_SubjectID_T1w_MPR<series_num>.nii.gz`, `StudyName_SubjectID_T2w_SPC<series_num>.nii.gz`
+  - for resting-state and SBRef: `StudyName_SubjectID_REST<series_num>_[SBRef].nii.gz`
+  - e.g. _ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2\_SBRef.nii.gz,  ADHD-Youth\_1234-1\_REST3.nii.gz_
+  
 ## Program Launch
-- from any beast or qlogin-session to the AIRC, open a terminal and enter: 
+- login via beast to the AIRC, open a terminal and enter: 
  `python /group_shares/PSYCH/code/release/executive_summary/summary_tools/layout_builder.py`
   - flags to add:
     - `-s /share/path/study/processed/subjID/visitID/pipeline/subjID/`
@@ -35,18 +36,19 @@
     - `[--version]`
     - `[-h for help]`
 
-## What It Makes
-- _executive\_summary\_(code).html_: a layout of 4 panels for cursory quality assurance
+## Outputs
+- __executive\_summary\_(code).html__: a 4-panel dashboard for cursory quality assurance
     -  T1/T2 Structural Segmentation Slices Panel
     -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
     -  Functional Data Panel _(raw and structurally registered image slices)_
     -  Concatenated Grayordinates Plot
-- a sub-directory 'img' (/summary/img), containing:
+- a sub-directory 'img' (__/summary/img__), containing:
     - new _.pngs_ of orthogonally sliced image rows for each raw and single-band reference, resting-state acquisition series
     - copies of all _.gifs_ from /summary placed in inside the new /summary/img directory
-    - new _.png_ images of each resting-state volume with othogonal slice-positions in regions known to be affected by susceptibility artifacts, or other issues that commonly occur during processing
-- a new output folder with copies of each summary page requested
-- some _\_log_ files for debugging
+    - new _.png_ images of each resting-state volume with othogonal slice-positions
+- an output folder with copies of each summary requested for convenience
+(__/summary/subjID_visitID__)
+- some __\_log__ files for debugging
 
 ## Architecture
 ### /group_shares/PSYCH/code/release/utilities/executive_summary
