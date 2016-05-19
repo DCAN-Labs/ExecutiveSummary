@@ -18,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 
 LAST_MOD = '5-15-16'
 

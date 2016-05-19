@@ -16,7 +16,7 @@ sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.5.0'
+VERSION = '0.5.1'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -209,7 +209,7 @@ def get_nii_info(path_to_nii, info=None):
     Runs fslval on a given nifti file and can take an optional info set.
 
     :param path_to_nii: full path to nii or nii.gz
-    :param info: optional info list of subject_code, modality, series
+    :param info: optional info LIST of 3 items: subject_code, modality, series
     :return: row of data in a list, length 8
     """
 
@@ -509,7 +509,7 @@ def main():
     _logger.debug('args are: %s' % args)
 
     # write out the first row of our data rows to setup column headers
-    data_rows = [['Modality', 'x', 'y', 'z', 'TR', 'TE', 'frames', 'TI']]
+    data_rows = [['Modality', 'x', 'y', 'z', 'TE', 'TR', 'frames', 'TI']]
 
     if args.verbose:
         _logger.setLevel(logging.INFO)
@@ -533,9 +533,9 @@ def main():
         nifti_path = path.join(args.nifti_path)
         if path.exists(nifti_path):
             nii_params = get_nii_info(nifti_path)
-
-            print 'parameters are: %s ' % nii_params
-            param_table = path.join(nifti_path, 'Params.csv')
+            data_rows.append(nii_params)
+            print 'parameters are: %s ' % data_rows
+            param_table = path.join(os.path.dirname(nifti_path), 'Params.csv')
             data_rows.append(nii_params)
             write_csv(data_rows, param_table)
         else:

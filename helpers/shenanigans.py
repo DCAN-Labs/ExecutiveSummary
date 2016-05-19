@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+"""
+__author__ = 'Shannon Buckley', 12/27/15
+"""
 
 import os
 from os import path
 import subprocess
-import re
 
 
 def rename_structural(path_to_image_dump):
     """
+    Takes list of unlabeled png and renames them in-place.
     :param path_to_image_dump: directory containing inputs (will also serve as output dir)
     :return: list of new image paths
     """
@@ -28,6 +31,8 @@ def rename_structural(path_to_image_dump):
 
 def rename_image(img_path):
     """
+    Takes an image path, renames it according to images_dict.
+
     :img_path should be full-path to any image file
     :returns renamed, full-path to new image filename
     """
@@ -46,7 +51,7 @@ def rename_image(img_path):
 
 def get_dcm_info(path_to_dicom, modality=None):
     """
-    Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TR, TE, nFrames, TI]
+    Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TE, TR, nFrames, TI]
 
     :param path_to_dicom: full-path to any single .dcm file
     :param modality: optional string you want used as a label for this dicom file
@@ -57,8 +62,8 @@ def get_dcm_info(path_to_dicom, modality=None):
 
     cmd = 'echo %s,' % modality
     cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TE
+    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TR
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
