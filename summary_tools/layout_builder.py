@@ -18,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.1.3'
+VERSION = '1.1.4'
 
 LAST_MOD = '5-15-16'
 
@@ -616,7 +616,7 @@ def main():
             # -------------------------> END LAYOUT <------------------------- #
 
             # -------------------------> PREPARE QC PACKET <------------------------- #
-            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
+            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; cp -R %(img_in_path)s/img %(sub_code_folder)s" % {
                         'sub_code_folder'  : subject_code_folder,
                         'img_in_path'      : img_in_path}
 
