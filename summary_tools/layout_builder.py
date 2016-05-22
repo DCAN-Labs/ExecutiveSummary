@@ -20,7 +20,7 @@ import logging
 PROG = 'Layout Builder'
 VERSION = '1.1.4'
 
-LAST_MOD = '5-15-16'
+LAST_MOD = '5-18-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -341,7 +341,7 @@ def main():
     parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me more...")
 
     parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
-                        help="Tell me all about it.")
+                        help="Print version.")
 
 # -------------------------> END ARGS TO PARSE <------------------------ #
     args = parser.parse_args()
@@ -424,7 +424,7 @@ def main():
                 except OSError:
 
                     print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                    _logger.error('cannot make /img within /summary... permissions?')
+                    _logger.error('cannot make /img within /summary... permissions? \nPath: %s' % summary_path)
 
                     return
 
