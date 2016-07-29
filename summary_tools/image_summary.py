@@ -16,7 +16,7 @@ sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.5.1'
+VERSION = '0.6.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -116,6 +116,14 @@ def get_subject_info(path_to_nii_file):
 
     if p_count < 2:
         _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
+
+    elif p_count == 2 and 'Scout' in parts[1]:
+
+        _logger.info('raw SBRef file: %s' % parts)
+        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
+        modality = 'SBRef'
+
+        series_num = path.basename(path.dirname(path_to_nii_file))
 
     elif p_count == 2 and 'SBRef' in parts[1]:
 
