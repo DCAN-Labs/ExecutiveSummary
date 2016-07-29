@@ -18,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
@@ -39,6 +39,10 @@ def get_parser():
     parser.add_argument('-o', '--output_path', dest='output_path', action='store',
                         help='''Expects path to a folder you can write to in order to copy final outputs there. Final
                         goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
+
+    parser.add_argument('--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
+
+    parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
 
     return parser
 
@@ -474,7 +478,7 @@ def main():
                 # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
 
                 # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-                # pattern = alt_sbref_path + '/REST??/REST??_SBRef.nii.gz'
+                # pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
                 # more_epi = glob.glob(pattern)
                 #
                 # for sbref in more_epi:
@@ -482,7 +486,7 @@ def main():
 
                 # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
                 alternate_sbref_path = path.join(sub_root)
-                sbref_pattern = alternate_sbref_path + '/REST??/Scout_orig.nii.gz'
+                sbref_pattern = alternate_sbref_path + '/REST?/Scout_orig.nii.gz'
 
                 more_sbref = glob.glob(sbref_pattern)
                 print 'found additional SBRef files: %s' % more_sbref
