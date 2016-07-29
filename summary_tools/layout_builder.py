@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-__author__ = 'Shannon Buckley', 2/20/16
-
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
 -o for optional output_directory; (default =
 /group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/<date>/subjID_visit)
+
+__author__ = 'Shannon Buckley', 2/20/16
 """
 
 import os
@@ -18,15 +18,29 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.1.4'
-
-LAST_MOD = '5-18-16'
+VERSION = '1.2.0'
+LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
 Use -s /path/to/subjectfolder/with/summary_subfolder to launch and build a summary page.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
+
+
+def get_parser():
+
+    parser = argparse.ArgumentParser(description=program_desc, prog=PROG, version=VERSION)
+
+    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append',
+                        help='''Expects path to a subject-level directory of processed data, which should have a
+                        'summary' folder within (e.g./remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/)''')
+
+    parser.add_argument('-o', '--output_path', dest='output_path', action='store',
+                        help='''Expects path to a folder you can write to in order to copy final outputs there. Final
+                        goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
+
+    return parser
 
 # HTML BUILDING BLOCKS
 html_header = """<!DOCTYPE html>
@@ -100,9 +114,9 @@ def write_html(template, dest_dir, title="executive_summary.html"):
     """
     Takes an html template string and a destination, then writes it out to a default title.
 
-    :param template: path to html template
-    :param dest_dir: output path for final .html file
-    :param title: string to apply to output
+    :parameter: template: path to html template
+    :parameter: dest_dir: output path for final .html file
+    :parameter: title: string to apply to output
     :return: None
     """
 
@@ -121,7 +135,7 @@ def write_structural_panel(list_of_image_paths):
     """
     Builds a panel of orthogonally sliced T1 and T2 images with pial and white matter surface overlays from Freesurfer.
 
-    :param list_of_image_paths: list of 6 image paths for the structural image panel
+    :parameter: list_of_image_paths: list of 6 image paths for the structural image panel
     :return: string of html containing a div row with an images table
     """
 
@@ -167,9 +181,9 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
     """
     Takes some html string, does a find/replace on it.
 
-    :param html_string: any string, really
-    :param thing_to_find: any string
-    :param thing_that_replaces_it: replacement string
+    :parameter: html_string: any string, really
+    :parameter: thing_to_find: any string
+    :parameter: thing_that_replaces_it: replacement string
     :return: new string with replacement
     """
 
@@ -182,7 +196,7 @@ def write_param_table_row(list_of_data):
     """
     Takes a list of data and fills in one row in the parameter table per datum
 
-    :param list_of_data: list of data with 8 elements
+    :parameter: list_of_data: list of data with 8 elements
     :return: param_table_row with specific metrics (8 columns)
     """
 
@@ -218,7 +232,7 @@ def write_epi_panel_row(list_of_img_paths):
     """
     Takes a list of image paths and builds one row of epi_images for the panel.
 
-    :param list_of_img_paths: list of paths
+    :parameter: list_of_img_paths: list of paths
     :return: one row of an html table, <tr> to </tr> with epi-images for a given series
     """
 
@@ -246,9 +260,9 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     """
     Takes a list of panel rows (html_strings), a header and footer to build the full epi-panel.
 
-    :param epi_rows_list: list of data rows (strings)
-    :param header: div section opener
-    :param footer: dev section closer
+    :parameter: epi_rows_list: list of data rows (strings)
+    :parameter: header: div section opener
+    :parameter: footer: dev section closer
     :return: html string for the whole epi-panel div (one row of images per REST)
     """
 
@@ -265,7 +279,7 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
     """
     Takes a path to a specific image and writes up a div for it
 
-    :param dvars_input_path: path to DVARS image.png expected
+    :parameter: dvars_input_path: path to DVARS image.png expected
     :return: div section string for DVARS
     """
 
@@ -294,8 +308,8 @@ def append_html_with_chunk(existing_html, string_to_insert):
     """
     Takes some html string, appends a chunk to it, returns the new chunk+extension.
 
-    :param existing_html: string
-    :param string_to_insert: another string
+    :parameter: existing_html: string
+    :parameter: string_to_insert: another string
     :return: appended string
     """
 
@@ -308,9 +322,9 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     """
     Takes a source dir and a list of images, copies them to a default destination ./img.
 
-    :param src_dir: copy from path
-    :param list_of_images: list of image names to copy (full paths not expected)
-    :param dst_dir: copy to  path
+    :parameter: src_dir: copy from path
+    :parameter: list_of_images: list of image names to copy (full paths not expected)
+    :parameter: dst_dir: copy to  path
     :return: None
     """
 
@@ -326,24 +340,8 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
 
 def main():
 
-    parser = argparse.ArgumentParser(description=program_desc, prog=PROG)
+    parser = get_parser()
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append',
-                        help='''Expects path to a subject-level directory of processed data, which should have a
-                        'summary' folder within (e.g./remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/)''')
-
-    parser.add_argument('-o', '--output_path', dest='output_path', action='store',
-                        help='''Expects path to a folder you can write to in order to copy final outputs there. Final
-                        goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
-
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
-
-    parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me more...")
-
-    parser.add_argument('--version', dest="version", action="version", version="%(prog)s_v" + VERSION,
-                        help="Print version.")
-
-# -------------------------> END ARGS TO PARSE <------------------------ #
     args = parser.parse_args()
 
     if args.verbose:
@@ -400,8 +398,9 @@ def main():
                 print '\nNo subject directory found within %s \nexiting...' % sub
                 _logger.error('\nNo subject directory within %s \nexiting...' % sub)
 
-                return
+                continue
 
+            # --------------------------------- > SETUP PATHS < --------------------------------- #
             if path.exists(summary_path):
 
                 img_out_path = path.join(sub_root, 'summary', 'img')
@@ -470,13 +469,27 @@ def main():
             if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
 
                 _logger.warning('odd number of epi files were found...')
-                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
-                alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-                pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
-                more_epi = glob.glob(pattern)
+                print '\nLooking for SBRef images...\n'
 
-                for sbref in more_epi:
+                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
+
+                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
+                # pattern = alt_sbref_path + '/REST??/REST??_SBRef.nii.gz'
+                # more_epi = glob.glob(pattern)
+                #
+                # for sbref in more_epi:
+                #     data['epi-data'].append(sbref)
+
+                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
+                alternate_sbref_path = path.join(sub_root)
+                sbref_pattern = alternate_sbref_path + '/REST??/Scout_orig.nii.gz'
+
+                more_sbref = glob.glob(sbref_pattern)
+                print 'found additional SBRef files: %s' % more_sbref
+
+                for sbref in more_sbref:
                     data['epi-data'].append(sbref)
+
 
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
@@ -567,6 +580,7 @@ def main():
                 print 'ack, something went wrong while trying to assemble epi-data! exiting...'
                 continue
             else:
+
                 # APPEND NEW EPI-PANEL SECTIONS
                 newer_body = new_body + epi_panel_header
                 for i in range(0, num_epi_gifs):
@@ -616,7 +630,7 @@ def main():
             # -------------------------> END LAYOUT <------------------------- #
 
             # -------------------------> PREPARE QC PACKET <------------------------- #
-            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; cp -R %(img_in_path)s/img %(sub_code_folder)s" % {
+            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
                         'sub_code_folder'  : subject_code_folder,
                         'img_in_path'      : img_in_path}
 
