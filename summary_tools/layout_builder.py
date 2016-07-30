@@ -18,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
