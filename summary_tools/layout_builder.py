@@ -18,7 +18,7 @@ import shutil
 import logging
 
 PROG = 'Layout Builder'
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
@@ -489,7 +489,7 @@ def main():
                 sbref_pattern = alternate_sbref_path + '/REST?/Scout_orig.nii.gz'
 
                 more_sbref = glob.glob(sbref_pattern)
-                print 'found additional SBRef files: %s' % more_sbref
+                # print 'found additional SBRef files: %s' % more_sbref
 
                 for sbref in more_sbref:
                     data['epi-data'].append(sbref)
@@ -499,8 +499,10 @@ def main():
 
             for list_entry in data['epi-data']:
 
-                # get modality so we can know how to slice it...
-                modality = image_summary.get_subject_info(list_entry)[1]
+                info = image_summary.get_subject_info(list_entry)
+
+                # get modality / series so we can know how to slice & label ...
+                modality, series = info[1], info[2]
                 print '\nPROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
                 print 'slicing images for: \n%s' % list_entry
 
@@ -511,7 +513,12 @@ def main():
 
                 elif 'SBRef' in modality and 'REST' in modality:
 
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % (modality)))
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
+                elif 'SBRef' in modality:
+
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
+                                                                                                             series)))
 
             # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
             for list_entry in data.values():
@@ -564,6 +571,7 @@ def main():
             rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list])
             # print rest_raw_paths
             sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            # print sb_ref_paths
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
