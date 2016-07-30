@@ -16,9 +16,11 @@ from image_summary import _logger
 import glob
 import shutil
 import logging
+import sys
+from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.2.3'
+VERSION = '1.3.0'
 LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
@@ -39,6 +41,9 @@ def get_parser():
     parser.add_argument('-o', '--output_path', dest='output_path', action='store',
                         help='''Expects path to a folder you can write to in order to copy final outputs there. Final
                         goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
+
+    parser.add_argument('-l', '--list_file', dest='list_file', required=False, help="""Optional: path to file containing
+    list of processed-subject-paths, e.g. /scratch/HCP/processed/ASD-blah/subjCode/VisitID/subjCode .""")
 
     parser.add_argument('--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
@@ -354,6 +359,29 @@ def main():
         _logger.setLevel(logging.DEBUG)
     else:
         _logger.setLevel(logging.ERROR)
+
+    if args.list_file:
+
+        file_we_read_in = path.join(args.list_file)
+
+        if not path.exists(file_we_read_in) or not file_we_read_in.endswith('.txt'):
+            shenanigans.update_user('List FILE (.txt) does not exist, please verify your path to: \n%s' %
+                                    file_we_read_in)
+            sys.exit()
+
+        if path.exists(file_we_read_in):
+
+            paths_to_process = shenanigans.read_list_file(file_we_read_in)
+
+            # print paths_to_process
+
+            for path_to_proc in paths_to_process:
+
+                path_to_proc = path_to_proc.strip('\n')
+
+                command = 'python %s -s %s' % (sys.argv[0], path.join(path_to_proc))
+
+                shenanigans.submit_command(command)
 
     if args.subject_path:
 

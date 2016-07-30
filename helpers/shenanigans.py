@@ -140,7 +140,35 @@ def grab_te_from_dicom(path_to_dicom):
 
     echo_time = output.strip("\n").split(',')
 
-    return echo_time
+    return format(float(echo_time), '.2f')
+
+
+def update_user(info):
+    """
+    Print prettily for user.
+
+    :parameter: info: string
+    :return: None
+    """
+
+    print '\n%s\n' % info
+
+
+def read_list_file(path_to_file):
+    """
+    Takes path to a file with one line per processed-dataset you want to check.
+
+    :parameter: path_to_file: path to the list_file.txt
+    :return: list of lines from the file
+    """
+
+    with open(path_to_file, 'r') as f:
+
+        lines_in_file = f.readlines()
+
+        f.close()
+
+    return lines_in_file
 
 
 def get_searchable_parts_from_processed_path(path_to_processed_subject_data):

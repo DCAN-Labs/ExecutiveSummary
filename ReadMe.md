@@ -1,4 +1,4 @@
-# Executive Summary v1.2.3
+# Executive Summary v1.3.0
 
 ## System Requirements
 - Imaging Software Packages Required: 
@@ -54,6 +54,7 @@
 ### /group_shares/PSYCH/code/release/utilities/executive_summary
 ### /summary_tools
 #### layout_builder.py
+   - use -l and a path to a .txt file containing your subject-paths (single column)
    - use -s and paths to subject folders, separated by spaces
    - add -o </output/path> to control where the final product is copied 
    - add --verbose for verbose output to _log file
@@ -86,6 +87,7 @@
   - image sizing for some raw data sets may be small and require zooming-in on your browser to view
 
 ## Recent Updates
+  - v1.3.0: add list-mode support! (supply a list of processed paths)
   - v1.2.3: floating points now have only 2 decimal places
   - v1.2.2: SBRef data can be found elsewhere when we do not have Raw
   
