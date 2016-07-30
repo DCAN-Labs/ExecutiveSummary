@@ -16,7 +16,7 @@ sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.6.1'
+VERSION = '0.7.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -244,6 +244,9 @@ def get_nii_info(path_to_nii, info=None):
 
         print '\n--->%s... is the wrong file type<---' % path.join(path_to_nii)
 
+    if modality == '':
+        modality = 'UnknownModality'
+
     cmd = 'echo %s,' % modality
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
@@ -258,7 +261,19 @@ def get_nii_info(path_to_nii, info=None):
 
     output = submit_command(cmd)
 
-    data = output.strip("\n").split(',')
+    output = output.strip('\n').split(',')
+
+    modality = output[0]
+
+    floats_list = []
+
+    for value in output[1:]:
+
+        floats_list.append(format(float(value), '.2f'))
+
+    data = [modality] + floats_list
+
+    #print data
 
     return data
 
