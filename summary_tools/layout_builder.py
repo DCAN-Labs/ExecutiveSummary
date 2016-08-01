@@ -20,8 +20,8 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.3.0'
-LAST_MOD = '7-28-16'
+VERSION = '1.4.0'
+LAST_MOD = '8-1-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -391,24 +391,34 @@ def main():
 
             if path.exists(sub_root):
 
+                sub_root = shenanigans.handle_trailing_slash(sub_root)
+
                 # ------------------------- > GATHER BASIC INFO < ------------------------- #
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
-                subj_id = sub_root.split('/')[-2]
+                dicom_root, subj_id, visit_id, pipeline_version = \
+                    shenanigans.get_searchable_parts_from_processed_path(sub_root)
 
-                visit_id = sub_root.split('/')[-4]
-
-                print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
-
-                pipeline_version = sub_root.split('/')[-3]
-
-                date = image_summary.date_stamp
+                # path_parts = sub_root.split('/')
+                #
+                #
+                #
+                # subj_id = path_parts[-1]
+                #
+                # pipeline_version = path_parts[-2]
+                #
+                # visit_id = path_parts[-3]
 
                 if 'release' not in pipeline_version:
                     print '\nthis may or may not workout if this is not a standard HCP_release! *fingers crossed*'
 
                 print '\npipeline_version is: %s\n' % pipeline_version
+
+                shenanigans.update_user('SubjID and Visit: \n%s %s\nPipeline: %s' % (subj_id, visit_id,
+                                                                                     pipeline_version))
+
+                date = image_summary.date_stamp
 
                 # ------------------------- > WRITE OUT SUMMARY REPORT < ------------------------- #
                 with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
@@ -512,7 +522,6 @@ def main():
                 # for sbref in more_epi:
                 #     data['epi-data'].append(sbref)
 
-                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
                 alternate_sbref_path = path.join(sub_root)
                 sbref_pattern = alternate_sbref_path + '/REST?/Scout_orig.nii.gz'
 
@@ -555,9 +564,27 @@ def main():
 
                 for item in list_entry:
 
+                    information = image_summary.get_subject_info(item)
+
+                    modality, series = information[1], information[2]
+
+                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
+
+                    nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
+
+                    print '\nTE for this file was: %s\n' % nifti_te
+
                     print '\nadding %s to list of data, for which we need parameters...\n' % item
+
                     _logger.debug('data_list is: %s' % data)
+
                     params_row = image_summary.get_nii_info(item)
+
+                    alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
+                    print '\nTESTING PARAMS GETTER.....\n'
+                    print '\nOld Way params_row = %s\n' % params_row
+                    print '\nNew Way alt_params_row = %s\n' % alt_params_row
+
                     real_data.append(params_row)
 
             # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
