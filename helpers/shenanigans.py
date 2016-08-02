@@ -140,56 +140,132 @@ def grab_te_from_dicom(path_to_dicom):
 
     echo_time = output.strip("\n").split(',')
 
-    return echo_time
+    return format(float(echo_time), '.2f')
+
+
+def update_user(info):
+    """
+    Print prettily for user.
+
+    :parameter: info: string
+    :return: None
+    """
+
+    print '\n%s\n' % info
+
+
+def read_list_file(path_to_file):
+    """
+    Takes path to a file with one line per processed-dataset you want to check.
+
+    :parameter: path_to_file: path to the list_file.txt
+    :return: list of lines from the file
+    """
+
+    with open(path_to_file, 'r') as f:
+
+        lines_in_file = f.readlines()
+
+        f.close()
+
+    return lines_in_file
+
+
+def handle_trailing_slash(directory):
+    """
+    Takes a directory and returns it back without any trailing slash, if present.
+
+    :parameter directory: path to a directory with or without a trailing slash (you don't have to know which)
+    :return: directory path without trailing slash
+    """
+
+    if path.join(directory).endswith('/'):
+
+        return directory.rstrip('/')
+    else:
+        return path.join(directory)
+
+
+def get_airc_dicom_path_from_nifti_info(processed_subject_path, modality_name):
+    """
+    Uses another helper function to find a dicom path for a given nifti modality and subject/visit
+
+    :parameter processed_subject_path:
+    :parameter modality_name: string identifying the modality of the nifti file
+    :return: path to the "top-most" .dcm file returned by the shell command 'ls -1 head'
+    """
+
+    dicom_root_dir = get_searchable_parts_from_processed_path(processed_subject_path)
+
+    if dicom_root_dir:
+
+        acquisitions = os.listdir(dicom_root_dir)
+        print 'Folders found within dicom root directory for this subject: \n%s' % acquisitions
+
+        for folder in acquisitions:
+            if modality_name in folder:
+                # take the first match you get... for now that should be fine / stable?
+                dcm_file = submit_command('ls %s/*.dcm | head -1' % folder)
+
+                return path.abspath(dcm_file)
 
 
 def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
+    """
+    Takes only the path to the processed_subject_directory, handles trailing slashes and finds /dicom, if exists.
 
-    # TODO: needs testing on airc, wrote this in the dark...
+    :parameter path_to_processed_subject_data:
+    :return: (tuple) dicom root, subjid, visit_id, pipeline_version
+    """
 
-    pipeline_folder_path = path.join(path_to_processed_subject_data)
+    sub_root = handle_trailing_slash(path_to_processed_subject_data)
 
-    os.chdir(pipeline_folder_path)
+    path_parts = sub_root.split('/')
 
-    print os.getcwd()
-    os.chdir('../')
-    print os.getcwd()
-    print 'pardir is\n %s' % path.abspath(path.pardir)
-    study_folder = os.getcwd()
-    os.chdir('../')
+    pipeline_version = path_parts[-2]
 
-    subject_encoded_folder = os.getcwd()
+    subj_id = path_parts[-1]
 
-    study_folder_root = path.basename(study_folder)
+    visit_id = path_parts[-3]
 
-    year = path.basename(study_folder).split('_')[0][:4]
+    if 'release' not in pipeline_version.lower():
+        update_user('Not a HCP_generic-like structure with final directory=subject_code...Using Old-School '
+                    'Structure...')
+        pipeline_version = path_parts[-1]
+        visit_id = path_parts[-2]
+        subj_id = path_parts[-3]
 
-    month = path.basename(study_folder).split('_')[0][4:6]
+    print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
 
-    day = path.basename(study_folder).split('_')[0][6:8]
+    update_user('pipeline_version is: %s\n' % pipeline_version)
 
-    print 'subject data path:\n %s \nstudy_folder:\n %s\nsubject-coded-path:\n %s' % (pipeline_folder_path,
-                                                                                      study_folder,
-                                                                               subject_encoded_folder)
-    print 'year month day == %s %s %s' % (year, month, day)
+    date_section = path.basename(visit_id).split('_')[0]
 
-    subject_code = path.basename(subject_encoded_folder).split('_')[0]
+    year = date_section[:4]
 
-    print subject_code
+    month = date_section[4:6]
 
-    dicom_root = '/dicom/%(year)s/%(month)s/%(subject_ID)s_blah_blah/%(day)s_1234/' % {'year': year,
-                                                                  'month': month,
-                                                                  'day' : day,
-                                                                  'subject_ID': subject_code}
+    day = date_section[6:8]
 
-    print dicom_root
+    update_user('year month day == %s %s %s' % (year, month, day))
+
+    dicom_root = '/dicom/%(year)s/%(month)s/%(subject_ID)s/%(day)s_%(subj_id_no_dash)s)/' % {
+
+          'year'            : year,
+          'month'           : month,
+          'day'             : day,
+          'subject_ID'      : subj_id,
+          'subj_id_no_dash' : subj_id[:-2]
+    }
+
+    update_user('dicom root is: \n%s' % dicom_root)
 
     if path.exists(dicom_root):
-        print os.listdir(path.join(dicom_root))[0]
+        print os.listdir(dicom_root)[0]
+    else:
+        update_user('Unable to locate dicom root on the airc...\ncheck: %s' % dicom_root)
 
-    # TODO: once we know where each series is located, we can find the series we need from the list of directories
-    # TODO: then we can find any dicom in each, and send that absolute path to 'grab_te_from_dicom'
-    return dicom_root
+    return dicom_root, subj_id, visit_id, pipeline_version
 
 # describes existing set of structural images... may need adjustments to other locations / names
 images_dict = {
@@ -215,6 +291,12 @@ images_dict = {
 
 
 def make_img_list(path_to_dir):
+    """
+    Takes path to any directory, and returns a list of image_paths for all .gif an .png found via listdir()
+
+    :parameter path_to_dir: directory where you think there will be *.gif or *.png and you don't care which / how many
+    :return: list of image paths
+    """
 
     images = []
     for image in os.listdir(path_to_dir):

@@ -1,4 +1,4 @@
-# Executive Summary v1.1.4
+# Executive Summary v1.3.0
 
 ## System Requirements
 - Imaging Software Packages Required: 
@@ -54,17 +54,18 @@
 ### /group_shares/PSYCH/code/release/utilities/executive_summary
 ### /summary_tools
 #### layout_builder.py
+   - use -l and a path to a .txt file containing your subject-paths (single column)
    - use -s and paths to subject folders, separated by spaces
-   - add -o </output/path> to control where the final product is copied for review
-   - add -v for verbose output to _log file
+   - add -o </output/path> to control where the final product is copied 
+   - add --verbose for verbose output to _log file
    - add -vv for extra debugging output to _log file
-   - use --version to print version and exit
    - use -h to print usage
    
 #### image_summary.py
    - use -n to print parameters for any single nifti
    - use -d to print parameters for any single dicom
-   - use -v to do extra logging (verbose mode)
+   - use --verbose for extra logging 
+   - use -vv to do even more logging 
    - use -h to print usage
 
 ### /helpers
@@ -84,7 +85,12 @@
 ## Known Issues
   - TE and TI displayed as 0.00
   - image sizing for some raw data sets may be small and require zooming-in on your browser to view
-  - non-significant zeroes in some parameters panel rows
+
+## Recent Updates
+  - v1.3.0: add list-mode support! (supply a list of processed paths)
+  - v1.2.3: floating points now have only 2 decimal places
+  - v1.2.2: SBRef data can be found elsewhere when we do not have Raw
+  
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project

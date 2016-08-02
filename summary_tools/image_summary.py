@@ -16,7 +16,7 @@ sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.5.1'
+VERSION = '0.7.0'
 
 program_desc = """%(prog)s v%(ver)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
@@ -115,7 +115,16 @@ def get_subject_info(path_to_nii_file):
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
 
     if p_count < 2:
-        _logger.error('not enough parts for this to be a "good summary_tools": %s' % p_count)
+        _logger.error('not enough file string parts for this to be a "good summary": %s' % p_count)
+
+    elif p_count == 2 and 'Scout' in parts:
+
+        _logger.info('raw SBRef file: %s' % parts)
+        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
+        modality = 'SBRef'
+
+        series_num = path.basename(path.dirname(path_to_nii_file))[-1]
+        # print 'series_num: %s' % series_num
 
     elif p_count == 2 and 'SBRef' in parts[1]:
 
@@ -194,8 +203,8 @@ def write_csv(data, filepath):
     """
     Takes a list of data rows and writes out a csv file to the path provided.
 
-    :param data: list of lists, with each inner-list being one row of data
-    :param filepath: path to file-out.csv
+    :parameter: data: list of lists, with each inner-list being one row of data
+    :parameter: filepath: path to file-out.csv
     :return: None
     """
     f = open(filepath, 'wb')
@@ -208,8 +217,8 @@ def get_nii_info(path_to_nii, info=None):
     """
     Runs fslval on a given nifti file and can take an optional info set.
 
-    :param path_to_nii: full path to nii or nii.gz
-    :param info: optional info LIST of 3 items: subject_code, modality, series
+    :parameter: path_to_nii: full path to nii or nii.gz
+    :parameter: info: optional info LIST of 3 items: subject_code, modality, series
     :return: row of data in a list, length 8
     """
 
@@ -235,6 +244,9 @@ def get_nii_info(path_to_nii, info=None):
 
         print '\n--->%s... is the wrong file type<---' % path.join(path_to_nii)
 
+    if modality == '':
+        modality = 'UnknownModality'
+
     cmd = 'echo %s,' % modality
     cmd += '`fslval %s pixdim1`,' % path_to_nii  # x
     cmd += '`fslval %s pixdim2`,' % path_to_nii  # y
@@ -249,7 +261,19 @@ def get_nii_info(path_to_nii, info=None):
 
     output = submit_command(cmd)
 
-    data = output.strip("\n").split(',')
+    output = output.strip('\n').split(',')
+
+    modality = output[0]
+
+    floats_list = []
+
+    for value in output[1:]:
+
+        floats_list.append(format(float(value), '.2f'))
+
+    data = [modality] + floats_list
+
+    #print data
 
     return data
 
@@ -500,7 +524,7 @@ def main():
     parser.add_argument('-n', '--nii-path', dest='nifti_path', help="Uses fslval to grab params via the given full "
                                                                     "path to any nii or nii.gz file.")
 
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
+    parser.add_argument('--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
     parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
 
