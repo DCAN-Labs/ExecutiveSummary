@@ -395,13 +395,13 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
-                subj_id = sub_root.split('/')[-2]
+                subj_id = sub_root.split('/')[-1]
 
-                visit_id = sub_root.split('/')[-4]
+                visit_id = sub_root.split('/')[-3]
 
                 print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
 
-                pipeline_version = sub_root.split('/')[-3]
+                pipeline_version = sub_root.split('/')[-2]
 
                 date = image_summary.date_stamp
 
@@ -498,29 +498,36 @@ def main():
             # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
             # TODO: improve this section with a more specific test
 
-            if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+#            if len(data['epi-data']) == len(glob.glob(path.join(sub_root,'REST*'))):  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+#
+#                _logger.warning('odd number of epi files were found...')
+#                print '\nLooking for SBRef images...\n'
+#
+#                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST*
+#
+#                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
+#                # pattern = alt_sbref_path + '/REST*/REST*_SBRef.nii.gz'
+#                # more_epi = glob.glob(pattern)
+#                #
+#                # for sbref in more_epi:
+#                #     data['epi-data'].append(sbref)
+#
+#                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
+#                alternate_sbref_path = path.join(sub_root)
+#                sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
+#
+#                more_sbref = glob.glob(sbref_pattern)
+#                # print 'found additional SBRef files: %s' % more_sbref
+#
+#                for sbref in more_sbref:
+#                    data['epi-data'].append(sbref)
 
-                _logger.warning('odd number of epi files were found...')
-                print '\nLooking for SBRef images...\n'
-
-                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
-
-                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-                # pattern = alt_sbref_path + '/REST?/REST?_SBRef.nii.gz'
-                # more_epi = glob.glob(pattern)
-                #
-                # for sbref in more_epi:
-                #     data['epi-data'].append(sbref)
-
-                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
-                alternate_sbref_path = path.join(sub_root)
-                sbref_pattern = alternate_sbref_path + '/REST?/Scout_orig.nii.gz'
-
-                more_sbref = glob.glob(sbref_pattern)
-                # print 'found additional SBRef files: %s' % more_sbref
-
-                for sbref in more_sbref:
-                    data['epi-data'].append(sbref)
+            print '\nLooking for SBRef images...\n'
+            alternate_sbref_path = path.join(sub_root)
+            sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
+            more_sbref = glob.glob(sbref_pattern)
+            for sbref in more_sbref:
+                data['epi-data'].append(sbref)
 
 
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
@@ -593,10 +600,10 @@ def main():
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, 'REST?.png')
+            raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list])
+            rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
             # print rest_raw_paths
             sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
             # print sb_ref_paths
@@ -609,15 +616,18 @@ def main():
 
             if num_epi_gifs != len(epi_in_t1_gifs):
                 _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
-                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                print 'ack 1, something went wrong while trying to assemble epi-data! exiting...'
+                print num_epi_gifs,epi_in_t1_gifs
                 continue
             elif num_epi_gifs != len(rest_raw_paths):
                 _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
-                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                print 'ack 2, something went wrong while trying to assemble epi-data! exiting...'
+                print num_epi_gifs,rest_raw_paths
                 continue
             elif num_epi_gifs != len(sb_ref_paths):
                 _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
-                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                print 'ack 3, something went wrong while trying to assemble epi-data! exiting...'
+                print num_epi_gifs,sb_ref_paths
                 continue
             else:
 

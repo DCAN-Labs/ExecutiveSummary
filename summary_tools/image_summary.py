@@ -170,6 +170,13 @@ def get_subject_info(path_to_nii_file):
         subject_code = parts[1]
         modality += '_' + series_num
 
+    elif p_count == 4 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
+
+        _logger.info('raw REST file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
+        modality = parts[3]
+        series_num = parts[3]
+
     elif p_count == 4 and 'SBRef' not in parts:
 
         _logger.info('file string parts were: %s' % parts)
@@ -183,6 +190,20 @@ def get_subject_info(path_to_nii_file):
         if len(parts) == 2:  # parts now 2 fewer and we check what's left
 
             subject_code = parts[1]
+
+    elif p_count == 5 and 'T1w' in parts:
+
+        _logger.info('T2 file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
+        modality = parts[3]
+        series_num = parts[4]
+
+    elif p_count == 5 and 'T2w' in parts:
+
+        _logger.info('T2 file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
+        modality = parts[3]
+        series_num = parts[4]
 
     elif p_count == 5:
 
