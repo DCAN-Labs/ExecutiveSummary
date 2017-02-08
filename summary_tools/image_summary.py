@@ -12,7 +12,8 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+#sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+sys.path.append('/mnt/max/shared/code/internal/utilities/executivesummary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
@@ -290,7 +291,16 @@ def get_nii_info(path_to_nii, info=None):
 
     for value in output[1:]:
 
-        floats_list.append(format(float(value), '.2f'))
+        try:
+            value = format(float(value), '.2f')
+            
+        except ValueError:
+            if value:  # If not an empty string
+                value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
+            else:
+                value = 'Not found'
+
+        floats_list.append(value)
 
     data = [modality] + floats_list
 
