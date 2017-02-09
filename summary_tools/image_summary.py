@@ -294,6 +294,7 @@ def get_nii_info(path_to_nii, info=None):
         try:
             value = format(float(value), '.2f')
             
+        # If there is non-number input, remove it
         except ValueError:
             if value:  # If not an empty string
                 value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
