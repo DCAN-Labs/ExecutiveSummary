@@ -12,8 +12,7 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-#sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
-sys.path.append('/mnt/max/shared/code/internal/utilities/executivesummary')
+sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
