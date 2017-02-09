@@ -616,18 +616,15 @@ def main():
 
             if num_epi_gifs != len(epi_in_t1_gifs):
                 _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
-                print 'ack 1, something went wrong while trying to assemble epi-data! exiting...'
-                print num_epi_gifs,epi_in_t1_gifs
+                print 'Incorrect number of gifs. \nepi_in_t1 count: %s\nt1_in_epi_count: %s \nCannot proceed with processing. Exiting...' %(len(epi_in_t1_gifs), num_epi_gifs)
                 continue
             elif num_epi_gifs != len(rest_raw_paths):
                 _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
-                print 'ack 2, something went wrong while trying to assemble epi-data! exiting...'
-                print num_epi_gifs,rest_raw_paths
+                print 'Incorrect number of raw epi files.\nepi_rows: %s\nnum_epi_files: %s \nCannot proceed with processing. Exiting...' %(len(rest_raw_paths), num_epi_gifs)
                 continue
             elif num_epi_gifs != len(sb_ref_paths):
                 _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
-                print 'ack 3, something went wrong while trying to assemble epi-data! exiting...'
-                print num_epi_gifs,sb_ref_paths
+                print 'Incorrect number of sb_ref files.\nepi_rows: %s\nnum_epi_files: %s \nCannot proceed with processing. Exiting...' %(len(sb_ref_paths), num_epi_gifs)
                 continue
             else:
 
