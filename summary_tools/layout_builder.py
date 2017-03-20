@@ -417,26 +417,28 @@ def insert_placeholders(image_path_lists):
         new_l = []
         if 'REST' in l[0] and 't1' in l[0]:
             # Square placeholders for REST_in_t1 and t1_in_REST images
-#            placeholder_path = os.path.join(placeholder_dst_path, 'square_placeholder_text.png')
             placeholder_path = './img/square_placeholder_text.png'
         else:
             # Rectangular placeholders for REST and SBRef images
-#            placeholder_path = os.path.join(placeholder_dst_path, 'rectangular_placeholder_text.png')
              placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Check if there are any gaps in image sequence that need to be filled by placeholders
         for x in xrange(int(missing[0]), int(missing[-1]) + 1):
             if 'SBRef' in l[0]:
-                sequence_text = 'SBRef'
-            else:
-                sequence_text = 'REST'
-            sequence_text += str(x)
+                sequence_text = 'SBRef' + str(x)
+            elif 't1_in_REST' in l[0]:
+                sequence_text = 't1_in_REST' + str(x)
+            elif '_in_t1' in l[0]:
+                sequence_text = 'REST' + str(x) + '_in_t1'
+            elif 'REST' in l[0]:
+                sequence_text = 'REST' + str(x)
 
             match = [s for s in l if sequence_text in s]
             if match:
                 new_l.append(match[0])
             else:
                 new_l.append(placeholder_path)
+                _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
         corrected_lists.append(new_l)
 
     return corrected_lists
