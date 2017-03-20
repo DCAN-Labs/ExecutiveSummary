@@ -250,7 +250,7 @@ def write_epi_panel_row(list_of_img_paths):
                     <tr>
                         <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
                         <td><a href="%(t1_in_rest)s" target="_blank"><img src="%(t1_in_rest)s"></a></td>
-                        <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s"></a></td>
+                        <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
                         <td><a href="%(rest_nonlin_norm)s" target="_blank"><img src="%(rest_nonlin_norm)s"
                             class="raw_rest_img"></a></td>
                     </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
