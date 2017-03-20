@@ -10,6 +10,7 @@ __author__ = 'Shannon Buckley', 2/20/16
 
 import os
 from os import path
+import re
 import argparse
 import image_summary
 from image_summary import _logger
@@ -20,8 +21,8 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.3.0'
-LAST_MOD = '7-28-16'
+VERSION = '1.4.0'
+LAST_MOD = '3-17-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -245,11 +246,6 @@ def write_epi_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi-images for a given series
     """
 
-    if len(list_of_img_paths) < 4:
-        _logger.error('insufficient files to build an epi-panel row!\nCheck your list: %s ' % list_of_img_paths)
-        print 'do not have a full row (4 images) of epi-data for this subject'
-        return
-
     epi_panel_row = """
                     <tr>
                         <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
@@ -344,12 +340,113 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     elif type(list_of_images) == list:
         for image in list_of_images:
             img_path = path.join(src_dir, image)
+            print img_path
+            print dst_dir
             shutil.copyfile(img_path, path.join(dst_dir, image))
+
+
+def natural_sort(l):
+    """
+    Returns a list of strings sorted in alphanumeric order, with multi-digit
+    numbers treated as a single item. e.g. native Python sort() produces this
+    order: ['item1', 'item10', 'item2'] whereas natural_sort() produces this
+    order: ['item1', 'item2', 'item10'].
+
+    :parameter: l: list of strings
+    :return: same list of strings with natural sort
+    """ 
+    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+ 
+    return sorted(l, key = alphanum_key)
+
+
+def find_series_numbers(path_list, regex):
+    """
+    Locates series numbers within a list of image paths.
+
+    :parameter: path_list: list of image paths (strings)
+    :paramater: regex: regular expression describing where to find series numbers
+    :returns: list of series numbers (natural sort)
+    """
+
+    filtered_list = []
+
+    for item in path_list:
+        filtered = regex.search(item)
+        if filtered:
+            filtered = filtered.group()
+            filtered_num = re.search(r'\d+', filtered).group()
+            filtered_list.append(filtered_num)
+
+    sorted_list = natural_sort(filtered_list)
+
+    return sorted_list
+
+
+def insert_placeholders(image_path_lists):
+    """
+    Fills in any gaps (missing series) in lists of image paths with placeholder
+    images.
+
+    :parameter: image_path_lists: list of image path lists that need to be altered
+    :returns: list of image path lists with paths to placeholder images where needed
+    """
+
+    corrected_lists = []
+
+    rest_t1_re = re.compile(r'REST\d+_')
+    t1_rest_re = re.compile(r'_in_REST\d+')
+    sbref_re = re.compile(r'SBRef\d+')
+    rest_re = re.compile(r'REST\d+')
+
+    rest_t1_nums = find_series_numbers(image_path_lists[0], rest_t1_re)
+    t1_rest_nums = find_series_numbers(image_path_lists[1], t1_rest_re)
+    sbref_nums = find_series_numbers(image_path_lists[2], sbref_re)
+    rest_nums = find_series_numbers(image_path_lists[3], rest_re)
+
+    numbers_lists = [rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
+
+    missing = []
+    for x in xrange(0, len(numbers_lists)):
+        for l in numbers_lists:
+            missing += [obj for obj in l if obj not in numbers_lists[x]]
+        missing = natural_sort(list(set(missing)))
+
+    for l in image_path_lists:
+        new_l = []
+        if 'REST' in l[0] and 't1' in l[0]:
+            # Square placeholders for REST_in_t1 and t1_in_REST images
+#            placeholder_path = os.path.join(placeholder_dst_path, 'square_placeholder_text.png')
+            placeholder_path = './img/square_placeholder_text.png'
+        else:
+            # Rectangular placeholders for REST and SBRef images
+#            placeholder_path = os.path.join(placeholder_dst_path, 'rectangular_placeholder_text.png')
+             placeholder_path = './img/rectangular_placeholder_text.png'
+
+        # Check if there are any gaps in image sequence that need to be filled by placeholders
+        for x in xrange(int(missing[0]), int(missing[-1]) + 1):
+            if 'SBRef' in l[0]:
+                sequence_text = 'SBRef'
+            else:
+                sequence_text = 'REST'
+            sequence_text += str(x)
+
+            match = [s for s in l if sequence_text in s]
+            if match:
+                new_l.append(match[0])
+            else:
+                new_l.append(placeholder_path)
+        corrected_lists.append(new_l)
+
+    return corrected_lists
 
 
 def main():
 
     parser = get_parser()
+
+    program_dir = os.getcwd()
 
     args = parser.parse_args()
 
@@ -478,17 +575,25 @@ def main():
 
                     _logger.debug('data are: %s' % data)
 
+
             except OSError:
 
                     print '\n\tUnable to locate image sources...'
 
                     return
 
+            # Copy placeholder images to /img folder
+            placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
+            placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
+
+            copy_images(placeholder_path, placeholders, img_out_path)
+
+
             # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
-            epi_in_t1_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-            t1_in_epi_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
+            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -603,42 +708,37 @@ def main():
             raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
-            # print rest_raw_paths
-            sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
-            # print sb_ref_paths
+            rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
+            sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
-            num_epi_gifs = len(t1_in_epi_gifs)
+            image_paths = [epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
+            
+            epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
 
-            if num_epi_gifs != len(epi_in_t1_gifs):
-                _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
-                print 'Incorrect number of gifs. \nepi_in_t1 count: %s\nt1_in_epi_count: %s \nCannot proceed with processing. Exiting...' %(len(epi_in_t1_gifs), num_epi_gifs)
-                continue
-            elif num_epi_gifs != len(rest_raw_paths):
-                _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
-                print 'Incorrect number of raw epi files.\nepi_rows: %s\nnum_epi_files: %s \nCannot proceed with processing. Exiting...' %(len(rest_raw_paths), num_epi_gifs)
-                continue
-            elif num_epi_gifs != len(sb_ref_paths):
-                _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
-                print 'Incorrect number of sb_ref files.\nepi_rows: %s\nnum_epi_files: %s \nCannot proceed with processing. Exiting...' %(len(sb_ref_paths), num_epi_gifs)
-                continue
-            else:
+            num_epi_gifs = len(epi_in_t1_gifs)
 
-                # APPEND NEW EPI-PANEL SECTIONS
-                newer_body = new_body + epi_panel_header
-                for i in range(0, num_epi_gifs):
+            # APPEND NEW EPI-PANEL SECTIONS
+            newer_body = new_body + epi_panel_header
+            for i in range(0, num_epi_gifs):
+                if epi_in_t1_gifs:
                     epi_rows.append(epi_in_t1_gifs.pop(0))
+                if t1_in_epi_gifs:
                     epi_rows.append(t1_in_epi_gifs.pop(0))
+                if sb_ref_paths:
                     epi_rows.append(sb_ref_paths.pop(0))
+                if rest_raw_paths:
                     epi_rows.append(rest_raw_paths.pop(0))
 
-                    newer_body += write_epi_panel_row(epi_rows[:4])
-                    _logger.debug('\nepi_rows were: %s' % epi_rows)
-                    epi_rows = []
+                epi_panel = write_epi_panel_row(epi_rows[:4])
+
+                if epi_panel:
+                    newer_body += epi_panel
+                _logger.debug('\nepi_rows were: %s' % epi_rows)
+                epi_rows = []
 
             # COMPLETE EPI PANEls
 
