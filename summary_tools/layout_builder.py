@@ -405,6 +405,7 @@ def insert_placeholders(image_path_lists):
 
     numbers_lists = [rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
 
+    # Check if there are any gaps in image sequence that need to be filled by placeholders
     missing = []
     for x in xrange(0, len(numbers_lists)):
         for l in numbers_lists:
@@ -420,16 +421,20 @@ def insert_placeholders(image_path_lists):
             # Rectangular placeholders for REST and SBRef images
              placeholder_path = './img/rectangular_placeholder_text.png'
 
-        # Check if there are any gaps in image sequence that need to be filled by placeholders
-        for x in xrange(int(missing[0]), int(missing[-1]) + 1):
-            if 'SBRef' in l[0]:
-                sequence_text = 'SBRef' + str(x)
-            elif 't1_in_REST' in l[0]:
-                sequence_text = 't1_in_REST' + str(x)
-            elif '_in_t1' in l[0]:
-                sequence_text = 'REST' + str(x) + '_in_t1'
-            elif 'REST' in l[0]:
-                sequence_text = 'REST' + str(x)
+        # Fill in gaps with placeholder images if necessary
+        if not missing:
+            return image_path_lists
+
+        else:
+            for x in xrange(int(missing[0]), int(missing[-1]) + 1):
+                if 'SBRef' in l[0]:
+                    sequence_text = 'SBRef' + str(x)
+                elif 't1_in_REST' in l[0]:
+                    sequence_text = 't1_in_REST' + str(x)
+                elif '_in_t1' in l[0]:
+                    sequence_text = 'REST' + str(x) + '_in_t1'
+                elif 'REST' in l[0]:
+                    sequence_text = 'REST' + str(x)
 
             match = [s for s in l if sequence_text in s]
             if match:
