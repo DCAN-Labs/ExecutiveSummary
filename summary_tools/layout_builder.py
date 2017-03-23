@@ -422,10 +422,7 @@ def insert_placeholders(image_path_lists):
              placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
-        if not missing:
-            return image_path_lists
-
-        else:
+        if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if 'SBRef' in l[0]:
                     sequence_text = 'SBRef' + str(x)
@@ -436,15 +433,18 @@ def insert_placeholders(image_path_lists):
                 elif 'REST' in l[0]:
                     sequence_text = 'REST' + str(x)
 
-            match = [s for s in l if sequence_text in s]
-            if match:
-                new_l.append(match[0])
-            else:
-                new_l.append(placeholder_path)
-                _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
-        corrected_lists.append(new_l)
+                match = [s for s in l if sequence_text in s]
+                if match:
+                    new_l.append(match[0])
+                else:
+                    new_l.append(placeholder_path)
+                    _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
+            corrected_lists.append(new_l)
 
-    return corrected_lists
+    if corrected_lists:
+        return corrected_lists
+    else:
+        return image_path_lists
 
 
 def main():
