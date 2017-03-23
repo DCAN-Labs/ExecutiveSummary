@@ -340,8 +340,6 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     elif type(list_of_images) == list:
         for image in list_of_images:
             img_path = path.join(src_dir, image)
-            print img_path
-            print dst_dir
             shutil.copyfile(img_path, path.join(dst_dir, image))
 
 
@@ -448,7 +446,8 @@ def main():
 
     parser = get_parser()
 
-    program_dir = os.getcwd()
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
 
     args = parser.parse_args()
 
@@ -588,6 +587,8 @@ def main():
             placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
             placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
 
+            print "Placeholder path is: " + placeholder_path
+            print "Img out path is: " + img_out_path
             copy_images(placeholder_path, placeholders, img_out_path)
 
 
