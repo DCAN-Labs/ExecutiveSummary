@@ -498,6 +498,9 @@ def main():
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
+                if sub_root.endswith('/'):
+                    sub_root = sub_root[:-1]
+
                 subj_id = sub_root.split('/')[-1]
 
                 visit_id = sub_root.split('/')[-3]
