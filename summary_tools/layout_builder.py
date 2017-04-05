@@ -2,8 +2,7 @@
 """
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
--o for optional output_directory; (default =
-/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/<date>/subjID_visit)
+-o for optional output_directory; (default = user's home directory)
 
 __author__ = 'Shannon Buckley', 2/20/16
 """
@@ -808,8 +807,9 @@ def main():
 
             else:
 
-                qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s/%s' %
-                                          (image_summary.date_stamp, subj_id + '_' + visit_id))
+                user_home = os.path.expanduser('~')
+
+                qc_folder_out = path.join(user_home, image_summary.date_stamp, subj_id + '_' + visit_id)
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
