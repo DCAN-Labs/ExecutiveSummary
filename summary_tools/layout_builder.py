@@ -422,13 +422,13 @@ def insert_placeholders(image_path_lists):
         # Fill in gaps with placeholder images if necessary
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
-                if 'SBRef' in l[0]:
-                    sequence_text = 'SBRef' + str(x)
-                elif 't1_in_REST' in l[0]:
-                    sequence_text = 't1_in_REST' + str(x)
-                elif '_in_t1' in l[0]:
+                if list_index == 0:
                     sequence_text = 'REST' + str(x) + '_in_t1'
-                elif 'REST' in l[0]:
+                elif list_index == 1:
+                    sequence_text = 't1_in_REST' + str(x)
+                elif list_index == 2:
+                    sequence_text = 'SBRef' + str(x)
+                elif list_index == 3:
                     sequence_text = 'REST' + str(x)
 
                 match = [s for s in l if sequence_text in s]
