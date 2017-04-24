@@ -20,7 +20,7 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.4.0'
+VERSION = '1.4.1'
 LAST_MOD = '3-17-16'
 
 program_desc = """%(prog)s v%(ver)s:
@@ -413,12 +413,11 @@ def insert_placeholders(image_path_lists):
 
     for l in image_path_lists:
         new_l = []
-        if 'REST' in l[0] and 't1' in l[0]:
-            # Square placeholders for REST_in_t1 and t1_in_REST images
+        list_index = image_path_lists.index(l)
+        if list_index in [0, 1]:
             placeholder_path = './img/square_placeholder_text.png'
         else:
-            # Rectangular placeholders for REST and SBRef images
-             placeholder_path = './img/rectangular_placeholder_text.png'
+            placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
         if missing:
