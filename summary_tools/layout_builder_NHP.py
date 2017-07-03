@@ -2,14 +2,17 @@
 """
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
--o for optional output_directory; (default = user's home directory)
+-o for optional output_directory; (default =
+/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/<date>/subjID_visit)
+<<<<<<< HEAD
+=======
 
 __author__ = 'Shannon Buckley', 2/20/16
+>>>>>>> release/v1.0.0
 """
 
 import os
 from os import path
-import re
 import argparse
 import image_summary
 from image_summary import _logger
@@ -20,8 +23,8 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.4.1'
-LAST_MOD = '3-17-16'
+VERSION = '1.3.0'
+LAST_MOD = '7-28-16'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -123,9 +126,15 @@ def write_html(template, dest_dir, title="executive_summary.html"):
     """
     Takes an html template string and a destination, then writes it out to a default title.
 
+<<<<<<< HEAD
+    :param template: path to html template
+    :param dest_dir: output path for final .html file
+    :param title: string to apply to output
+=======
     :parameter: template: path to html template
     :parameter: dest_dir: output path for final .html file
     :parameter: title: string to apply to output
+>>>>>>> release/v1.0.0
     :return: None
     """
 
@@ -144,7 +153,11 @@ def write_structural_panel(list_of_image_paths):
     """
     Builds a panel of orthogonally sliced T1 and T2 images with pial and white matter surface overlays from Freesurfer.
 
+<<<<<<< HEAD
+    :param list_of_image_paths: list of 6 image paths for the structural image panel
+=======
     :parameter: list_of_image_paths: list of 6 image paths for the structural image panel
+>>>>>>> release/v1.0.0
     :return: string of html containing a div row with an images table
     """
 
@@ -190,9 +203,15 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
     """
     Takes some html string, does a find/replace on it.
 
+<<<<<<< HEAD
+    :param html_string: any string, really
+    :param thing_to_find: any string
+    :param thing_that_replaces_it: replacement string
+=======
     :parameter: html_string: any string, really
     :parameter: thing_to_find: any string
     :parameter: thing_that_replaces_it: replacement string
+>>>>>>> release/v1.0.0
     :return: new string with replacement
     """
 
@@ -205,7 +224,11 @@ def write_param_table_row(list_of_data):
     """
     Takes a list of data and fills in one row in the parameter table per datum
 
+<<<<<<< HEAD
+    :param list_of_data: list of data with 8 elements
+=======
     :parameter: list_of_data: list of data with 8 elements
+>>>>>>> release/v1.0.0
     :return: param_table_row with specific metrics (8 columns)
     """
 
@@ -241,15 +264,24 @@ def write_epi_panel_row(list_of_img_paths):
     """
     Takes a list of image paths and builds one row of epi_images for the panel.
 
+<<<<<<< HEAD
+    :param list_of_img_paths: list of paths
+=======
     :parameter: list_of_img_paths: list of paths
+>>>>>>> release/v1.0.0
     :return: one row of an html table, <tr> to </tr> with epi-images for a given series
     """
+
+    if len(list_of_img_paths) < 4:
+        _logger.error('insufficient files to build an epi-panel row!\nCheck your list: %s ' % list_of_img_paths)
+        print 'do not have a full row (4 images) of epi-data for this subject'
+        return
 
     epi_panel_row = """
                     <tr>
                         <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
                         <td><a href="%(t1_in_rest)s" target="_blank"><img src="%(t1_in_rest)s"></a></td>
-                        <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
+                        <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s"></a></td>
                         <td><a href="%(rest_nonlin_norm)s" target="_blank"><img src="%(rest_nonlin_norm)s"
                             class="raw_rest_img"></a></td>
                     </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
@@ -264,9 +296,15 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     """
     Takes a list of panel rows (html_strings), a header and footer to build the full epi-panel.
 
+<<<<<<< HEAD
+    :param epi_rows_list: list of data rows (strings)
+    :param header: div section opener
+    :param footer: dev section closer
+=======
     :parameter: epi_rows_list: list of data rows (strings)
     :parameter: header: div section opener
     :parameter: footer: dev section closer
+>>>>>>> release/v1.0.0
     :return: html string for the whole epi-panel div (one row of images per REST)
     """
 
@@ -283,7 +321,11 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
     """
     Takes a path to a specific image and writes up a div for it
 
+<<<<<<< HEAD
+    :param dvars_input_path: path to DVARS image.png expected
+=======
     :parameter: dvars_input_path: path to DVARS image.png expected
+>>>>>>> release/v1.0.0
     :return: div section string for DVARS
     """
 
@@ -326,9 +368,9 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     """
     Takes a source dir and a list of images, copies them to a default destination ./img.
 
-    :parameter: src_dir: copy from path
-    :parameter: list_of_images: list of image names to copy (full paths not expected)
-    :parameter: dst_dir: copy to  path
+    :parameter src_dir: copy from path
+    :parameter list_of_images: list of image names to copy (full paths not expected)
+    :parameter dst_dir: copy to  path
     :return: None
     """
 
@@ -342,115 +384,9 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
             shutil.copyfile(img_path, path.join(dst_dir, image))
 
 
-def natural_sort(l):
-    """
-    Returns a list of strings sorted in alphanumeric order, with multi-digit
-    numbers treated as a single item. e.g. native Python sort() produces this
-    order: ['item1', 'item10', 'item2'] whereas natural_sort() produces this
-    order: ['item1', 'item2', 'item10'].
-
-    :parameter: l: list of strings
-    :return: same list of strings with natural sort
-    """ 
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
- 
-    return sorted(l, key = alphanum_key)
-
-
-def find_series_numbers(path_list, regex):
-    """
-    Locates series numbers within a list of image paths.
-
-    :parameter: path_list: list of image paths (strings)
-    :paramater: regex: regular expression describing where to find series numbers
-    :returns: list of series numbers (natural sort)
-    """
-
-    filtered_list = []
-
-    for item in path_list:
-        filtered = regex.search(item)
-        if filtered:
-            filtered = filtered.group()
-            filtered_num = re.search(r'\d+', filtered).group()
-            filtered_list.append(filtered_num)
-
-    sorted_list = natural_sort(filtered_list)
-
-    return sorted_list
-
-
-def insert_placeholders(image_path_lists):
-    """
-    Fills in any gaps (missing series) in lists of image paths with placeholder
-    images.
-
-    :parameter: image_path_lists: list of image path lists that need to be altered
-    :returns: list of image path lists with paths to placeholder images where needed
-    """
-
-    corrected_lists = []
-
-    rest_t1_re = re.compile(r'REST\d+_')
-    t1_rest_re = re.compile(r'_in_REST\d+')
-    sbref_re = re.compile(r'SBRef\d+')
-    rest_re = re.compile(r'REST\d+')
-
-    rest_t1_nums = find_series_numbers(image_path_lists[0], rest_t1_re)
-    t1_rest_nums = find_series_numbers(image_path_lists[1], t1_rest_re)
-    sbref_nums = find_series_numbers(image_path_lists[2], sbref_re)
-    rest_nums = find_series_numbers(image_path_lists[3], rest_re)
-
-    numbers_lists = [rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
-
-    # Check if there are any gaps in image sequence that need to be filled by placeholders
-    missing = []
-    for x in xrange(0, len(numbers_lists)):
-        for l in numbers_lists:
-            missing += [obj for obj in l if obj not in numbers_lists[x]]
-        missing = natural_sort(list(set(missing)))
-
-    for l in image_path_lists:
-        new_l = []
-        list_index = image_path_lists.index(l)
-        if list_index in [0, 1]:
-            placeholder_path = './img/square_placeholder_text.png'
-        else:
-            placeholder_path = './img/rectangular_placeholder_text.png'
-
-        # Fill in gaps with placeholder images if necessary
-        if missing:
-            for x in xrange(int(missing[0]), int(missing[-1]) + 1):
-                if list_index == 0:
-                    sequence_text = 'REST' + str(x) + '_in_t1'
-                elif list_index == 1:
-                    sequence_text = 't1_in_REST' + str(x)
-                elif list_index == 2:
-                    sequence_text = 'SBRef' + str(x)
-                elif list_index == 3:
-                    sequence_text = 'REST' + str(x)
-
-                match = [s for s in l if sequence_text in s]
-                if match:
-                    new_l.append(match[0])
-                else:
-                    new_l.append(placeholder_path)
-                    _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
-            corrected_lists.append(new_l)
-
-    if corrected_lists:
-        return corrected_lists
-    else:
-        return image_path_lists
-
-
 def main():
 
     parser = get_parser()
-
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
 
     args = parser.parse_args()
 
@@ -492,22 +428,17 @@ def main():
 
             if path.exists(sub_root):
 
-                sub_root = shenanigans.handle_trailing_slash(sub_root)
-
                 # ------------------------- > GATHER BASIC INFO < ------------------------- #
 
                 summary_path, data_path = image_summary.get_paths(sub_root)
 
-                if sub_root.endswith('/'):
-                    sub_root = sub_root[:-1]
+                subj_id = sub_root.split('/')[-2]
 
-                subj_id = sub_root.split('/')[-1]
-
-                visit_id = sub_root.split('/')[-3]
+                visit_id = sub_root.split('/')[-4]
 
                 print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
 
-                pipeline_version = sub_root.split('/')[-2]
+                pipeline_version = sub_root.split('/')[-3]
 
                 date = image_summary.date_stamp
 
@@ -515,11 +446,6 @@ def main():
                     print '\nthis may or may not workout if this is not a standard HCP_release! *fingers crossed*'
 
                 print '\npipeline_version is: %s\n' % pipeline_version
-
-                shenanigans.update_user('SubjID and Visit: \n%s %s\nPipeline: %s' % (subj_id, visit_id,
-                                                                                     pipeline_version))
-
-                date = image_summary.date_stamp
 
                 # ------------------------- > WRITE OUT SUMMARY REPORT < ------------------------- #
                 with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
@@ -589,27 +515,17 @@ def main():
 
                     _logger.debug('data are: %s' % data)
 
-
             except OSError:
 
                     print '\n\tUnable to locate image sources...'
 
                     return
 
-            # Copy placeholder images to /img folder
-            placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
-            placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
-
-            print "Placeholder path is: " + placeholder_path
-            print "Img out path is: " + img_out_path
-            copy_images(placeholder_path, placeholders, img_out_path)
-
-
             # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
-            epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            epi_in_t1_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
+            t1_in_epi_gifs = sorted([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -619,45 +535,36 @@ def main():
             # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
             # TODO: improve this section with a more specific test
 
-#            if len(data['epi-data']) == len(glob.glob(path.join(sub_root,'REST*'))):  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
-#
-#                _logger.warning('odd number of epi files were found...')
-#                print '\nLooking for SBRef images...\n'
-#
-#                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST*
-#
-#                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-#                # pattern = alt_sbref_path + '/REST*/REST*_SBRef.nii.gz'
-#                # more_epi = glob.glob(pattern)
-#                #
-#                # for sbref in more_epi:
-#                #     data['epi-data'].append(sbref)
-#
-#                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
-#                alternate_sbref_path = path.join(sub_root)
-#                sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
-#
-#                more_sbref = glob.glob(sbref_pattern)
-#                # print 'found additional SBRef files: %s' % more_sbref
-#
-#                for sbref in more_sbref:
-#                    data['epi-data'].append(sbref)
+            if len(data['epi-data']) % 2 != 0:  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
 
-            print '\nLooking for SBRef images...\n'
-            alternate_sbref_path = path.join(sub_root)
-            sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
-            more_sbref = glob.glob(sbref_pattern)
-            for sbref in more_sbref:
-                data['epi-data'].append(sbref)
+                _logger.warning('odd number of epi files were found...')
+
+                print '\nLooking for SBRef images...\n'
+
+                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST?
+
+                alternate_sbref_path = path.join(sub_root)
+                sbref_pattern = alternate_sbref_path + '/REST?/Scout_orig.nii.gz'
+
+                more_sbref = glob.glob(sbref_pattern)
+                # print 'found additional SBRef files: %s' % more_sbref
+
+                for sbref in more_sbref:
+                    data['epi-data'].append(sbref)
 
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
             for list_entry in data['epi-data']:
 
+#<<<<<<< HEAD
+                # get modality so we can know how to slice it...
+                modality = image_summary.get_subject_info(list_entry)[1]
+#=======
                 info = image_summary.get_subject_info(list_entry)
 
                 # get modality / series so we can know how to slice & label ...
                 modality, series = info[1], info[2]
+#>>>>>>> release/v1.0.0
                 print '\nPROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
                 print 'slicing images for: \n%s' % list_entry
 
@@ -668,12 +575,16 @@ def main():
 
                 elif 'SBRef' in modality and 'REST' in modality:
 
+#<<<<<<< HEAD
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % (modality)))
+#=======
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
                 elif 'SBRef' in modality:
 
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
                                                                                                              series)))
+#>>>>>>> release/v1.0.0
 
             # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
             for list_entry in data.values():
@@ -682,27 +593,9 @@ def main():
 
                 for item in list_entry:
 
-                    information = image_summary.get_subject_info(item)
-
-                    modality, series = information[1], information[2]
-
-                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
-
-                    nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
-
-                    print '\nTE for this file was: %s\n' % nifti_te
-
                     print '\nadding %s to list of data, for which we need parameters...\n' % item
-
                     _logger.debug('data_list is: %s' % data)
-
                     params_row = image_summary.get_nii_info(item)
-
-                    alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
-                    print '\nTESTING PARAMS GETTER.....\n'
-                    print '\nOld Way params_row = %s\n' % params_row
-                    print '\nNew Way alt_params_row = %s\n' % alt_params_row
-
                     real_data.append(params_row)
 
             # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
@@ -738,40 +631,45 @@ def main():
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
+            raw_rest_img_pattern = path.join(img_out_path, 'REST?.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
-            sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            rest_raw_paths = sorted([path.join('./img', path.basename(img)) for img in raw_rest_img_list])
+            # print rest_raw_paths
+            sb_ref_paths = sorted([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            # print sb_ref_paths
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
-            image_paths = [epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
-            
-            epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
+            num_epi_gifs = len(t1_in_epi_gifs)
 
-            num_epi_gifs = len(epi_in_t1_gifs)
+            if num_epi_gifs != len(epi_in_t1_gifs):
+                _logger.error('incorrect number of gifs !\nepi_in_t1 count: %s\nt1_in_epi_count: %s' %(len(epi_in_t1_gifs), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                continue
+            elif num_epi_gifs != len(rest_raw_paths):
+                _logger.error('incorrect number of raw epi files!\nepi_rows: %s\nnum_epi_files: %s' %(len(rest_raw_paths), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                continue
+            elif num_epi_gifs != len(sb_ref_paths):
+                _logger.error('incorrect number of sb_ref files!\nepi_rows: %s\nnum_epi_files: %s' %(len(sb_ref_paths), num_epi_gifs))
+                print 'ack, something went wrong while trying to assemble epi-data! exiting...'
+                continue
+            else:
 
-            # APPEND NEW EPI-PANEL SECTIONS
-            newer_body = new_body + epi_panel_header
-            for i in range(0, num_epi_gifs):
-                if epi_in_t1_gifs:
+                # APPEND NEW EPI-PANEL SECTIONS
+                newer_body = new_body + epi_panel_header
+                for i in range(0, num_epi_gifs):
                     epi_rows.append(epi_in_t1_gifs.pop(0))
-                if t1_in_epi_gifs:
                     epi_rows.append(t1_in_epi_gifs.pop(0))
-                if sb_ref_paths:
                     epi_rows.append(sb_ref_paths.pop(0))
-                if rest_raw_paths:
                     epi_rows.append(rest_raw_paths.pop(0))
 
-                epi_panel = write_epi_panel_row(epi_rows[:4])
-
-                if epi_panel:
-                    newer_body += epi_panel
-                _logger.debug('\nepi_rows were: %s' % epi_rows)
-                epi_rows = []
+                    newer_body += write_epi_panel_row(epi_rows[:4])
+                    _logger.debug('\nepi_rows were: %s' % epi_rows)
+                    epi_rows = []
 
             # COMPLETE EPI PANEls
 
@@ -830,9 +728,8 @@ def main():
 
             else:
 
-                user_home = os.path.expanduser('~')
-
-                qc_folder_out = path.join(user_home, image_summary.date_stamp, subj_id + '_' + visit_id)
+                qc_folder_out = path.join('/group_shares/FAIR_LAB2/Projects/FAIR_users/Shannon/QC_todo/%s/%s' %
+                                          (image_summary.date_stamp, subj_id + '_' + visit_id))
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
