@@ -20,8 +20,8 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.4.1'
-LAST_MOD = '3-17-16'
+VERSION = '1.4.2'
+LAST_MOD = '7-11-17'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -688,7 +688,13 @@ def main():
 
                     dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
 
-                    nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
+                    if dicom_for_te_grabber is not None:
+
+                        nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
+
+                    else:
+
+                        nifti_te = 0.0
 
                     print '\nTE for this file was: %s\n' % nifti_te
 
@@ -795,7 +801,7 @@ def main():
                 print '\nExpected path to required images: %s' % img_in_path
 
             # FILL-IN THE CODE / VERSION INFO
-            new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s_%s' % (subj_id, visit_id))
+            new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s' % (subj_id))
 
             new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
 
@@ -805,7 +811,7 @@ def main():
 
             html_doc += html_footer
 
-            write_html(html_doc, summary_path, title='executive_summary_%s_%s.html' % (subj_id, visit_id))
+            write_html(html_doc, summary_path, title='executive_summary_%s.html' % (subj_id))
 
             # -------------------------> END LAYOUT <------------------------- #
 

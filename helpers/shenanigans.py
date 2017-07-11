@@ -195,9 +195,9 @@ def get_airc_dicom_path_from_nifti_info(processed_subject_path, modality_name):
     :return: path to the "top-most" .dcm file returned by the shell command 'ls -1 head'
     """
 
-    dicom_root_dir = get_searchable_parts_from_processed_path(processed_subject_path)
+    dicom_root_dir, subj_id, visit_id, pipeline_version = get_searchable_parts_from_processed_path(processed_subject_path)
 
-    if dicom_root_dir:
+    if os.path.exists(dicom_root_dir):
 
         acquisitions = os.listdir(dicom_root_dir)
         print 'Folders found within dicom root directory for this subject: \n%s' % acquisitions
@@ -208,6 +208,9 @@ def get_airc_dicom_path_from_nifti_info(processed_subject_path, modality_name):
                 dcm_file = submit_command('ls %s/*.dcm | head -1' % folder)
 
                 return path.abspath(dcm_file)
+
+    else:
+        return None
 
 
 def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
@@ -249,7 +252,7 @@ def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
 
     update_user('year month day == %s %s %s' % (year, month, day))
 
-    dicom_root = '/dicom/%(year)s/%(month)s/%(subject_ID)s/%(day)s_%(subj_id_no_dash)s)/' % {
+    dicom_root = '/dicom/%(year)s/%(month)s/%(subject_ID)s/%(day)s_%(subj_id_no_dash)s/' % {
 
           'year'            : year,
           'month'           : month,
