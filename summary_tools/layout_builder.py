@@ -830,7 +830,7 @@ def main():
 
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
-                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id + '_' + visit_id)
+                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
 
                     print '\nFind your images here: \n\t%s' % qc_folder_out
 
@@ -838,7 +838,7 @@ def main():
 
                 user_home = os.path.expanduser('~')
 
-                qc_folder_out = path.join(user_home, image_summary.date_stamp, subj_id + '_' + visit_id)
+                qc_folder_out = path.join(user_home, image_summary.date_stamp, subj_id)
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
