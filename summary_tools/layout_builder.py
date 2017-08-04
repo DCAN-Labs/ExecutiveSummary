@@ -57,7 +57,7 @@ html_header = """<!DOCTYPE html>
     <head>
         <meta charset = "utf-8">
         <title>Executive Summary: CODE_VISIT</title>
-        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.raw_rest_img img {width: 300px;height: 110px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:350px;height:300px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
+        <style type="text/css">.epi,.grayords,.params{position:relative}.header,button,table,td{text-align:center}body{background-color:#c3c4c3}span{font-size:10px}img{border-radius:5px}.header{font-family:Garamond;margin-top:25px;margin-bottom:15px}table,td{border:1px dashed #70b8ff}.epi td,.params td,.top-left-panel table,td{border:none}.top-left-panel{float:left;width:50%}.top-left-panel img{width:250px;height:200px}.epi{float:right}.epi img{width:175px;height:150px}.raw_rest_img img {width: 300px;height: 110px}.params{float:left;width:40%}.params th{border-bottom:1px #70b8ff solid}.params .column-names{border-bottom:1px #00f solid;font-weight:700}.grayords{float:right}.grayords img{width:525px;height:450px}.out-of-range{color:red}button{cursor:pointer;display:inline-block;height:20px;width:70px;font-family:arial;font-weight:700;margin-top:2px}
         </style>
     </head>
     <body>
@@ -279,7 +279,7 @@ def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_foot
     return epi_panel_html
 
 
-def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
+def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png', dvars_concp_input_path='img/DVARS_and_FD_CONCP.png'):
     """
     Takes a path to a specific image and writes up a div for it
 
@@ -291,8 +291,8 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
             <div class="grayords">
                 <table class="grayords">
                 <thead>
-                    <th colspan="3">
-                        Resting State Grayordinates Plot
+                    <th colspan="1">
+                        Resting State Grayordinates Plot (pre-regression)
                     </th>
                 </thead>
                 <tbody>
@@ -300,10 +300,19 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png'):
                         <td><a href="%(dvars_path)s" target="_blank">
                                 <img src="%(dvars_path)s"></a>
                         </td>
+
                     </tr>
+                    <th colspan="1">
+                        Resting State Grayordinates Plot (post-regression)
+                    </th>
+		    <tr>
+                        <td><a href="%(dvars_p_path)s" target="_blank">
+                                <img src="%(dvars_p_path)s"></a>
+                        </td>
+		    </tr>
                     </tbody>
                 </table>
-            </div>""" % {'dvars_path' : dvars_input_path}
+            </div>""" % {'dvars_path' : dvars_input_path, 'dvars_p_path': dvars_concp_input_path}
 
     return dvars_panel_html_string
 
@@ -546,7 +555,16 @@ def main():
             # --------------------------------- > SETUP PATHS < --------------------------------- #
             if path.exists(summary_path):
 
-                img_out_path = path.join(sub_root, 'summary', 'img')
+		v2_path = path.join(sub_root, 'summary_FNL_preproc_v2')
+
+		if path.exists(v2_path):
+
+		    img_out_path = path.join(v2_path, 'img')
+
+		else:
+
+		    img_out_path = path.join(sub_root, 'summary', 'img')
+
                 img_in_path = summary_path
                 subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
 
@@ -740,7 +758,7 @@ def main():
 
             new_body = body + html_params_panel
 
-            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]  # does not include DVARS
+            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
@@ -749,6 +767,8 @@ def main():
 
             rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
             sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
+
+#            dvars_paths = [path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)]
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
@@ -788,6 +808,9 @@ def main():
             shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
             dvars_path = path.join(img_out_path, 'DVARS_and_FD_CONCA.png')
 
+            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCP.png'), img_out_path)
+            dvars_p_path = path.join(img_out_path, 'DVARS_and_FD_CONCP.png')
+
             try:
 
                 copy_images(img_in_path, structural_img_labels, img_out_path)  # out: /summary/img/<blah>
@@ -807,7 +830,7 @@ def main():
 
             # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
 
-            html_doc = new_html_header + newer_body + write_dvars_panel(path.join('./img', path.basename(dvars_path)))
+            html_doc = new_html_header + newer_body + write_dvars_panel()
 
             html_doc += html_footer
 

@@ -12,7 +12,8 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+# sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+sys.path.append('/mnt/max/home/kleira/Projects/executivesummary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
@@ -65,7 +66,15 @@ def get_paths(subject_code_path):
 
     if path.exists(sub_path):
 
-        img_in_path = path.join(sub_path, 'summary')
+        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
+
+        if path.exists(v2_path):
+
+            img_in_path = v2_path
+
+        else:
+
+            img_in_path = path.join(sub_path, 'summary')
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
