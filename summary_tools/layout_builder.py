@@ -247,15 +247,19 @@ def write_epi_panel_row(list_of_img_paths):
 
     epi_panel_row = """
                     <tr>
+                        <td><a href="%(dvars)s" target="_blank"><img src="%(dvars)s"></a></td>
+			<td><a href="%(dvars_postreg)s" target="_blank"><img src="%(dvars_postreg)s"></a></td>
                         <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
                         <td><a href="%(t1_in_rest)s" target="_blank"><img src="%(t1_in_rest)s"></a></td>
                         <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
                         <td><a href="%(rest_nonlin_norm)s" target="_blank"><img src="%(rest_nonlin_norm)s"
                             class="raw_rest_img"></a></td>
-                    </tr>""" % {'rest_in_t1'        : list_of_img_paths[0],
-                                't1_in_rest'        : list_of_img_paths[1],
-                                'sb_ref'            : list_of_img_paths[2],
-                                'rest_nonlin_norm'  : list_of_img_paths[3]}
+                    </tr>""" % {'dvars'             : list_of_img_paths[0],
+                                'dvars_postreg'     : list_of_img_paths[1],
+                                'rest_in_t1'        : list_of_img_paths[2],
+                                't1_in_rest'        : list_of_img_paths[3],
+                                'sb_ref'            : list_of_img_paths[4],
+                                'rest_nonlin_norm'  : list_of_img_paths[5]}
 
     return epi_panel_row
 
@@ -401,17 +405,21 @@ def insert_placeholders(image_path_lists):
 
     corrected_lists = []
 
+    dvars_re = re.compile(r'DVARS_and_FD_REST\d+_')
+    postreg_dvars_re = re.compile(r'_DVARS_and_FD_REST\d+_')
     rest_t1_re = re.compile(r'REST\d+_')
     t1_rest_re = re.compile(r'_in_REST\d+')
     sbref_re = re.compile(r'SBRef\d+')
     rest_re = re.compile(r'REST\d+')
 
-    rest_t1_nums = find_series_numbers(image_path_lists[0], rest_t1_re)
-    t1_rest_nums = find_series_numbers(image_path_lists[1], t1_rest_re)
-    sbref_nums = find_series_numbers(image_path_lists[2], sbref_re)
-    rest_nums = find_series_numbers(image_path_lists[3], rest_re)
+    dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
+    postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
+    rest_t1_nums = find_series_numbers(image_path_lists[2], rest_t1_re)
+    t1_rest_nums = find_series_numbers(image_path_lists[3], t1_rest_re)
+    sbref_nums = find_series_numbers(image_path_lists[4], sbref_re)
+    rest_nums = find_series_numbers(image_path_lists[5], rest_re)
 
-    numbers_lists = [rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
+    numbers_lists = [dvars_nums, postreg_dvars_nums, rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
 
     # Check if there are any gaps in image sequence that need to be filled by placeholders
     missing = []
@@ -423,7 +431,7 @@ def insert_placeholders(image_path_lists):
     for l in image_path_lists:
         new_l = []
         list_index = image_path_lists.index(l)
-        if list_index in [0, 1]:
+        if list_index in [0, 1, 2, 3]:
             placeholder_path = './img/square_placeholder_text.png'
         else:
             placeholder_path = './img/rectangular_placeholder_text.png'
@@ -432,12 +440,16 @@ def insert_placeholders(image_path_lists):
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if list_index == 0:
-                    sequence_text = 'REST' + str(x) + '_in_t1'
+                    sequence_text = 'DVARS_and_FD_REST' + str(x)
                 elif list_index == 1:
-                    sequence_text = 't1_in_REST' + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_REST' + str(x)
                 elif list_index == 2:
-                    sequence_text = 'SBRef' + str(x)
+                    sequence_text = 'REST' + str(x) + '_in_t1'
                 elif list_index == 3:
+                    sequence_text = 't1_in_REST' + str(x)
+                elif list_index == 4:
+                    sequence_text = 'SBRef' + str(x)
+                elif list_index == 5:
                     sequence_text = 'REST' + str(x)
 
                 match = [s for s in l if sequence_text in s]
@@ -614,14 +626,17 @@ def main():
 
                     return
 
+            # Copy DVARS pngs to /img folder
+
+            dvars = [img for img in os.listdir(img_in_path) if (img.endswith('png')) and 'DVARS' in img]
+
+            copy_images(img_in_path, dvars, img_out_path)
+
             # Copy placeholder images to /img folder
             placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
             placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
 
-            print "Placeholder path is: " + placeholder_path
-            print "Img out path is: " + img_out_path
             copy_images(placeholder_path, placeholders, img_out_path)
-
 
             # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
@@ -765,24 +780,42 @@ def main():
             raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
-            sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            print raw_rest_img_list
 
-#            dvars_paths = [path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)]
+            rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
+            print rest_raw_paths
+
+            print pngs
+
+            sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            print sb_ref_paths
+
+            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img)])
+            print dvars
+
+            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)])
+            print dvars_postreg
+
+            print epi_in_t1_gifs
+            print t1_in_epi_gifs
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
-            image_paths = [epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
+            image_paths = [dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
             
-            epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
+            dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
 
             num_epi_gifs = len(epi_in_t1_gifs)
 
             # APPEND NEW EPI-PANEL SECTIONS
             newer_body = new_body + epi_panel_header
             for i in range(0, num_epi_gifs):
+                if dvars:
+                    epi_rows.append(dvars.pop(0))
+                if dvars_postreg:
+                    epi_rows.append(dvars_postreg.pop(0))
                 if epi_in_t1_gifs:
                     epi_rows.append(epi_in_t1_gifs.pop(0))
                 if t1_in_epi_gifs:
@@ -792,7 +825,7 @@ def main():
                 if rest_raw_paths:
                     epi_rows.append(rest_raw_paths.pop(0))
 
-                epi_panel = write_epi_panel_row(epi_rows[:4])
+                epi_panel = write_epi_panel_row(epi_rows[:6])
 
                 if epi_panel:
                     newer_body += epi_panel
@@ -804,12 +837,6 @@ def main():
             newer_body += epi_panel_footer
 
             _logger.debug('newer_body is : %s' % newer_body)
-
-            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCA.png'), img_out_path)
-            dvars_path = path.join(img_out_path, 'DVARS_and_FD_CONCA.png')
-
-            shutil.copy(path.join(img_in_path, 'DVARS_and_FD_CONCP.png'), img_out_path)
-            dvars_p_path = path.join(img_out_path, 'DVARS_and_FD_CONCP.png')
 
             try:
 
