@@ -489,7 +489,6 @@ def main():
         if not path.exists(file_we_read_in) or not file_we_read_in.endswith('.txt'):
             shenanigans.update_user('List FILE (.txt) does not exist, please verify your path to: \n%s' %
                                     file_we_read_in)
-            sys.exit()
 
         if path.exists(file_we_read_in):
 
@@ -735,6 +734,7 @@ def main():
 
                     _logger.debug('data_list is: %s' % data)
 
+                    print "Item: " + item
                     params_row = image_summary.get_nii_info(item)
 
                     alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
@@ -780,24 +780,13 @@ def main():
             raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
-            print raw_rest_img_list
-
             rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
-            print rest_raw_paths
-
-            print pngs
 
             sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
-            print sb_ref_paths
 
             dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img)])
-            print dvars
 
             dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)])
-            print dvars_postreg
-
-            print epi_in_t1_gifs
-            print t1_in_epi_gifs
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'

@@ -62,8 +62,6 @@ def get_paths(subject_code_path):
     sub_path = path.join(subject_code_path)
     _logger.debug('\nsubject path is %s\n' % sub_path)
 
-    #print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
-
     if path.exists(sub_path):
 
         v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
@@ -312,8 +310,6 @@ def get_nii_info(path_to_nii, info=None):
         floats_list.append(value)
 
     data = [modality] + floats_list
-
-    #print data
 
     return data
 
