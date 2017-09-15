@@ -405,10 +405,10 @@ def insert_placeholders(image_path_lists):
 
     corrected_lists = []
 
-    dvars_re = re.compile(r'DVARS_and_FD_REST\d+_')
-    postreg_dvars_re = re.compile(r'_DVARS_and_FD_REST\d+_')
+    dvars_re = re.compile(r'DVARS_and_FD_rfmri_REST\d+_')
+    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfmri_REST\d+_')
     rest_t1_re = re.compile(r'REST\d+_')
-    t1_rest_re = re.compile(r'_in_REST\d+')
+    t1_rest_re = re.compile(r'_in_rfmri_REST\d+')
     sbref_re = re.compile(r'SBRef\d+')
     rest_re = re.compile(r'REST\d+')
 
@@ -440,13 +440,13 @@ def insert_placeholders(image_path_lists):
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_REST' + str(x)
+                    sequence_text = 'DVARS_and_FD_rfmri_REST' + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_REST' + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_rfmri_REST' + str(x)
                 elif list_index == 2:
                     sequence_text = 'REST' + str(x) + '_in_t1'
                 elif list_index == 3:
-                    sequence_text = 't1_in_REST' + str(x)
+                    sequence_text = 't1_in_rfmri_REST' + str(x)
                 elif list_index == 4:
                     sequence_text = 'SBRef' + str(x)
                 elif list_index == 5:
@@ -641,7 +641,7 @@ def main():
             real_data = []
             epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_REST' in gif])
+            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_rfmri_REST' in gif])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -677,7 +677,7 @@ def main():
 
             print '\nLooking for SBRef images...\n'
             alternate_sbref_path = path.join(sub_root)
-            sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
+            sbref_pattern = alternate_sbref_path + '/*REST*/Scout_orig.nii.gz'
             more_sbref = glob.glob(sbref_pattern)
             for sbref in more_sbref:
                 data['epi-data'].append(sbref)
