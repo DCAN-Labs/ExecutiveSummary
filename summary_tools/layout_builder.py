@@ -869,10 +869,10 @@ def insert_placeholders(image_path_lists):
 
     corrected_lists = []
 
-    dvars_re = re.compile(r'DVARS_and_FD_rfmri_REST\d+_')
-    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfmri_REST\d+_')
+    dvars_re = re.compile(r'DVARS_and_FD_rfMRI_REST\d+_')
+    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfMRI_REST\d+_')
     rest_t1_re = re.compile(r'REST\d+_')
-    t1_rest_re = re.compile(r'_in_rfmri_REST\d+')
+    t1_rest_re = re.compile(r'_in_rfMRI_REST\d+')
     sbref_re = re.compile(r'SBRef\d+')
     rest_re = re.compile(r'REST\d+')
 
@@ -904,13 +904,13 @@ def insert_placeholders(image_path_lists):
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_rfmri_REST' + str(x)
+                    sequence_text = 'DVARS_and_FD_rfMRI_REST' + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_rfmri_REST' + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_rfMRI_REST' + str(x)
                 elif list_index == 2:
                     sequence_text = 'REST' + str(x) + '_in_t1'
                 elif list_index == 3:
-                    sequence_text = 't1_in_rfmri_REST' + str(x)
+                    sequence_text = 't1_in_rfMRI_REST' + str(x)
                 elif list_index == 4:
                     sequence_text = 'SBRef' + str(x)
                 elif list_index == 5:
@@ -1105,9 +1105,9 @@ def main():
 
             # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
-            epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
+            epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
 
-            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_rfmri_REST' in gif])
+            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif) and ('rfMRI' in gif)])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -1244,14 +1244,14 @@ def main():
 
             dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img)])
 
-            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)])
+            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img)])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
             image_paths = [dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
-            
+                                    
             dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
 
             num_epi_gifs = len(epi_in_t1_gifs)
@@ -1278,7 +1278,7 @@ def main():
                     newer_body += epi_panel
                 _logger.debug('\nepi_rows were: %s' % epi_rows)
                 epi_rows = []
-
+                
             # COMPLETE EPI PANEls
 
             newer_body += epi_panel_footer
