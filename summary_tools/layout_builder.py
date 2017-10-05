@@ -1242,27 +1242,27 @@ def main():
 
             sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
-            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img)])
+            epi_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
 
-            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img)])
+            epi_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
             epi_rows = []
 
-            image_paths = [dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
+            image_paths = [epi_dvars, epi_dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
                                     
-            dvars, dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
+            epi_dvars, epi_dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
 
             num_epi_gifs = len(epi_in_t1_gifs)
 
             # APPEND NEW EPI-PANEL SECTIONS
             newer_body = new_body + epi_panel_header
             for i in range(0, num_epi_gifs):
-                if dvars:
-                    epi_rows.append(dvars.pop(0))
-                if dvars_postreg:
-                    epi_rows.append(dvars_postreg.pop(0))
+                if epi_dvars:
+                    epi_rows.append(epi_dvars.pop(0))
+                if epi_dvars_postreg:
+                    epi_rows.append(epi_dvars_postreg.pop(0))
                 if epi_in_t1_gifs:
                     epi_rows.append(epi_in_t1_gifs.pop(0))
                 if t1_in_epi_gifs:
