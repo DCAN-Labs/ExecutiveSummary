@@ -858,33 +858,34 @@ def find_series_numbers(path_list, regex):
     return sorted_list
 
 
-def insert_placeholders(image_path_lists):
+def insert_placeholders(image_path_lists, rest_or_task='REST'):
     """
     Fills in any gaps (missing series) in lists of image paths with placeholder
     images.
 
     :parameter: image_path_lists: list of image path lists that need to be altered
+    :parameter: rest_or_task: indicates whether images are rest or task, and if task, which one
     :returns: list of image path lists with paths to placeholder images where needed
     """
-
+    
     corrected_lists = []
 
-    dvars_re = re.compile(r'DVARS_and_FD_rfMRI_REST\d+_')
-    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfMRI_REST\d+_')
-    rest_t1_re = re.compile(r'REST\d+_')
-    t1_rest_re = re.compile(r'_in_rfMRI_REST\d+')
-    sbref_re = re.compile(r'SBRef\d+')
-    rest_re = re.compile(r'REST\d+')
-
+    dvars_re = re.compile(r'DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_')
+    postreg_dvars_re = re.compile(r'_DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_')
+    series_t1_re = re.compile(r'(REST|SST|MID|nBack)\d+_')
+    t1_series_re = re.compile(r'_in_[rt]fMRI_(REST|SST|MID|nBack)\d+')
+    sbref_re = re.compile(r'SBRef')
+    rest_re = re.compile(r'(REST|SST|MID|nBack)\d+')
+        
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
-    rest_t1_nums = find_series_numbers(image_path_lists[2], rest_t1_re)
-    t1_rest_nums = find_series_numbers(image_path_lists[3], t1_rest_re)
+    series_t1_nums = find_series_numbers(image_path_lists[2], series_t1_re)
+    t1_series_nums = find_series_numbers(image_path_lists[3], t1_series_re)
     sbref_nums = find_series_numbers(image_path_lists[4], sbref_re)
     rest_nums = find_series_numbers(image_path_lists[5], rest_re)
 
-    numbers_lists = [dvars_nums, postreg_dvars_nums, rest_t1_nums, t1_rest_nums, sbref_nums, rest_nums]
-
+    numbers_lists = [dvars_nums, postreg_dvars_nums, series_t1_nums, t1_series_nums, sbref_nums, rest_nums]
+ 
     # Check if there are any gaps in image sequence that need to be filled by placeholders
     missing = []
     for x in xrange(0, len(numbers_lists)):
@@ -901,20 +902,24 @@ def insert_placeholders(image_path_lists):
             placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
+        if (rest_or_task == 'REST'):
+            r_or_t = 'r'
+        else:
+            r_or_t = 't'
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_rfMRI_REST' + str(x)
+                    sequence_text = 'DVARS_and_FD_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_rfMRI_REST' + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
                 elif list_index == 2:
-                    sequence_text = 'REST' + str(x) + '_in_t1'
+                    sequence_text = str(x) + '_in_t1'
                 elif list_index == 3:
-                    sequence_text = 't1_in_rfMRI_REST' + str(x)
+                    sequence_text = 't1_in_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
                 elif list_index == 4:
-                    sequence_text = 'SBRef' + str(x)
+                    sequence_text = 'SBRef_' + rest_or_task + str(x)
                 elif list_index == 5:
-                    sequence_text = 'REST' + str(x)
+                    sequence_text = rest_or_task + str(x)
 
                 match = [s for s in l if sequence_text in s]
                 if match:
@@ -1103,11 +1108,17 @@ def main():
 
             copy_images(placeholder_path, placeholders, img_out_path)
 
-            # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
+            # ------------------------- > Make lists of paths to be used in the series panel < -------------------------- #
             real_data = []
-            series_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
+            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
+            mid_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('MID' in gif) and ('atlas' not in gif)])
+            nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nBack' in gif) and ('atlas' not in gif)])
+            sst_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('SST' in gif) and ('atlas' not in gif)])
 
-            t1_in_series_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif) and ('rfMRI' in gif)])
+            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif)])
+            t1_in_mid_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('MID' in gif)])
+            t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nBack' in gif)])
+            t1_in_sst_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('SST' in gif)])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -1233,52 +1244,148 @@ def main():
 
             pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
-            # BUILD THE LISTS NEEDED FOR EPI-PANEL
+            # BUILD THE LISTS NEEDED FOR SERIES PANEL
 
-            raw_img_pattern = path.join(img_out_path, 'REST*.png')
-            raw_img_list = glob.glob(raw_img_pattern)
+            raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
+            raw_rest_img_list = glob.glob(raw_rest_img_pattern)
+            
+            raw_mid_img_pattern = path.join(img_out_path, 'MID*.png')
+            raw_mid_img_list = glob.glob(raw_mid_img_pattern)            
 
-            raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_img_list if '_' not in path.basename(img)])
+            raw_nback_img_pattern = path.join(img_out_path, 'nBack*.png')
+            raw_nback_img_list = glob.glob(raw_nback_img_pattern)
 
-            sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
+            raw_sst_img_pattern = path.join(img_out_path, 'SST*.png')
+            raw_sst_img_list = glob.glob(raw_sst_img_pattern)
 
-            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
+            raw_rest_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
+            raw_mid_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_mid_img_list if '_' not in path.basename(img)])
+            raw_nback_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_nback_img_list if '_' not in path.basename(img)])
+            raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
 
-            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
+            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('REST' in img)])
+            sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('MID' in img)])
+            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nBack' in img)])
+            sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img)])
 
-            # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
+            rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
+            mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
+            nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img)])
+            sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
+
+            rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
+            mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
+            nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img)]) 
+            sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
+
+
+            # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
             print '\nAssembling series images to build panel...'
+
+            rest_image_paths = [rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths]
+            mid_image_paths = [mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths]
+            nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
+            sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
+
+            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
+            mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, rest_or_task='MID')
+            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, rest_or_task='nBack')
+            sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, rest_or_task='SST')
+
+            num_rest_dvars = len(rest_dvars)
+            num_mid_dvars = len(mid_dvars)
+            num_nback_dvars = len(nback_dvars)
+            num_sst_dvars = len(sst_dvars)
+
+            # APPEND NEW SERIES PANEL SECTIONS
             series_rows = []
-
-            image_paths = [dvars, dvars_postreg, series_in_t1_gifs, t1_in_series_gifs, sb_ref_paths, raw_paths]
-                                    
-            dvars, dvars_postreg, series_in_t1_gifs, t1_in_series_gifs, sb_ref_paths, raw_paths = insert_placeholders(image_paths)
-
-            num_series_gifs = len(series_in_t1_gifs)
-
-            # APPEND NEW EPI-PANEL SECTIONS
             newer_body = new_body + series_panel_header
-            for i in range(0, num_series_gifs):
-                if dvars:
-                    series_rows.append(dvars.pop(0))
-                if dvars_postreg:
-                    series_rows.append(dvars_postreg.pop(0))
-                if series_in_t1_gifs:
-                    series_rows.append(series_in_t1_gifs.pop(0))
-                if t1_in_series_gifs:
-                    series_rows.append(t1_in_series_gifs.pop(0))
-                if sb_ref_paths:
-                    series_rows.append(sb_ref_paths.pop(0))
-                if raw_paths:
-                    series_rows.append(raw_paths.pop(0))
+            for i in range(0, num_rest_dvars):
+                if rest_dvars:
+                    series_rows.append(rest_dvars.pop(0))
+                if rest_dvars_postreg:
+                    series_rows.append(rest_dvars_postreg.pop(0))
+                if rest_in_t1_gifs:
+                    series_rows.append(rest_in_t1_gifs.pop(0))
+                if t1_in_rest_gifs:
+                    series_rows.append(t1_in_rest_gifs.pop(0))
+                if sb_ref_rest_paths:
+                    series_rows.append(sb_ref_rest_paths.pop(0))
+                if raw_rest_paths:
+                    series_rows.append(raw_rest_paths.pop(0))
 
                 series_panel = write_series_panel_row(series_rows[:6])
 
                 if series_panel:
                     newer_body += series_panel
-                _logger.debug('\nseries_rows were: %s' % series_rows)
+                _logger.debug('\nrest_rows were: %s' % series_rows)
+
+                series_rows = []
+
+            for i in range(0, num_mid_dvars):
+                if mid_dvars:
+                    series_rows.append(mid_dvars.pop(0))
+                if mid_dvars_postreg:
+                    series_rows.append(mid_dvars_postreg.pop(0))
+                if mid_in_t1_gifs:
+                    series_rows.append(mid_in_t1_gifs.pop(0))
+                if t1_in_mid_gifs:
+                    series_rows.append(t1_in_mid_gifs.pop(0))
+                if sb_ref_mid_paths:
+                    series_rows.append(sb_ref_mid_paths.pop(0))
+                if raw_mid_paths:
+                    series_rows.append(raw_mid_paths.pop(0))
+
+                series_panel = write_series_panel_row(series_rows[:6])
+
+                if series_panel:
+                    newer_body += series_panel
+                _logger.debug('\mid_rows were: %s' % series_rows)
                 series_rows = []
                 
+            for i in range(0, num_nback_dvars):
+                if nback_dvars:
+                    series_rows.append(nback_dvars.pop(0))
+                if nback_dvars_postreg:
+                    series_rows.append(nback_dvars_postreg.pop(0))
+                if nback_in_t1_gifs:
+                    series_rows.append(nback_in_t1_gifs.pop(0))
+                if t1_in_nback_gifs:
+                    series_rows.append(t1_in_nback_gifs.pop(0))
+                if sb_ref_nback_paths:
+                    series_rows.append(sb_ref_nback_paths.pop(0))
+                if raw_nback_paths:
+                    series_rows.append(raw_nback_paths.pop(0))
+
+                series_panel = write_series_panel_row(series_rows[:6])
+
+                if series_panel:
+                    newer_body += series_panel
+                _logger.debug('\nback_rows were: %s' % series_rows)
+                series_rows = []
+
+            for i in range(0, num_sst_dvars):
+                if sst_dvars:
+                    series_rows.append(sst_dvars.pop(0))
+                if sst_dvars_postreg:
+                    series_rows.append(sst_dvars_postreg.pop(0))
+                if sst_in_t1_gifs:
+                    series_rows.append(sst_in_t1_gifs.pop(0))
+                if t1_in_sst_gifs:
+                    series_rows.append(t1_in_sst_gifs.pop(0))
+                if sb_ref_sst_paths:
+                    series_rows.append(sb_ref_sst_paths.pop(0))
+                if raw_sst_paths:
+                    series_rows.append(raw_sst_paths.pop(0))
+
+                series_panel = write_series_panel_row(series_rows[:6])
+
+                if series_panel:
+                    newer_body += series_panel
+                _logger.debug('\sst_rows were: %s' % series_rows)
+                series_rows = []
+
+
             # COMPLETE EPI PANEls
 
             newer_body += series_panel_footer
