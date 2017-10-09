@@ -571,17 +571,17 @@ param_table_footer = """
                 </table>
             </div>"""
 
-epi_panel_header = """
+series_panel_header = """
             <div class="epi">
                 <table id="epi">
                     <thead>
                         <th colspan="4">
-                            Resting State Data
+                            Resting State and Task Data
                         </th>
                     </thead>
                     <tbody>"""
 
-epi_panel_footer = """
+series_panel_footer = """
                     </tbody>
                 </table>
             </div>
@@ -701,50 +701,50 @@ def write_param_table_row(list_of_data):
     return param_table_html_row
 
 
-def write_epi_panel_row(list_of_img_paths):
+def write_series_panel_row(list_of_img_paths):
     """
-    Takes a list of image paths and builds one row of epi_images for the panel.
+    Takes a list of image paths and builds one row of series images for the panel.
 
     :parameter: list_of_img_paths: list of paths
-    :return: one row of an html table, <tr> to </tr> with epi-images for a given series
+    :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    epi_panel_row = """
+    series_panel_row = """
                     <tr>
                         <td><a href="%(dvars)s" target="_blank"><img src="%(dvars)s"></a></td>
 			<td><a href="%(dvars_postreg)s" target="_blank"><img src="%(dvars_postreg)s"></a></td>
-                        <td><a href="%(rest_in_t1)s" target="_blank"><img src="%(rest_in_t1)s"></a></td>
-                        <td><a href="%(t1_in_rest)s" target="_blank"><img src="%(t1_in_rest)s"></a></td>
+                        <td><a href="%(series_in_t1)s" target="_blank"><img src="%(series_in_t1)s"></a></td>
+                        <td><a href="%(t1_in_series)s" target="_blank"><img src="%(t1_in_series)s"></a></td>
                         <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
-                        <td><a href="%(rest_nonlin_norm)s" target="_blank"><img src="%(rest_nonlin_norm)s"
+                        <td><a href="%(nonlin_norm)s" target="_blank"><img src="%(nonlin_norm)s"
                             class="raw_rest_img"></a></td>
                     </tr>""" % {'dvars'             : list_of_img_paths[0],
                                 'dvars_postreg'     : list_of_img_paths[1],
-                                'rest_in_t1'        : list_of_img_paths[2],
-                                't1_in_rest'        : list_of_img_paths[3],
+                                'series_in_t1'        : list_of_img_paths[2],
+                                't1_in_series'        : list_of_img_paths[3],
                                 'sb_ref'            : list_of_img_paths[4],
-                                'rest_nonlin_norm'  : list_of_img_paths[5]}
+                                'nonlin_norm'  : list_of_img_paths[5]}
 
-    return epi_panel_row
+    return series_panel_row
 
 
-def make_epi_panel(epi_rows_list, header=epi_panel_header, footer=epi_panel_footer):
+def make_series_panel(series_rows_list, header=series_panel_header, footer=series_panel_footer):
     """
-    Takes a list of panel rows (html_strings), a header and footer to build the full epi-panel.
+    Takes a list of panel rows (html_strings), a header and footer to build the full series panel.
 
-    :parameter: epi_rows_list: list of data rows (strings)
+    :parameter: series_rows_list: list of data rows (strings)
     :parameter: header: div section opener
     :parameter: footer: dev section closer
     :return: html string for the whole epi-panel div (one row of images per REST)
     """
 
-    epi_panel_html = header
+    series_panel_html = header
 
-    for row in epi_rows_list:
-        epi_panel_html += row
-    epi_panel_html += footer
+    for row in series_rows_list:
+        series_panel_html += row
+    series_panel_html += footer
 
-    return epi_panel_html
+    return series_panel_html
 
 
 def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png', dvars_concp_input_path='img/DVARS_and_FD_CONCP.png'):
@@ -1105,9 +1105,9 @@ def main():
 
             # ------------------------- > Make lists of paths to be used in the epi-panel < -------------------------- #
             real_data = []
-            epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
+            series_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
 
-            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif) and ('rfMRI' in gif)])
+            t1_in_series_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif) and ('rfMRI' in gif)])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -1235,53 +1235,53 @@ def main():
 
             # BUILD THE LISTS NEEDED FOR EPI-PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
-            raw_rest_img_list = glob.glob(raw_rest_img_pattern)
+            raw_img_pattern = path.join(img_out_path, 'REST*.png')
+            raw_img_list = glob.glob(raw_img_pattern)
 
-            rest_raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
+            raw_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_img_list if '_' not in path.basename(img)])
 
             sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
-            epi_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
+            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
 
-            epi_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
+            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
-            print '\nAssembling epi-images to build panel...'
-            epi_rows = []
+            print '\nAssembling series images to build panel...'
+            series_rows = []
 
-            image_paths = [epi_dvars, epi_dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths]
+            image_paths = [dvars, dvars_postreg, series_in_t1_gifs, t1_in_series_gifs, sb_ref_paths, raw_paths]
                                     
-            epi_dvars, epi_dvars_postreg, epi_in_t1_gifs, t1_in_epi_gifs, sb_ref_paths, rest_raw_paths = insert_placeholders(image_paths)
+            dvars, dvars_postreg, series_in_t1_gifs, t1_in_series_gifs, sb_ref_paths, raw_paths = insert_placeholders(image_paths)
 
-            num_epi_gifs = len(epi_in_t1_gifs)
+            num_series_gifs = len(series_in_t1_gifs)
 
             # APPEND NEW EPI-PANEL SECTIONS
-            newer_body = new_body + epi_panel_header
-            for i in range(0, num_epi_gifs):
-                if epi_dvars:
-                    epi_rows.append(epi_dvars.pop(0))
-                if epi_dvars_postreg:
-                    epi_rows.append(epi_dvars_postreg.pop(0))
-                if epi_in_t1_gifs:
-                    epi_rows.append(epi_in_t1_gifs.pop(0))
-                if t1_in_epi_gifs:
-                    epi_rows.append(t1_in_epi_gifs.pop(0))
+            newer_body = new_body + series_panel_header
+            for i in range(0, num_series_gifs):
+                if dvars:
+                    series_rows.append(dvars.pop(0))
+                if dvars_postreg:
+                    series_rows.append(dvars_postreg.pop(0))
+                if series_in_t1_gifs:
+                    series_rows.append(series_in_t1_gifs.pop(0))
+                if t1_in_series_gifs:
+                    series_rows.append(t1_in_series_gifs.pop(0))
                 if sb_ref_paths:
-                    epi_rows.append(sb_ref_paths.pop(0))
-                if rest_raw_paths:
-                    epi_rows.append(rest_raw_paths.pop(0))
+                    series_rows.append(sb_ref_paths.pop(0))
+                if raw_paths:
+                    series_rows.append(raw_paths.pop(0))
 
-                epi_panel = write_epi_panel_row(epi_rows[:6])
+                series_panel = write_series_panel_row(series_rows[:6])
 
-                if epi_panel:
-                    newer_body += epi_panel
-                _logger.debug('\nepi_rows were: %s' % epi_rows)
-                epi_rows = []
+                if series_panel:
+                    newer_body += series_panel
+                _logger.debug('\nseries_rows were: %s' % series_rows)
+                series_rows = []
                 
             # COMPLETE EPI PANEls
 
-            newer_body += epi_panel_footer
+            newer_body += series_panel_footer
 
             _logger.debug('newer_body is : %s' % newer_body)
 
