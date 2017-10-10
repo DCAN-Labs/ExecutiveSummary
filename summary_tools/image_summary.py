@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/opt/installed/python-2.7.11/bin/python
 """
 __author__ = 'Shannon Buckley', 12/27/15
 """
@@ -12,8 +12,8 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-# sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
-sys.path.append('/mnt/max/home/kleira/Projects/executivesummary')
+#sys.path.append('/mnt/lustre1/fnl_lab/code/internal/utilities/executivesummary')
+sys.path.append('/mnt/lustre1/fnl_lab/projects/earl/executivesummary')
 from helpers import shenanigans
 
 PROG = 'Image Summary'
@@ -115,8 +115,9 @@ def get_subject_info(path_to_nii_file):
         print '%s is neither .nii nor nii.gz' % filename
         return
 
+    epi = path.basename(dirname).split('_')[-1]
     parts = filename.split('_')
-
+    print(parts)
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
@@ -128,7 +129,7 @@ def get_subject_info(path_to_nii_file):
 
         _logger.info('raw SBRef file: %s' % parts)
         subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = 'SBRef'
+        modality = 'SBRef_' + epi
 
         series_num = path.basename(path.dirname(path_to_nii_file))[-1]
         # print 'series_num: %s' % series_num
@@ -167,6 +168,13 @@ def get_subject_info(path_to_nii_file):
         _logger.info('T2 file: %s' % parts)
         subject_code = parts[0]
         modality = parts[1]
+        series_num = parts[2]
+
+    elif p_count == 3 and 'tfMRI' in parts:
+        
+        _logger.info('raw task file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1]
+        modality = parts[2]
         series_num = parts[2]
 
     elif p_count == 4 and 'SBRef' in parts:
@@ -224,6 +232,9 @@ def get_subject_info(path_to_nii_file):
         _logger.error('\nimage_summary: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
 
+    elif 'tfMRI' in parts:
+        print('WARNING: Task found but parts not recognized. The parts are %s' % parts)
+
     return [subject_code, modality, series_num]
 
 
@@ -249,8 +260,8 @@ def get_nii_info(path_to_nii, info=None):
     :parameter: info: optional info LIST of 3 items: subject_code, modality, series
     :return: row of data in a list, length 8
     """
-
     path_to_nii = path.join(path_to_nii)
+    print(path_to_nii)
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
         if not path.basename(path_to_nii).endswith('.nii'):
@@ -286,11 +297,11 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
-
+    
     output = submit_command(cmd)
 
     output = output.strip('\n').split(',')
-
+    
     modality = output[0]
 
     floats_list = []
@@ -353,8 +364,9 @@ def get_list_of_data(src_folder):
     t1_data = []
     t2_data = []
     epi_data = []
-
+    print('getting list of data')
     for dir_name in tree:
+        print(dir_name)
 
         _logger.debug('dir: %s' % dir_name[0])
 
@@ -375,8 +387,9 @@ def get_list_of_data(src_folder):
             try:
 
                 data_info = get_nii_info(path.join(dir_name[0], file))
-
+                print(data_info)
                 modality = data_info[0]
+                print('modality = %s' % modality)
 
                 if 'T1w' in modality or 'T1' == modality:
 
@@ -388,7 +401,7 @@ def get_list_of_data(src_folder):
                     full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'SBRef' in modality or 'REST' in modality:
+                elif 'SBRef' or 'REST' or 'MID' or 'nBack' or 'SST' in modality:
 
                     full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -422,6 +435,8 @@ def slice_image_to_ortho_row(file_path, dst):
     """
 
     dst = path.join(dst)
+    print "Dst:"
+    print dst
 
     cmd = ''
     cmd += 'slicer %(input_file)s -u -a %(dest)s' % {
@@ -430,6 +445,8 @@ def slice_image_to_ortho_row(file_path, dst):
         'dest': dst}
 
     submit_command(cmd)
+    print "Cmd:"
+    print cmd
 
     return dst
 
@@ -453,7 +470,8 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
         'x_y_or_z': plane,
         'slice_pos': slice_pos,
         'dest': dst}
-
+    print("super_slice_me command:")
+    print(cmd)
     submit_command(cmd)
 
     return dst
@@ -494,10 +512,11 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
         'y': 55,
         'z': 45
     }
-
+    print("choose slices dict nifti_infor:")
+    print(nifti_info)
     if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
         slices_dict = sb_ref_slices
-    elif 'REST' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
+    elif 'REST' or 'MID' or 'SST' or 'nBack' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
         slices_dict = raw_rest_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices
@@ -591,6 +610,7 @@ def main():
 
     if args.nifti_path:
         nifti_path = path.join(args.nifti_path)
+        print(nifti_path)
         if path.exists(nifti_path):
             nii_params = get_nii_info(nifti_path)
             data_rows.append(nii_params)

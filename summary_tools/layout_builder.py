@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/opt/installed/python-2.7.11/bin/python
 """
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
 processed data.
@@ -405,10 +405,10 @@ def insert_placeholders(image_path_lists):
 
     corrected_lists = []
 
-    dvars_re = re.compile(r'DVARS_and_FD_rfmri_REST\d+_')
-    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfmri_REST\d+_')
+    dvars_re = re.compile(r'DVARS_and_FD_rfMRI_REST\d+_')
+    postreg_dvars_re = re.compile(r'_DVARS_and_FD_rfMRI_REST\d+_')
     rest_t1_re = re.compile(r'REST\d+_')
-    t1_rest_re = re.compile(r'_in_rfmri_REST\d+')
+    t1_rest_re = re.compile(r'_in_rfMRI_REST\d+')
     sbref_re = re.compile(r'SBRef\d+')
     rest_re = re.compile(r'REST\d+')
 
@@ -440,13 +440,13 @@ def insert_placeholders(image_path_lists):
         if missing:
             for x in xrange(int(missing[0]), int(missing[-1]) + 1):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_rfmri_REST' + str(x)
+                    sequence_text = 'DVARS_and_FD_rfMRI_REST' + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_rfmri_REST' + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_rfMRI_REST' + str(x)
                 elif list_index == 2:
                     sequence_text = 'REST' + str(x) + '_in_t1'
                 elif list_index == 3:
-                    sequence_text = 't1_in_rfmri_REST' + str(x)
+                    sequence_text = 't1_in_rfMRI_REST' + str(x)
                 elif list_index == 4:
                     sequence_text = 'SBRef' + str(x)
                 elif list_index == 5:
@@ -641,7 +641,7 @@ def main():
             real_data = []
             epi_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_in_t1.gif' in gif and 'atlas' not in gif])
 
-            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_rfmri_REST' in gif])
+            t1_in_epi_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if '_t1_in_rfMRI_REST' in gif])
 
             # setup an output directory
             if not path.exists(subject_code_folder):
@@ -678,12 +678,16 @@ def main():
             print '\nLooking for SBRef images...\n'
             alternate_sbref_path = path.join(sub_root)
             sbref_pattern = alternate_sbref_path + '/*REST*/Scout_orig.nii.gz'
+            task_sbref_pattern = alternate_sbref_path + '/*tfMRI*/Scout_orig.nii.gz'
+            more_task_sbref = glob.glob(task_sbref_pattern)
             more_sbref = glob.glob(sbref_pattern)
-            for sbref in more_sbref:
+            all_sbref = more_sbref + more_task_sbref            
+            for sbref in all_sbref:
                 data['epi-data'].append(sbref)
 
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
+            print(data)
             for list_entry in data['epi-data']:
 
                 info = image_summary.get_subject_info(list_entry)
@@ -693,7 +697,7 @@ def main():
                 print '\nPROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
                 print 'slicing images for: \n%s' % list_entry
 
-                if 'REST' in modality and 'SBRef' not in modality:
+                if 'REST' or 'SST' or 'MID' or 'nBack' in modality and 'SBRef' not in modality:
 
                     image_summary.slice_list_of_data([list_entry], subject_code=subj_id, modality=modality,
                                                      dest_dir=img_out_path, also_xyz=True)
@@ -702,11 +706,15 @@ def main():
 
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
+                elif 'SBRef' in modality and 'SST' or 'MID' or 'nBack' in modality:
+
+                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
                 elif 'SBRef' in modality:
 
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
                                                                                                              series)))
-
+                                                                                                             
             # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
             for list_entry in data.values():
 
@@ -714,6 +722,7 @@ def main():
 
                 for item in list_entry:
 
+                    print(item)
                     information = image_summary.get_subject_info(item)
 
                     modality, series = information[1], information[2]
@@ -784,9 +793,9 @@ def main():
 
             sb_ref_paths = natural_sort([path.join('./img', img) for img in pngs if 'SBRef' in img])
 
-            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img)])
+            dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
 
-            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img)])
+            dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('tfMRI' not in img)])
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH EPI-TYPE
             print '\nAssembling epi-images to build panel...'
@@ -826,6 +835,9 @@ def main():
             newer_body += epi_panel_footer
 
             _logger.debug('newer_body is : %s' % newer_body)
+            print(img_in_path)
+            print(structural_img_labels)
+            print(img_out_path)
 
             try:
 
