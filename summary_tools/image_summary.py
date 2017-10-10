@@ -1,4 +1,6 @@
-#!/opt/installed/python-2.7.11/bin/python
+#!/mnt/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+
+
 """
 __author__ = 'Shannon Buckley', 12/27/15
 """
@@ -8,13 +10,19 @@ import subprocess
 import argparse
 import csv
 from os import path
+from math import sqrt
+import re
 import logging
 import logging.handlers
 from datetime import datetime
 import sys
+
 #sys.path.append('/mnt/lustre1/fnl_lab/code/internal/utilities/executivesummary')
 sys.path.append('/mnt/lustre1/fnl_lab/projects/earl/executivesummary')
+
 from helpers import shenanigans
+
+from PIL import Image
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
@@ -567,6 +575,47 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                                                                                  (modality,
                                                                                   key,
                                                                                   dict[key])))
+
+
+def make_mosaic(png_path, mosaic_path):
+
+    """
+    Takes path to .png anatomical slices, creates a mosaic that can be
+    used in a BrainSprite viewer, and saves to a specified directory.
+
+    :return: None
+    """
+    
+    os.chdir(png_path)
+
+    def natural_sort(l): 
+	    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+	    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+	    return sorted(l, key = alphanum_key)
+
+    files = os.listdir(png_path)
+    files = natural_sort(files)
+
+    image_dim = 218
+    images_per_side = int(sqrt(len(files)))
+    square_dim = image_dim * images_per_side
+    result = Image.new("RGB", (square_dim, square_dim))
+
+    for index, file in enumerate(files):
+        path = os.path.expanduser(file)
+        img = Image.open(path)
+        img.thumbnail((image_dim, image_dim), Image.ANTIALIAS)
+        # TODO: decide whether using resize is worth it over thumbnail
+        #img.resize((image_dim, image_dim), Image.ANTIALIAS)
+        x = index % images_per_side * image_dim
+        y = index // images_per_side * image_dim
+        w, h = img.size
+        result.paste(img, (x, y, x + w, y + h))
+
+    os.chdir(mosaic_path)
+
+    quality_val = 95
+    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
 
 
 def main():
