@@ -1,4 +1,4 @@
-#!/mnt/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
 
 """
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
@@ -810,6 +810,9 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     :return: None
     """
 
+    print "copy_images function list_of_images:"
+    print list_of_images
+
     if type(list_of_images) == str:
         img_path = path.join(src_dir, list_of_images)
         shutil.copyfile(img_path, dst_dir)
@@ -845,10 +848,17 @@ def find_series_numbers(path_list, regex):
     :returns: list of series numbers (natural sort)
     """
 
+#    print 'Doing find_series numbers on...'
+#    print 'path_list:'
+#    print path_list
+#    print 'regex:'
+#    print regex
+
     filtered_list = []
+    compiled_regex = re.compile(regex)
 
     for item in path_list:
-        filtered = regex.search(item)
+        filtered = compiled_regex.search(item)
         if filtered:
             filtered = filtered.group()
             filtered_num = re.search(r'\d+', filtered).group()
@@ -872,13 +882,12 @@ def insert_placeholders(image_path_lists, rest_or_task='REST'):
     corrected_lists = []
 
 
-    dvars_re = re.compile(r'DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_')
-    postreg_dvars_re = re.compile(r'_DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_')
-    series_t1_re = re.compile(r'(REST|SST|MID|nBack)\d+_')
-    t1_series_re = re.compile(r'_in_[rt]fMRI_(REST|SST|MID|nBack)\d+')
-    sbref_re = re.compile(r'SBRef')
-    rest_re = re.compile(r'(REST|SST|MID|nBack)\d+')
-        
+    dvars_re         = r'DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_'
+    postreg_dvars_re = r'_DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_'
+    series_t1_re     = r'(REST|SST|MID|nBack)\d+_'
+    t1_series_re     = r'_in_[rt]fMRI_(REST|SST|MID|nBack)\d+'
+    sbref_re         = r'SBRef_(REST|SST|MID|nBack)\d+'
+    rest_re          = r'(REST|SST|MID|nBack)\d+'
 
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
@@ -1060,18 +1069,20 @@ def main():
 
                 continue
             # ------------------------- > MAKE /img or quit ... CHECK IMAGES < ------------------------- #
-            if not path.exists(img_out_path):
+            if path.exists(img_out_path):
 
-                try:
+                shutil.rmtree(img_out_path,ignore_errors=True)
 
-                    os.makedirs(img_out_path)
+            try:
 
-                except OSError:
+                os.makedirs(img_out_path)
 
-                    print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                    _logger.error('cannot make /img within /summary... permissions? \nPath: %s' % summary_path)
+            except OSError:
 
-                    return
+                print '\nCheck permissions to write to that path? \npath: %s' % summary_path
+                _logger.error('cannot make /img within /summary... permissions? \nPath: %s' % summary_path)
+
+                return
 
             try:
                 gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
@@ -1102,7 +1113,6 @@ def main():
             # Copy DVARS pngs to /img folder
 
             dvars = [img for img in os.listdir(img_in_path) if (img.endswith('png')) and 'DVARS' in img]
-
             copy_images(img_in_path, dvars, img_out_path)
 
             # Copy placeholder images to /img folder
@@ -1126,9 +1136,10 @@ def main():
 
 
             # setup an output directory
-            if not path.exists(subject_code_folder):
+            if path.exists(subject_code_folder):
+                shutil.rmtree(subject_code_folder,ignore_errors=True)
 
-                os.makedirs(subject_code_folder)
+            os.makedirs(subject_code_folder)
 
             # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
             # TODO: improve this section with a more specific test
@@ -1407,7 +1418,7 @@ def main():
 
             _logger.debug('newer_body is : %s' % newer_body)
             print(img_in_path)
-            print(structural_img_labels)
+#            print(structural_img_labels)
             print(img_out_path)
 
 #            try:

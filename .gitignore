@@ -5,3 +5,8 @@ out/
 *.orig
 summary_tools/_log
 *.pyc
+*/*.pyc*~
+logs/
+_log
+TestCode/img/
+
