@@ -63,7 +63,7 @@ def get_dcm_info(path_to_dicom, modality=None):
     cmd = 'echo %s,' % modality
     cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
     cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TE
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TR
+    cmd += '`mri_info %s | grep "TR" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TR
     cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
     cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
