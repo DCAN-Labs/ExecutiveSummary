@@ -1,4 +1,4 @@
-#!/mnt/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
 
 
 """
@@ -16,13 +16,11 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-
-#sys.path.append('/mnt/lustre1/fnl_lab/code/internal/utilities/executivesummary')
-sys.path.append('/mnt/lustre1/fnl_lab/projects/earl/executivesummary')
-
 from helpers import shenanigans
-
 from PIL import Image
+
+current_dir = os.getcwd()
+sys.path.append(current_dir)
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
@@ -125,7 +123,6 @@ def get_subject_info(path_to_nii_file):
 
     epi = path.basename(dirname).split('_')[-1]
     parts = filename.split('_')
-    print(parts)
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
@@ -237,7 +234,6 @@ def get_subject_info(path_to_nii_file):
 
     elif parts > 5:
         _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        _logger.error('\nimage_summary: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
 
     elif 'tfMRI' in parts:
@@ -269,7 +265,6 @@ def get_nii_info(path_to_nii, info=None):
     :return: row of data in a list, length 8
     """
     path_to_nii = path.join(path_to_nii)
-    print(path_to_nii)
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
         if not path.basename(path_to_nii).endswith('.nii'):
@@ -443,8 +438,6 @@ def slice_image_to_ortho_row(file_path, dst):
     """
 
     dst = path.join(dst)
-    print "Dst:"
-    print dst
 
     cmd = ''
     cmd += 'slicer %(input_file)s -u -a %(dest)s' % {
@@ -453,8 +446,6 @@ def slice_image_to_ortho_row(file_path, dst):
         'dest': dst}
 
     submit_command(cmd)
-    print "Cmd:"
-    print cmd
 
     return dst
 
@@ -478,8 +469,6 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
         'x_y_or_z': plane,
         'slice_pos': slice_pos,
         'dest': dst}
-    print("super_slice_me command:")
-    print(cmd)
     submit_command(cmd)
 
     return dst

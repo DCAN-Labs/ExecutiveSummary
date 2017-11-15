@@ -674,9 +674,10 @@ def write_param_table_row(list_of_data):
     :return: param_table_row with specific metrics (8 columns)
     """
 
-    if len(list_of_data) != 8 or list_of_data[5] == '':
-        _logger.error('list of data is incomplete:\n%s' % list_of_data)
-        return
+#    if len(list_of_data) != 8 or list_of_data[5] == '' or list_of_data[0] == '':
+#        _logger.error('list of data is incomplete:\n%s' % list_of_data)
+#        print 'list of data is incomplete:\n%s' % list_of_data
+#        return
 
     param_table_html_row = """
                         <tr class="%(class_prefix)s_data">
@@ -809,9 +810,6 @@ def copy_images(src_dir, list_of_images, dst_dir='./img/'):
     :parameter: dst_dir: copy to  path
     :return: None
     """
-
-    print "copy_images function list_of_images:"
-    print list_of_images
 
     if type(list_of_images) == str:
         img_path = path.join(src_dir, list_of_images)
@@ -1180,7 +1178,6 @@ def main():
 
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
-            print(data)
             for list_entry in data['epi-data']:
 
                 info = image_summary.get_subject_info(list_entry)
@@ -1215,36 +1212,46 @@ def main():
 
                 for item in list_entry:
 
-                    print(item)
                     information = image_summary.get_subject_info(item)
 
                     modality, series = information[1], information[2]
 
-                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
+#                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
 
-                    if dicom_for_te_grabber is not None:
+                    dicom_root_dir = path.join(sub_root, 'unprocessed/DICOM/')
 
-                        nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
+                    dicom_for_te_grabber = shenanigans.get_dicom_path_from_nifti_info(dicom_root_dir, modality)
 
-                    else:
+#                    if dicom_for_te_grabber is not None:
 
-                        nifti_te = 0.0
+#                        nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
 
-                    print '\nTE for this file was: %s\n' % nifti_te
+#                    else:
+#                        nifti_te = 0.0
+
+#                    print '\nTE for this file was: %s\n' % nifti_te
 
                     print '\nadding %s to list of data, for which we need parameters...\n' % item
 
                     _logger.debug('data_list is: %s' % data)
 
                     print "Item: " + item
-                    params_row = image_summary.get_nii_info(item)
 
-                    alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
-                    print '\nTESTING PARAMS GETTER.....\n'
-                    print '\nOld Way params_row = %s\n' % params_row
-                    print '\nNew Way alt_params_row = %s\n' % alt_params_row
+                    if dicom_for_te_grabber:
+                        alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
+                        print alt_params_row
+                        real_data.append(alt_params_row)
 
-                    real_data.append(params_row)
+                    else:
+                        params_row = image_summary.get_nii_info(item)
+                        real_data.append(params_row)
+
+                    #print '\nTESTING PARAMS GETTER.....\n'
+                    #print '\nOld Way params_row = %s\n' % params_row
+                    #print '\nNew Way alt_params_row = %s\n' % alt_params_row
+
+                    
+
 
             # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
 
@@ -1255,7 +1262,8 @@ def main():
             # BUILD PARAM PANEL
 
             for data_row in real_data:
-                html_params_panel += write_param_table_row(data_row)
+                html_row = write_param_table_row(data_row)
+                html_params_panel += html_row
 
             html_params_panel += param_table_footer
 
@@ -1417,9 +1425,6 @@ def main():
             newer_body += series_panel_footer
 
             _logger.debug('newer_body is : %s' % newer_body)
-            print(img_in_path)
-#            print(structural_img_labels)
-            print(img_out_path)
 
 #            try:
 

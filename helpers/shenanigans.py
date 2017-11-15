@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
 """
 __author__ = 'Shannon Buckley', 12/27/15
 """
@@ -60,20 +60,38 @@ def get_dcm_info(path_to_dicom, modality=None):
 
     path_to_dicom = path.join(path_to_dicom)
 
-    cmd = 'echo %s,' % modality
-    cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
-    cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TE
-    cmd += '`mri_info %s | grep "TR" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TR
-    cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
-    cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
+    if modality == '':
+        modality = 'UnknownModality'
 
-    output = submit_command(cmd)
+    final_data = [modality]
 
-    data = output.strip("\n").split(',')
+    if path_to_dicom is not None:
 
-    data = [item for item in data if not item == '']
+        cmd = 'echo %s,' % modality
+        cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
+        cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TE
+        cmd += '`mri_info %s | grep "TR" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
+        cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
+        cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
-    return data
+        output = submit_command(cmd)
+
+        output = output.strip("\n").split(',')
+
+        for value in output[1:]:
+            try:
+                value = format(float(value), '.2f')
+            
+            # If there is non-number input, remove it
+            except ValueError:
+                if value:  # If not an empty string
+                    value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
+                else:
+                     value = 'Not found'
+
+            final_data.append(value)
+
+    return final_data
 
 
 def structural_montage_cmd(list_in, path_out, label=False):
@@ -135,10 +153,13 @@ def grab_te_from_dicom(path_to_dicom):
     path_to_dicom = os.path.join(path_to_dicom)
 
     cmd = 'echo `mri_info %s | grep "TE" | awk %s`' % (path_to_dicom, "'{print $5}'")
+    print cmd
 
     output = submit_command(cmd)
+    print output
 
     echo_time = output.strip("\n").split(',')
+    print echo_time
 
     return format(float(echo_time), '.2f')
 
@@ -211,6 +232,28 @@ def get_airc_dicom_path_from_nifti_info(processed_subject_path, modality_name):
 
     else:
         return None
+
+def get_dicom_path_from_nifti_info(dicom_root_dir, modality_name):
+    """
+    Uses another helper function to find a dicom path for a given nifti modality and subject/visit
+
+    :parameter dicom_root_dir:
+    :parameter modality_name: string identifying the modality of the nifti file
+    :return: path to the .dcm file
+    """
+
+    if os.path.exists(dicom_root_dir):
+
+        dicoms = os.listdir(dicom_root_dir)
+#        print 'Folders found within dicom root directory for this subject: \n%s' % acquisitions
+
+        for dicom in dicoms:
+            if modality_name in dicom:
+                return path.join(dicom_root_dir, dicom)
+
+    else:
+        return None
+
 
 
 def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
