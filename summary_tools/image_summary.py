@@ -16,11 +16,13 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
+
+script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(script_path)
+
 from helpers import shenanigans
 from PIL import Image
 
-current_dir = os.getcwd()
-sys.path.append(current_dir)
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
@@ -314,9 +316,9 @@ def get_nii_info(path_to_nii, info=None):
         try:
             value = format(float(value), '.2f')
             
-        # If there is non-number input, remove it
+        # If there is non-number input, format or remove it
         except ValueError:
-            if value:  # If not an empty string
+            if value.isdigit():
                 value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
             else:
                 value = 'Not found'
