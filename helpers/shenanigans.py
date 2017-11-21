@@ -82,9 +82,9 @@ def get_dcm_info(path_to_dicom, modality=None):
             try:
                 value = format(float(value), '.2f')
             
-            # If there is non-number input, remove it
+            # If there is non-number input, format or remove it
             except ValueError:
-                if value:  # If not an empty string
+                if value.isdigit():
                     value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
                 else:
                      value = 'Not found'
