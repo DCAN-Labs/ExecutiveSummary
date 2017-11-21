@@ -586,6 +586,7 @@ def make_mosaic(png_path, mosaic_path):
 
     files = os.listdir(png_path)
     files = natural_sort(files)
+    files = files[::-1]
 
     image_dim = 218
     images_per_side = int(sqrt(len(files)))
@@ -595,6 +596,7 @@ def make_mosaic(png_path, mosaic_path):
     for index, file in enumerate(files):
         path = os.path.expanduser(file)
         img = Image.open(path)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
         img.thumbnail((image_dim, image_dim), Image.ANTIALIAS)
         # TODO: decide whether using resize is worth it over thumbnail
         #img.resize((image_dim, image_dim), Image.ANTIALIAS)
