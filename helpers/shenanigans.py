@@ -49,11 +49,12 @@ def rename_image(img_path):
         return new_file_path
 
 
-def get_dcm_info(path_to_dicom, modality=None):
+def get_dcm_info(path_to_dicom, path_to_nii, modality=None):
     """
     Runs mri_info on a .dcm to grab TE and other info, giving you: [modality, x,y,z, TE, TR, nFrames, TI]
 
     :param path_to_dicom: full-path to any single .dcm file
+    :param path_to_nii: needs path to nifti to get correct number of frames and TR
     :param modality: optional string you want used as a label for this dicom file
     :return: list of data with length 8
     """
@@ -70,8 +71,8 @@ def get_dcm_info(path_to_dicom, modality=None):
         cmd = 'echo %s,' % modality
         cmd += '`mri_info %s | grep "voxel sizes" | awk %s`,' % (path_to_dicom, "'{print $3 $4 $5}'")
         cmd += '`mri_info %s | grep "TE" | awk %s`,' % (path_to_dicom, "'{print $5}'")  # grabs TE
-        cmd += '`mri_info %s | grep "TR" | awk %s`,' % (path_to_dicom, "'{print $2}'")  # grabs TR
-        cmd += '`mri_info %s | grep "nframes" | awk %s`,' % (path_to_dicom, "'{print $7}'")
+        cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
+        cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
         cmd += '`mri_info %s | grep "TI" | awk %s`' % (path_to_dicom, "'{print $8}'")
 
         output = submit_command(cmd)

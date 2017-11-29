@@ -1238,7 +1238,7 @@ def main():
                     print "Item: " + item
 
                     if dicom_for_te_grabber:
-                        alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, modality)
+                        alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
                         print alt_params_row
                         real_data.append(alt_params_row)
 
