@@ -641,7 +641,7 @@ def make_brainsprite_viewer(png_path, mosaic_path):
     structural_html_panel = """
     <div class="top-row">
             <div class="structural">
-                <div style=width:1000px;>
+                <div>
                     <p>BrainSprite Viewer: T1</p>
                     <canvas id="viewer">
                     <img id="spriteImg" class="hidden" src="./img/mosaic.jpg">

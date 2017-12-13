@@ -597,9 +597,7 @@ def make_mosaic(png_path, mosaic_path):
         path = os.path.expanduser(file)
         img = Image.open(path)
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        img.thumbnail((image_dim, image_dim), Image.ANTIALIAS)
-        # TODO: decide whether using resize is worth it over thumbnail
-        #img.resize((image_dim, image_dim), Image.ANTIALIAS)
+        img.thumbnail((image_dim, image_dim), resample=Image.LANCZOS)
         x = index % images_per_side * image_dim
         y = index // images_per_side * image_dim
         w, h = img.size
@@ -608,7 +606,7 @@ def make_mosaic(png_path, mosaic_path):
     os.chdir(mosaic_path)
 
     quality_val = 95
-    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
+    result.save('mosaic.png', 'PNG', quality=quality_val)
 
 
 def main():
