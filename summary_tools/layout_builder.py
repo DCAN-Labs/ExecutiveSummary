@@ -711,8 +711,14 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
+    series_type_re = r'(REST|SST|MID|nBack)\d+'
+    compiled_series_type = re.compile(series_type_re)
+    series_type = compiled_series_type.search(list_of_img_paths[5]).group()
+    print "Making series panel for " + series_type
+
     series_panel_row = """
                     <tr>
+                        <td><b>%(series_type)s</b></td>
                         <td><a href="%(dvars)s" target="_blank"><img src="%(dvars)s"></a></td>
 			<td><a href="%(dvars_postreg)s" target="_blank"><img src="%(dvars_postreg)s"></a></td>
                         <td><a href="%(series_in_t1)s" target="_blank"><img src="%(series_in_t1)s"></a></td>
@@ -720,7 +726,8 @@ def write_series_panel_row(list_of_img_paths):
                         <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
                         <td><a href="%(nonlin_norm)s" target="_blank"><img src="%(nonlin_norm)s"
                             class="raw_rest_img"></a></td>
-                    </tr>""" % {'dvars'             : list_of_img_paths[0],
+                    </tr>""" % {'series_type'       : series_type,
+                                'dvars'             : list_of_img_paths[0],
                                 'dvars_postreg'     : list_of_img_paths[1],
                                 'series_in_t1'        : list_of_img_paths[2],
                                 't1_in_series'        : list_of_img_paths[3],
