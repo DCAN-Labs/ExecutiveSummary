@@ -16,6 +16,7 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
+import glob
 
 script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(script_path)
@@ -72,15 +73,31 @@ def get_paths(subject_code_path):
 
     if path.exists(sub_path):
 
-        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
+        os.chdir(sub_path)
 
-        if path.exists(v2_path):
+        summary_dirs = glob.glob('*summary*')
+        
+        # TODO: Add option for ICA?
+        summary_dir = [d for d in summary_dirs if 'ica' not in d][0]
 
-            img_in_path = v2_path
+        summary_path = path.join(subject_code_path, summary_dir)
+
+        if path.exists(summary_path):
+            img_in_path = summary_path
 
         else:
+            print "No summary folder found."
+            sys.exit()
 
-            img_in_path = path.join(sub_path, 'summary')
+#        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
+
+#        if path.exists(v2_path):
+
+#            img_in_path = v2_path
+
+#        else:
+
+#            img_in_path = path.join(sub_path, 'summary')
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 

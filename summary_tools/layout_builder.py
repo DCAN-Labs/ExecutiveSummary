@@ -1052,12 +1052,10 @@ def main():
             # --------------------------------- > SETUP PATHS < --------------------------------- #
             if path.exists(summary_path):
 
-		v2_path = path.join(sub_root, 'summary_FNL_preproc_v2')
+		if 'v2' or 'infant' in summary_path:
 
-		if path.exists(v2_path):
-
-		    img_out_path = path.join(v2_path, 'img')
-		    T1_path = path.join(v2_path, 'T1_pngs')
+		    img_out_path = path.join(summary_path, 'img')
+		    T1_path = path.join(summary_path, 'T1_pngs')
 
 		else:
 
@@ -1093,6 +1091,8 @@ def main():
                 gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
 
                 if len(gifs) == 0:
+
+                    print img_in_path
 
                     _logger.error('no .gifs in summary folder')
                     print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
@@ -1276,7 +1276,11 @@ def main():
 
             # BUILD & WRITE THE STRUCTURAL PANEL
 
-            body = make_brainsprite_viewer(T1_path, img_out_path)
+            # If there are T1 pngs, make the BrainSprite viewer
+            if os.listdir(T1_path):
+                body = make_brainsprite_viewer(T1_path, img_out_path)
+            else:
+                body = ''
 
             # APPEND WITH PARAMS PANEL
 
