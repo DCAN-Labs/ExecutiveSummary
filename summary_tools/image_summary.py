@@ -17,12 +17,12 @@ import logging
 import logging.handlers
 from datetime import datetime
 import sys
-from helpers import shenanigans
 from PIL import Image
 import glob
 
 script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(script_path)
+from helpers import shenanigans
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
