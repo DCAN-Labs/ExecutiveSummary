@@ -12,18 +12,17 @@ import csv
 from os import path
 from math import sqrt
 import re
+import shutil
 import logging
 import logging.handlers
 from datetime import datetime
 import sys
+from helpers import shenanigans
+from PIL import Image
 import glob
 
 script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(script_path)
-
-from helpers import shenanigans
-from PIL import Image
-
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
@@ -61,7 +60,7 @@ _logger.addHandler(handler)
 _logger.info('\nprogram log: %s' % (date_stamp))
 
 
-def get_paths(subject_code_path):
+def get_paths(subject_code_path, use_ica=False):
     """
     PLACEHOLDER Takes subj_path and returns all relevant paths
     :param subject_code_path:
@@ -73,31 +72,31 @@ def get_paths(subject_code_path):
 
     if path.exists(sub_path):
 
-        os.chdir(sub_path)
+        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
 
-        summary_dirs = glob.glob('*summary*')
-        
-        # TODO: Add option for ICA?
-        summary_dir = [d for d in summary_dirs if 'ica' not in d][0]
+        if path.exists(v2_path):
+            if use_ica:
+                cmd=['mkdir', v2_path + '_ica']
+                print cmd
+                subprocess.call(cmd)
+                img_in_path = v2_path + "_ica"
+                for f in os.listdir(v2_path):
+                    if "_ica_" in f:
+                        new_f_name = re.sub("ica_", "", f)
+                        cmd=["cp", v2_path + "/" + f, img_in_path + "/" + new_f_name]
+                        print cmd
+                        subprocess.call(cmd, shell=False)
+                    if "fMRI_" not in f:
+                        cmd="cp -rT " + v2_path + "/" + f + " " + img_in_path + "/" + f
+                        print cmd
+                        subprocess.call(cmd, shell=True)
 
-        summary_path = path.join(subject_code_path, summary_dir)
-
-        if path.exists(summary_path):
-            img_in_path = summary_path
+            else:
+                img_in_path = v2_path
 
         else:
-            print "No summary folder found."
-            sys.exit()
 
-#        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
-
-#        if path.exists(v2_path):
-
-#            img_in_path = v2_path
-
-#        else:
-
-#            img_in_path = path.join(sub_path, 'summary')
+            img_in_path = path.join(sub_path, 'summary')
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
@@ -623,7 +622,7 @@ def make_mosaic(png_path, mosaic_path):
     os.chdir(mosaic_path)
 
     quality_val = 95
-    result.save('mosaic.png', 'PNG', quality=quality_val)
+    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
 
 
 def main():
