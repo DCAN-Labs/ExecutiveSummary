@@ -1060,7 +1060,7 @@ def main():
 		else:
 
 		    img_out_path = path.join(sub_root, 'summary', 'img')
-		    T1_path = path.join(sub_root, summary, 'T1_pngs')
+		    T1_path = path.join(sub_root, 'summary', 'T1_pngs')
 
                 img_in_path = summary_path
                 subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
