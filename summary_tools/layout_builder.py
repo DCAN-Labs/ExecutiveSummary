@@ -887,10 +887,10 @@ def insert_placeholders(image_path_lists, rest_or_task='REST'):
     corrected_lists = []
 
 
-    dvars_re         = r'DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_'
-    postreg_dvars_re = r'_DVARS_and_FD_[rt]fMRI_(REST|SST|MID|nBack)\d+_'
+    dvars_re         = r'DVARS_and_FD_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
+    postreg_dvars_re = r'_DVARS_and_FD_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
     series_t1_re     = r'(REST|SST|MID|nBack)\d+_'
-    t1_series_re     = r'_in_[rt]fMRI_(REST|SST|MID|nBack)\d+'
+    t1_series_re     = r'_in_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
     sbref_re         = r'SBRef_(REST|SST|MID|nBack)\d+'
     rest_re          = r'(REST|SST|MID|nBack)\d+'
 
@@ -1128,13 +1128,13 @@ def main():
 
             # ------------------------- > Make lists of paths to be used in the series panel < -------------------------- #
             real_data = []
-            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rfMRI' in gif) and ('atlas' not in gif)])
+            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('REST' in gif) and ('atlas' not in gif)])
             mid_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('MID' in gif) and ('atlas' not in gif)])
             nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nBack' in gif) and ('atlas' not in gif)])
             sst_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('SST' in gif) and ('atlas' not in gif)])
 
 
-            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_rfMRI_REST' in gif)])
+            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('REST' in gif)])
             t1_in_mid_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('MID' in gif)])
             t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nBack' in gif)])
             t1_in_sst_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('SST' in gif)])
@@ -1308,10 +1308,10 @@ def main():
             raw_nback_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_nback_img_list if '_' not in path.basename(img)])
             raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
 
-            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('REST' in img)])
-            sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('MID' in img)])
-            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nBack' in img)])
-            sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img)])
+            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('REST' in img) and ('-' not in img)])  # Last condition excludes x, y, and z images
+            sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('MID' in img) and ('-' not in img)])
+            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nBack' in img) and ('-' not in img)])
+            sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img) and ('-' not in img)])
 
             rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
             mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
