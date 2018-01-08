@@ -12,6 +12,7 @@ import os
 from os import path
 import re
 import argparse
+import subprocess
 import image_summary
 from image_summary import _logger
 import glob
@@ -45,6 +46,8 @@ def get_parser():
 
     parser.add_argument('-l', '--list_file', dest='list_file', required=False, help="""Optional: path to file containing
     list of processed-subject-paths, e.g. /scratch/HCP/processed/ASD-blah/subjCode/VisitID/subjCode .""")
+
+    parser.add_argument('--ica', action='store_true')
 
     parser.add_argument('--verbose', dest="verbose", action="store_true", help="Tell me all about it.")
 
@@ -720,7 +723,7 @@ def write_series_panel_row(list_of_img_paths):
                     <tr>
                         <td><b>%(series_type)s</b></td>
                         <td><a href="%(dvars)s" target="_blank"><img src="%(dvars)s"></a></td>
-			<td><a href="%(dvars_postreg)s" target="_blank"><img src="%(dvars_postreg)s"></a></td>
+                        <td><a href="%(dvars_postreg)s" target="_blank"><img src="%(dvars_postreg)s"></a></td>
                         <td><a href="%(series_in_t1)s" target="_blank"><img src="%(series_in_t1)s"></a></td>
                         <td><a href="%(t1_in_series)s" target="_blank"><img src="%(t1_in_series)s"></a></td>
                         <td><a href="%(sb_ref)s" target="_blank"><img src="%(sb_ref)s" class="raw_rest_img"></a></td>
@@ -1002,7 +1005,7 @@ def main():
 
                 # ------------------------- > GATHER BASIC INFO < ------------------------- #
 
-                summary_path, data_path = image_summary.get_paths(sub_root)
+                summary_path, data_path = image_summary.get_paths(sub_root, args.ica)
 
                 if sub_root.endswith('/'):
                     sub_root = sub_root[:-1]
@@ -1051,16 +1054,19 @@ def main():
 
             # --------------------------------- > SETUP PATHS < --------------------------------- #
             if path.exists(summary_path):
+                v2_path = path.join(sub_root, 'summary_FNL_preproc_v2')
 
-		if 'v2' or 'infant' in summary_path:
+                if path.exists(v2_path):
+                    if args.ica:
+                        img_out_path = path.join(v2_path + '_ica', 'img')
+                        T1_path = path.join(v2_path + '_ica', 'T1_pngs')
+                    else:
+                        img_out_path = path.join(v2_path, 'img')
+                        T1_path = path.join(v2_path, 'T1_pngs')
 
-		    img_out_path = path.join(summary_path, 'img')
-		    T1_path = path.join(summary_path, 'T1_pngs')
-
-		else:
-
-		    img_out_path = path.join(sub_root, 'summary', 'img')
-		    T1_path = path.join(sub_root, 'summary', 'T1_pngs')
+                else:
+                    img_out_path = path.join(sub_root, 'summary', 'img')
+                    T1_path = path.join(sub_root, 'summary', 'T1_pngs')
 
                 img_in_path = summary_path
                 subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
@@ -1093,7 +1099,7 @@ def main():
                 if len(gifs) == 0:
 
                     print img_in_path
-
+                    
                     _logger.error('no .gifs in summary folder')
                     print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
                         'Check to make sure FNL_preproc has been ran? '
@@ -1479,6 +1485,16 @@ def main():
 
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
+                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
+
+                    print '\nFind your images here: \n\t%s' % qc_folder_out
+
+                else:
+
+                    print 'output path not found: %s, attempting to create...' % user_out_path
+
+                    subprocess.call(['mkdir', user_out_path])
+                    
                     qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
 
                     print '\nFind your images here: \n\t%s' % qc_folder_out
