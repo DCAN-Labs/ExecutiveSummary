@@ -714,9 +714,14 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
+    print list_of_img_paths
+
     series_type_re = r'(REST|SST|MID|nBack)\d+'
     compiled_series_type = re.compile(series_type_re)
-    series_type = compiled_series_type.search(list_of_img_paths[5]).group()
+    if len(list_of_img_paths) >= 6:
+        series_type = compiled_series_type.search(list_of_img_paths[5]).group()
+    else:
+        series_type = "Unknown"
     print "Making series panel for " + series_type
 
     series_panel_row = """
@@ -1319,15 +1324,28 @@ def main():
             sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nBack' in img) and ('-' not in img)])
             sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img) and ('-' not in img)])
 
-            rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
-            mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
-            nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img)])
-            sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
+            if args.ica:
 
-            rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
-            mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
-            nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img)]) 
-            sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
+                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
+                mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
+                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img)])
+                sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
+
+                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
+                mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
+                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img)]) 
+                sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
+            else:
+                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img) and ('ica' not in img)])
+                mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img) and ('ica' not in img)])
+                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img) and ('ica' not in img)])
+                sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img) and ('ica' not in img)])
+
+                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img) and ('ica' not in img)])
+                mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)]) 
+                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img) and ('ica' not in img)]) 
+                sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)]) 
+
 
 
             # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
