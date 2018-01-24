@@ -53,6 +53,8 @@ def get_parser():
 
     parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
 
+    parser.add_argument('--nhp', dest="nhp", action="store_true", help="Indicates non-human primate data.")
+
     return parser
 
 # HTML BUILDING BLOCKS
@@ -714,12 +716,16 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    print list_of_img_paths
-
-    series_type_re = r'(REST|SST|MID|nBack)\d+'
+    series_type_re = r'(ffMRIREST|REST|SST|MID|nBack)\d+'
     compiled_series_type = re.compile(series_type_re)
     if len(list_of_img_paths) >= 6:
-        series_type = compiled_series_type.search(list_of_img_paths[5]).group()
+ 
+        series_type = compiled_series_type.search(list_of_img_paths[5])
+        if series_type:
+            series_type = series_type.group()
+        else:
+            series_type = "Unknown"
+
     else:
         series_type = "Unknown"
     print "Making series panel for " + series_type
@@ -861,12 +867,6 @@ def find_series_numbers(path_list, regex):
     :returns: list of series numbers (natural sort)
     """
 
-#    print 'Doing find_series numbers on...'
-#    print 'path_list:'
-#    print path_list
-#    print 'regex:'
-#    print regex
-
     filtered_list = []
     compiled_regex = re.compile(regex)
 
@@ -877,30 +877,30 @@ def find_series_numbers(path_list, regex):
             filtered_num = re.search(r'\d+', filtered).group()
             filtered_list.append(filtered_num)
 
-    sorted_list = natural_sort(filtered_list)
+    sorted_list = natural_sort(set(filtered_list))
 
     return sorted_list
 
 
-def insert_placeholders(image_path_lists, rest_or_task='REST'):
+def insert_placeholders(image_path_lists, fmri_type='REST', nhp=False):
     """
     Fills in any gaps (missing series) in lists of image paths with placeholder
     images.
 
     :parameter: image_path_lists: list of image path lists that need to be altered
-    :parameter: rest_or_task: indicates whether images are rest or task, and if task, which one
+    :parameter: fmri_type: indicates whether images are rest, ferumoxytol, or task, and if task, which one
     :returns: list of image path lists with paths to placeholder images where needed
     """
-    
+
     corrected_lists = []
 
 
-    dvars_re         = r'DVARS_and_FD_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
-    postreg_dvars_re = r'_DVARS_and_FD_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
-    series_t1_re     = r'(REST|SST|MID|nBack)\d+_'
-    t1_series_re     = r'_in_(?:[rt]fMRI_)?(REST|SST|MID|nBack)\d+'
-    sbref_re         = r'SBRef_(REST|SST|MID|nBack)\d+'
-    rest_re          = r'(REST|SST|MID|nBack)\d+'
+    dvars_re         = r'DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
+    postreg_dvars_re = r'_DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
+    series_t1_re     = r'(ffMRI_REST|REST|SST|MID|nBack)\d+_'
+    t1_series_re     = r'_in_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
+    sbref_re         = r'.*SBRef_(REST|SST|MID|nBack)\d+'
+    rest_re          = r'.*(REST|SST|MID|nBack)\d+'
 
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
@@ -927,24 +927,27 @@ def insert_placeholders(image_path_lists, rest_or_task='REST'):
             placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
-        if (rest_or_task == 'REST'):
-            r_or_t = 'r'
+        if (fmri_type == 'REST'):
+            fmri_letter = 'r'
         else:
-            r_or_t = 't'
+            fmri_letter = 't'
         if missing:
-            for x in xrange(int(missing[0]), int(missing[-1]) + 1):
+            
+            last_missing = int(missing[-1]) + 1
+
+            for x in xrange(int(missing[0]), last_missing):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
+                    sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 2:
                     sequence_text = str(x) + '_in_t1'
                 elif list_index == 3:
-                    sequence_text = 't1_in_' + r_or_t + 'fMRI_' + rest_or_task + str(x)
+                    sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 4:
-                    sequence_text = 'SBRef_' + rest_or_task + str(x)
+                    sequence_text = 'SBRef_' + fmri_type + str(x)
                 elif list_index == 5:
-                    sequence_text = rest_or_task + str(x)
+                    sequence_text = fmri_type + str(x)
 
                 match = [s for s in l if sequence_text in s]
                 if match:
@@ -953,6 +956,40 @@ def insert_placeholders(image_path_lists, rest_or_task='REST'):
                     new_l.append(placeholder_path)
                     _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
             corrected_lists.append(new_l)
+
+    if nhp:
+
+        for l in image_path_lists:
+            new_l = []
+            list_index = image_path_lists.index(l)
+            if list_index in [0, 1, 2, 3]:
+                placeholder_path = './img/square_placeholder_text.png'
+            else:
+                placeholder_path = './img/rectangular_placeholder_text.png'
+
+            fmri_letter = 'f'
+
+            for x in xrange(int(missing[0]), last_missing):
+                if list_index == 0:
+                    sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                elif list_index == 1:
+                    sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                elif list_index == 2:
+                    sequence_text = str(x) + '_in_t1'
+                elif list_index == 3:
+                    sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                elif list_index == 4:
+                    sequence_text = 'SBRef_' + fmri_type + str(x)
+                elif list_index == 5:
+                    sequence_text = fmri_type + str(x)
+
+                match = [s for s in l if sequence_text in s]
+                if match:
+                    new_l.append(match[0])
+                else:
+                    new_l.append(placeholder_path)
+                    _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
+            corrected_lists[list_index] += new_l
 
     if corrected_lists:
         return corrected_lists
@@ -1070,8 +1107,8 @@ def main():
                         T1_path = path.join(v2_path, 'T1_pngs')
 
                 else:
-                    img_out_path = path.join(sub_root, 'summary', 'img')
-                    T1_path = path.join(sub_root, 'summary', 'T1_pngs')
+                    img_out_path = path.join(summary_path, 'img')
+                    T1_path = path.join(summary_path, 'T1_pngs')
 
                 img_in_path = summary_path
                 subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
@@ -1193,7 +1230,7 @@ def main():
             all_sbref = more_sbref + more_task_sbref            
             for sbref in all_sbref:
                 data['epi-data'].append(sbref)
-
+            
             # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
             for list_entry in data['epi-data']:
@@ -1231,6 +1268,9 @@ def main():
                 for item in list_entry:
 
                     information = image_summary.get_subject_info(item)
+
+                    print "Information: "
+                    print information
 
                     modality, series = information[1], information[2]
 
@@ -1301,7 +1341,7 @@ def main():
 
             # BUILD THE LISTS NEEDED FOR SERIES PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, 'REST*.png')
+            raw_rest_img_pattern = path.join(img_out_path, '*REST*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
             
@@ -1356,12 +1396,14 @@ def main():
             nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
             sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
 
-            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
-            mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, rest_or_task='MID')
-            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, rest_or_task='nBack')
-            sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, rest_or_task='SST')
+            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths, nhp=args.nhp)
+
+            mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
+            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nBack')
+            sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, fmri_type='SST')
 
             num_rest_dvars = len(rest_dvars)
+
             num_mid_dvars = len(mid_dvars)
             num_nback_dvars = len(nback_dvars)
             num_sst_dvars = len(sst_dvars)
