@@ -96,7 +96,8 @@ def get_paths(subject_code_path, use_ica=False):
 
         else:
 
-            img_in_path = path.join(sub_path, 'summary')
+            path_pattern = path.join(sub_path, '*summary*')
+            img_in_path = glob.glob(path_pattern)[0]
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
@@ -141,6 +142,7 @@ def get_subject_info(path_to_nii_file):
 
     epi = path.basename(dirname).split('_')[-1]
     parts = filename.split('_')
+
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
@@ -148,7 +150,6 @@ def get_subject_info(path_to_nii_file):
     if p_count < 2:
         _logger.error('not enough file string parts for this to be a "good summary": %s' % p_count)
 
-    elif p_count == 2 and 'Scout' in parts:
 
         _logger.info('raw SBRef file: %s' % parts)
         subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
@@ -163,6 +164,14 @@ def get_subject_info(path_to_nii_file):
         subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
         modality = parts[1]
         series_num = parts[0]
+
+    elif p_count == 2 and 'SBRef' in parts[0]:
+
+        _logger.info('raw SBRef file: %s' % parts)
+        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
+        modality = parts[1]
+        series_num = parts[0]
+
 
     elif p_count == 2 and 'REST' in parts[1][0:4]:
 
@@ -199,6 +208,13 @@ def get_subject_info(path_to_nii_file):
         subject_code = parts[0] + '_' + parts[1]
         modality = parts[2]
         series_num = parts[2]
+
+    elif p_count == 5 and 'ffMRI' in parts:
+
+        _logger.info('NHP Ferumoxytol REST file: %s' % parts)
+        subject_code = parts[1]
+        modality = parts[3] + parts[4]
+        series_num = parts[4]
 
     elif p_count == 4 and 'SBRef' in parts:
 
