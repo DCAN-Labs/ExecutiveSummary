@@ -97,7 +97,12 @@ def get_paths(subject_code_path, use_ica=False):
         else:
 
             path_pattern = path.join(sub_path, '*summary*')
-            img_in_path = glob.glob(path_pattern)[0]
+            
+            try:
+                img_in_path = glob.glob(path_pattern)[0]
+            except IndexError:
+                print "Please make sure there is a summary folder within the subject path provided."
+                sys.exit()
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
