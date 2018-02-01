@@ -271,9 +271,19 @@ def get_subject_info(path_to_nii_file):
         modality = parts[3]
         series_num = parts[4]
 
-    elif parts > 5:
-        _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        pass
+#    elif p_count == 6:  # TODO: Confirm it's grabbing the right parts here
+
+ #        _logger.info('file parts: %s' % parts)
+ #        subject_code = parts[0]
+ #        modality = parts[4]
+ #        series_num = parts[5]
+
+    elif p_count == 7:
+
+         _logger.info('file parts: %s' % parts)
+         subject_code = parts[0]
+         modality = parts[5]
+         series_num = parts[6]
 
     elif 'tfMRI' in parts:
         print('WARNING: Task found but parts not recognized. The parts are %s' % parts)
@@ -587,10 +597,20 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
 
         for datum in list_of_data_paths:
 
+            print "Datum: "
+            print datum
+
+            print "Subject code: "
+            print subject_code
+
+            print "Modality: "
+            print modality
+
             if not subject_code:
                 subject_code = get_subject_info(datum)
 
             if modality:
+
                 slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % (modality)))
             else:
                 slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
@@ -634,7 +654,7 @@ def make_mosaic(png_path, mosaic_path):
         path = os.path.expanduser(file)
         img = Image.open(path)
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        img.thumbnail((image_dim, image_dim), resample=Image.LANCZOS)
+        img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
         x = index % images_per_side * image_dim
         y = index // images_per_side * image_dim
         w, h = img.size
