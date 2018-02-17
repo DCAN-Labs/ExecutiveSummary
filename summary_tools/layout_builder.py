@@ -53,7 +53,7 @@ def get_parser():
 
     parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
 
-    parser.add_argument('--nhp', dest="nhp", action="store_true", help="Indicates non-human primate data.")
+    parser.add_argument('--ffmri', dest="ffmri", action="store_true", help="Indicates non-human primate data.")
 
     return parser
 
@@ -716,7 +716,7 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    series_type_re = r'(ffMRIREST|REST|SST|MID|nBack)\d+'
+    series_type_re = r'(ffMRI_REST\d+|rfMRI_REST\d+|rfMRIREST\d+|SST\d+|MID\d+|nBack\d+)'
     compiled_series_type = re.compile(series_type_re)
     if len(list_of_img_paths) >= 6:
  
@@ -882,7 +882,7 @@ def find_series_numbers(path_list, regex):
     return sorted_list
 
 
-def insert_placeholders(image_path_lists, fmri_type='REST', nhp=False):
+def insert_placeholders(image_path_lists, fmri_type='REST', ffmri=False):
     """
     Fills in any gaps (missing series) in lists of image paths with placeholder
     images.
@@ -957,7 +957,7 @@ def insert_placeholders(image_path_lists, fmri_type='REST', nhp=False):
                     _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
             corrected_lists.append(new_l)
 
-    if nhp:
+    if ffmri:
 
         for l in image_path_lists:
             new_l = []
@@ -1239,7 +1239,7 @@ def main():
 
                 # get modality / series so we can know how to slice & label ...
                 modality, series = info[1], info[2]
-                print '\nPROCESSING subject_code: %s, modality: %s ' % (subj_id, modality)
+                print '\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series)
                 print 'slicing images for: \n%s' % list_entry
 
                 if 'REST' or 'SST' or 'MID' or 'nBack' in modality and 'SBRef' not in modality:
@@ -1269,9 +1269,6 @@ def main():
 
                     information = image_summary.get_subject_info(item)
 
-                    print "Information: "
-                    print information
-
                     modality, series = information[1], information[2]
 
 #                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
@@ -1292,8 +1289,6 @@ def main():
                     print '\nadding %s to list of data, for which we need parameters...\n' % item
 
                     _logger.debug('data_list is: %s' % data)
-
-                    print "Item: " + item
 
                     if dicom_for_te_grabber:
                         alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
@@ -1396,7 +1391,7 @@ def main():
             nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
             sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
 
-            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths, nhp=args.nhp)
+            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths, ffmri=args.ffmri)
 
             mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
             nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nBack')

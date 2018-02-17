@@ -113,29 +113,9 @@ def get_paths(subject_code_path, use_ica=False):
     else:
         _logger.error('\npath does not exist: %s' % sub_path)
 
-
 def get_subject_info(path_to_nii_file):
-    """
-    Takes path to nii or nii.gz file and returns a list of 3 elements: subjID, modality, series.
 
-    Super hacky!
-    :param path_to_nii_file: full-path to .nii or .nii.gz
-    :return: list of subject_code, modality, series
-    """
-
-    filename = path.join(path_to_nii_file)
-
-    subject_code, modality, series_num = '', '', ''
-
-    # TODO: fix this up a bit
-    if not path.join(path_to_nii_file).endswith('/'):
-
-        filename = path.basename(path_to_nii_file)
-        dirname = path.dirname(path_to_nii_file)
-    else:
-        print '%s is not a file and I reeeally needed a file, not a dir' % filename
-        _logger.error('\n%s is not a file...' % filename)
-        return
+    filename = path.basename(path_to_nii_file)
 
     if filename.endswith('.nii.gz'):
         filename = filename.strip('.nii.gz')
@@ -145,151 +125,31 @@ def get_subject_info(path_to_nii_file):
         print '%s is neither .nii nor nii.gz' % filename
         return
 
-    epi = path.basename(dirname).split('_')[-1]
-    parts = filename.split('_')
+    # TODO: Make more specific (whatever immediately precedes modality)?
+    subject_code_re = re.compile('^\w+_')
+    # TODO: Come up with more flexible matching for task?
+    modality_re = re.compile('(rfMRI_REST\d+)|(ffMRI_REST\d+)|(tfMRI_MID\d+)|(tfMRI_MID\d+)|(tfMRI_nBack\d+)|(tfMRI_SST\d+)|(T1w)|(T2w)|(FieldMap_Magnitude)|(FieldMap_Phase)|(SpinEchoPhaseEncodePositive)|(SpinEchoPhaseEncodeNegative)|(ReversePhaseEncodeEPI)|(Scout)')
+    series_num_re = re.compile('\d+$')
 
-    p_count = len(parts)
+    re_list = [subject_code_re, modality_re, series_num_re]
 
-    _logger.debug('file string has %d parts: %s' % (p_count, parts))
+    series_info = []
 
-    if p_count < 2:
-        _logger.error('not enough file string parts for this to be a "good summary": %s' % p_count)
+    for regex in re_list:
+        match = regex.search(filename)
+        if match:
+            match = match.group()
+            if '_' in match:
+                match = re.sub('_', '', match)
+            if match == 'Scout':  # Special case for SBRef files
+                dirname = path.dirname(path_to_nii_file)
+                epi_type = path.basename(dirname).split('_')[-1]
+                match = 'SBRef_' + epi_type
+            series_info.append(match)
+        else:
+            series_info.append('Unknown')
 
-
-        _logger.info('raw SBRef file: %s' % parts)
-        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = 'SBRef_' + epi
-
-        series_num = path.basename(path.dirname(path_to_nii_file))[-1]
-        # print 'series_num: %s' % series_num
-
-    elif p_count == 2 and 'SBRef' in parts[1]:
-
-        _logger.info('raw SBRef file: %s' % parts)
-        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = parts[1]
-        series_num = parts[0]
-
-    elif p_count == 2 and 'SBRef' in parts[0]:
-
-        _logger.info('raw SBRef file: %s' % parts)
-        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = parts[1]
-        series_num = parts[0]
-
-
-    elif p_count == 2 and 'REST' in parts[1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[1]
-
-    # to support ABCDPILOT_MSC02 type of subjectIDs with raw REST data... we hack
-    elif p_count == 3 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1]
-        modality = parts[2]
-        series_num = parts[2]
-
-    elif p_count == 3 and 'T1w' in parts:
-
-        _logger.info('T1 file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[2]
-
-    elif p_count == 3 and 'T2w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[2]
-
-    elif p_count == 3 and 'tfMRI' in parts:
-        
-        _logger.info('raw task file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1]
-        modality = parts[2]
-        series_num = parts[2]
-
-    elif p_count == 5 and 'ffMRI' in parts:
-
-        _logger.info('NHP Ferumoxytol REST file: %s' % parts)
-        subject_code = parts[1]
-        modality = parts[3] + parts[4]
-        series_num = parts[4]
-
-    elif p_count == 4 and 'SBRef' in parts:
-
-        _logger.info('SBRef file: %s' % parts)
-        modality = parts[3]
-        series_num = parts[2]
-        subject_code = parts[1]
-        modality += '_' + series_num
-
-    elif p_count == 4 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[3]
-
-    elif p_count == 4 and 'SBRef' not in parts:
-
-        _logger.info('file string parts were: %s' % parts)
-        series_num = parts.pop()
-        modality = parts.pop()
-
-        if modality == 'T2w' or modality == 'T1w':
-
-            modality += series_num
-
-        if len(parts) == 2:  # parts now 2 fewer and we check what's left
-
-            subject_code = parts[1]
-
-    elif p_count == 5 and 'T1w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[4]
-
-    elif p_count == 5 and 'T2w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[4]
-
-    elif p_count == 5:
-
-        _logger.info('file parts: %s' % parts)
-        subject_code = parts[1]
-        modality = parts[3]
-        series_num = parts[4]
-
-#    elif p_count == 6:  # TODO: Confirm it's grabbing the right parts here
-
- #        _logger.info('file parts: %s' % parts)
- #        subject_code = parts[0]
- #        modality = parts[4]
- #        series_num = parts[5]
-
-    elif p_count == 7:
-
-         _logger.info('file parts: %s' % parts)
-         subject_code = parts[0]
-         modality = parts[5]
-         series_num = parts[6]
-
-    elif 'tfMRI' in parts:
-        print('WARNING: Task found but parts not recognized. The parts are %s' % parts)
-
-    return [subject_code, modality, series_num]
-
+    return series_info
 
 def write_csv(data, filepath):
     """
