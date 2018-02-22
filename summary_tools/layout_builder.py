@@ -1323,8 +1323,11 @@ def main():
             # BUILD & WRITE THE STRUCTURAL PANEL
 
             # If there are T1 pngs, make the BrainSprite viewer
-            if os.listdir(T1_path):
-                body = make_brainsprite_viewer(T1_path, img_out_path)
+            if os.path.exists(T1_path):
+                if os.listdir(T1_path):
+                    body = make_brainsprite_viewer(T1_path, img_out_path)
+                else:
+                    body = ''
             else:
                 body = ''
 
