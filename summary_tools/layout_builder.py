@@ -969,27 +969,28 @@ def insert_placeholders(image_path_lists, fmri_type='REST', ffmri=False):
 
             fmri_letter = 'f'
 
-            for x in xrange(int(missing[0]), last_missing):
-                if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
-                elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
-                elif list_index == 2:
-                    sequence_text = str(x) + '_in_t1'
-                elif list_index == 3:
-                    sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
-                elif list_index == 4:
-                    sequence_text = 'SBRef_' + fmri_type + str(x)
-                elif list_index == 5:
-                    sequence_text = fmri_type + str(x)
+            if missing:
+                for x in xrange(int(missing[0]), last_missing):
+                    if list_index == 0:
+                        sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    elif list_index == 1:
+                        sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    elif list_index == 2:
+                        sequence_text = str(x) + '_in_t1'
+                    elif list_index == 3:
+                        sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    elif list_index == 4:
+                        sequence_text = 'SBRef_' + fmri_type + str(x)
+                    elif list_index == 5:
+                        sequence_text = fmri_type + str(x)
 
-                match = [s for s in l if sequence_text in s]
-                if match:
-                    new_l.append(match[0])
-                else:
-                    new_l.append(placeholder_path)
-                    _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
-            corrected_lists[list_index] += new_l
+                    match = [s for s in l if sequence_text in s]
+                    if match:
+                        new_l.append(match[0])
+                    else:
+                        new_l.append(placeholder_path)
+                        _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
+                corrected_lists[list_index] += new_l
 
     if corrected_lists:
         return corrected_lists
