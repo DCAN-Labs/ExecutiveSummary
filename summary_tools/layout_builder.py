@@ -53,8 +53,6 @@ def get_parser():
 
     parser.add_argument('-vv', '--very_verbose', dest="very_verbose", action="store_true", help="Tell me all about it.")
 
-    parser.add_argument('--ffmri', dest="ffmri", action="store_true", help="Indicates non-human primate data.")
-
     return parser
 
 # HTML BUILDING BLOCKS
@@ -882,7 +880,7 @@ def find_series_numbers(path_list, regex):
     return sorted_list
 
 
-def insert_placeholders(image_path_lists, fmri_type='REST', ffmri=False):
+def insert_placeholders(image_path_lists, fmri_type='REST'):
     """
     Fills in any gaps (missing series) in lists of image paths with placeholder
     images.
@@ -893,7 +891,6 @@ def insert_placeholders(image_path_lists, fmri_type='REST', ffmri=False):
     """
 
     corrected_lists = []
-
 
     dvars_re         = r'DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
     postreg_dvars_re = r'_DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
@@ -957,7 +954,8 @@ def insert_placeholders(image_path_lists, fmri_type='REST', ffmri=False):
                     _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
             corrected_lists.append(new_l)
 
-    if ffmri:
+    # If ffmri images exist, deal with those separately
+    if any("ffMRI" in path for path in image_path_lists):
 
         for l in image_path_lists:
             new_l = []
@@ -1395,7 +1393,7 @@ def main():
             nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
             sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
 
-            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths, ffmri=args.ffmri)
+            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
 
             mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
             nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nBack')
@@ -1541,10 +1539,11 @@ def main():
                 user_out_path = path.join(args.output_path)
 
                 if path.exists(user_out_path):
-
                     print 'found path: %s, using this to copy for QC' % user_out_path
 
-                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
+                    version_date = image_summary.date_stamp + '_summary_v' + VERSION
+
+                    qc_folder_out = path.join(user_out_path, version_date, subj_id)
 
                     print '\nFind your images here: \n\t%s' % qc_folder_out
 
@@ -1554,7 +1553,7 @@ def main():
 
                     subprocess.call(['mkdir', user_out_path])
                     
-                    qc_folder_out = path.join(user_out_path, image_summary.date_stamp, subj_id)
+                    qc_folder_out = path.join(user_out_path, version_date, subj_id)
 
                     print '\nFind your images here: \n\t%s' % qc_folder_out
 
@@ -1562,7 +1561,7 @@ def main():
 
                 user_home = os.path.expanduser('~')
 
-                qc_folder_out = path.join(user_home, image_summary.date_stamp, subj_id)
+                qc_folder_out = path.join(user_home, version_date, subj_id)
 
                 print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
 
