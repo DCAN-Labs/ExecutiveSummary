@@ -8,7 +8,7 @@
   - argparse
   
 ## Intended Usage
-- run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been ran
+- run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been run
 - _Note: you can move the HTML to any other directory, but it needs its 'img' folder along with it to view the images!_
 
 ## Requirements for Processed and Raw Data Structures
@@ -26,8 +26,7 @@
   - e.g. _ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2\_SBRef.nii.gz,  ADHD-Youth\_1234-1\_REST3.nii.gz_
   
 ## Program Launch
-- login via beast to the AIRC, open a terminal and enter: 
- `python /group_shares/PSYCH/code/release/executive_summary/summary_tools/layout_builder.py`
+- run `layout_builder.py` from appropriate local path
   - flags to add:
     - `-s /share/path/study/processed/subjID/visitID/pipeline/subjID/`
     - `[-s /another/subject ... -s /another...] `
@@ -70,23 +69,14 @@
 
 ### /helpers
 #### shenanigans.py
-   - various helper functions, some are used, some are place-holders 
-  
-### /TestCode
-#### table_template.html
-  - Executive Summary mock-up 
-  
-#### dispatch.py 
-  - used in testing, may disappear...
-  
-#### test_summary_airc.py
-  - may delete this, but contains some simple tests
+   - various helper functions
 
 ## Known Issues
   - TE and TI displayed as 0.00
   - image sizing for some raw data sets may be small and require zooming-in on your browser to view
 
 ## Recent Updates
+  - v1.4.2: insert placeholders for missing images, remove dates from HTML for PHI reasons, bugfixes for parameter table
   - v1.3.0: add list-mode support! (supply a list of processed paths)
   - v1.2.3: floating points now have only 2 decimal places
   - v1.2.2: SBRef data can be found elsewhere when we do not have Raw
