@@ -1,4 +1,4 @@
-gedit # Executive Summary v1.5.0
+# Executive Summary v1.5.0
 
 ## System Requirements
 - Imaging Software Packages Required: 
