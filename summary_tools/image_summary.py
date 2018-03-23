@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+
+
 """
 __author__ = 'Shannon Buckley', 12/27/15
 """
@@ -8,12 +10,19 @@ import subprocess
 import argparse
 import csv
 from os import path
+from math import sqrt
+import re
 import logging
 import logging.handlers
 from datetime import datetime
 import sys
-sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+
+script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(script_path)
+
 from helpers import shenanigans
+from PIL import Image
+
 
 PROG = 'Image Summary'
 VERSION = '0.7.0'
@@ -61,11 +70,17 @@ def get_paths(subject_code_path):
     sub_path = path.join(subject_code_path)
     _logger.debug('\nsubject path is %s\n' % sub_path)
 
-    #print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
-
     if path.exists(sub_path):
 
-        img_in_path = path.join(sub_path, 'summary')
+        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
+
+        if path.exists(v2_path):
+
+            img_in_path = v2_path
+
+        else:
+
+            img_in_path = path.join(sub_path, 'summary')
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
@@ -108,8 +123,8 @@ def get_subject_info(path_to_nii_file):
         print '%s is neither .nii nor nii.gz' % filename
         return
 
+    epi = path.basename(dirname).split('_')[-1]
     parts = filename.split('_')
-
     p_count = len(parts)
 
     _logger.debug('file string has %d parts: %s' % (p_count, parts))
@@ -121,7 +136,7 @@ def get_subject_info(path_to_nii_file):
 
         _logger.info('raw SBRef file: %s' % parts)
         subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = 'SBRef'
+        modality = 'SBRef_' + epi
 
         series_num = path.basename(path.dirname(path_to_nii_file))[-1]
         # print 'series_num: %s' % series_num
@@ -160,6 +175,13 @@ def get_subject_info(path_to_nii_file):
         _logger.info('T2 file: %s' % parts)
         subject_code = parts[0]
         modality = parts[1]
+        series_num = parts[2]
+
+    elif p_count == 3 and 'tfMRI' in parts:
+        
+        _logger.info('raw task file: %s' % parts)
+        subject_code = parts[0] + '_' + parts[1]
+        modality = parts[2]
         series_num = parts[2]
 
     elif p_count == 4 and 'SBRef' in parts:
@@ -214,8 +236,10 @@ def get_subject_info(path_to_nii_file):
 
     elif parts > 5:
         _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        _logger.error('\nimage_summary: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
         pass
+
+    elif 'tfMRI' in parts:
+        print('WARNING: Task found but parts not recognized. The parts are %s' % parts)
 
     return [subject_code, modality, series_num]
 
@@ -242,7 +266,6 @@ def get_nii_info(path_to_nii, info=None):
     :parameter: info: optional info LIST of 3 items: subject_code, modality, series
     :return: row of data in a list, length 8
     """
-
     path_to_nii = path.join(path_to_nii)
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
@@ -279,11 +302,11 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
-
+    
     output = submit_command(cmd)
 
     output = output.strip('\n').split(',')
-
+    
     modality = output[0]
 
     floats_list = []
@@ -293,9 +316,9 @@ def get_nii_info(path_to_nii, info=None):
         try:
             value = format(float(value), '.2f')
             
-        # If there is non-number input, remove it
+        # If there is non-number input, format or remove it
         except ValueError:
-            if value:  # If not an empty string
+            if value.isdigit():
                 value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
             else:
                 value = 'Not found'
@@ -303,8 +326,6 @@ def get_nii_info(path_to_nii, info=None):
         floats_list.append(value)
 
     data = [modality] + floats_list
-
-    #print data
 
     return data
 
@@ -348,8 +369,9 @@ def get_list_of_data(src_folder):
     t1_data = []
     t2_data = []
     epi_data = []
-
+    print('getting list of data')
     for dir_name in tree:
+        print(dir_name)
 
         _logger.debug('dir: %s' % dir_name[0])
 
@@ -370,8 +392,9 @@ def get_list_of_data(src_folder):
             try:
 
                 data_info = get_nii_info(path.join(dir_name[0], file))
-
+                print(data_info)
                 modality = data_info[0]
+                print('modality = %s' % modality)
 
                 if 'T1w' in modality or 'T1' == modality:
 
@@ -383,7 +406,7 @@ def get_list_of_data(src_folder):
                     full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'SBRef' in modality or 'REST' in modality:
+                elif 'SBRef' or 'REST' or 'MID' or 'nBack' or 'SST' in modality:
 
                     full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -448,7 +471,6 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
         'x_y_or_z': plane,
         'slice_pos': slice_pos,
         'dest': dst}
-
     submit_command(cmd)
 
     return dst
@@ -489,10 +511,11 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
         'y': 55,
         'z': 45
     }
-
+    print("choose slices dict nifti_infor:")
+    print(nifti_info)
     if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
         slices_dict = sb_ref_slices
-    elif 'REST' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
+    elif 'REST' or 'MID' or 'SST' or 'nBack' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
         slices_dict = raw_rest_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices
@@ -545,6 +568,49 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                                                                                   dict[key])))
 
 
+def make_mosaic(png_path, mosaic_path):
+
+    """
+    Takes path to .png anatomical slices, creates a mosaic that can be
+    used in a BrainSprite viewer, and saves to a specified directory.
+
+    :return: None
+    """
+    
+    os.chdir(png_path)
+
+    def natural_sort(l): 
+	    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+	    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+	    return sorted(l, key = alphanum_key)
+
+    files = os.listdir(png_path)
+    files = natural_sort(files)
+    files = files[::-1]
+
+    image_dim = 218
+    images_per_side = int(sqrt(len(files)))
+    square_dim = image_dim * images_per_side
+    result = Image.new("RGB", (square_dim, square_dim))
+
+    for index, file in enumerate(files):
+        path = os.path.expanduser(file)
+        img = Image.open(path)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img.thumbnail((image_dim, image_dim), Image.ANTIALIAS)
+        # TODO: decide whether using resize is worth it over thumbnail
+        #img.resize((image_dim, image_dim), Image.ANTIALIAS)
+        x = index % images_per_side * image_dim
+        y = index // images_per_side * image_dim
+        w, h = img.size
+        result.paste(img, (x, y, x + w, y + h))
+
+    os.chdir(mosaic_path)
+
+    quality_val = 95
+    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
+
+
 def main():
 
     parser = argparse.ArgumentParser(description=program_desc)
@@ -586,6 +652,7 @@ def main():
 
     if args.nifti_path:
         nifti_path = path.join(args.nifti_path)
+        print(nifti_path)
         if path.exists(nifti_path):
             nii_params = get_nii_info(nifti_path)
             data_rows.append(nii_params)
