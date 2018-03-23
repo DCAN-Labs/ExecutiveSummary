@@ -1,4 +1,4 @@
-# Executive Summary v1.4.1
+gedit # Executive Summary v1.5.0
 
 ## System Requirements
 - Imaging Software Packages Required: 
@@ -6,6 +6,7 @@
   - freesurfer v5.3
 - Environment: python 2.7.x 
   - argparse
+  - PIL (Python Image Library)
   
 ## Intended Usage
 - run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been run
@@ -15,7 +16,7 @@
 - __FNL_PreProc MUST be completed!__
 - Folder Structures:
   - /path/to/processed/pipeline/subjectID/summary/
-     - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations and epi coregistrations with functional_)
+     - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations or PNGs for BrainSprite, epi coregistrations with functional_)
   - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
      - all __raw__ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
   - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
@@ -34,13 +35,14 @@
     - `[-v or -vv]`
     - `[--version]`
     - `[-h for help]`
+    - `[--ica]`
 
 ## Outputs
-- __executive\_summary\_(code).html__: a 4-panel dashboard for cursory quality assurance
-    -  T1/T2 Structural Segmentation Slices Panel
+- __executive\_summary\_(code).html__: a dashboard for cursory quality assurance
+    -  BrainSprite viewer with clickable 3D images
     -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
     -  Functional Data Panel _(raw and structurally registered image slices)_
-    -  Concatenated Grayordinates Plot
+    -  Concatenated Grayordinates Plots, pre-regression and post-regression, for entire run and for individual series
 - a sub-directory 'img' (__/summary/img__), containing:
     - new _.pngs_ of orthogonally sliced image rows for each raw and single-band reference, resting-state acquisition series
     - copies of all _.gifs_ from /summary placed in inside the new /summary/img directory
@@ -50,7 +52,6 @@
 - some __\_log__ files for debugging
 
 ## Architecture
-### /group_shares/PSYCH/code/release/utilities/executive_summary
 ### /summary_tools
 #### layout_builder.py
    - use -l and a path to a .txt file containing your subject-paths (single column)
@@ -71,16 +72,11 @@
 #### shenanigans.py
    - various helper functions
 
-## Known Issues
-  - TE and TI displayed as 0.00
-  - image sizing for some raw data sets may be small and require zooming-in on your browser to view
-
 ## Recent Updates
-  - v1.4.2: insert placeholders for missing images, remove dates from HTML for PHI reasons, bugfixes for parameter table
+  - v1.5.0: Support for ABCD, monkey, and infant images, ica flag, pulling TE and TI from DICOMs
   - v1.3.0: add list-mode support! (supply a list of processed paths)
   - v1.2.3: floating points now have only 2 decimal places
   - v1.2.2: SBRef data can be found elsewhere when we do not have Raw
-  
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project

@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+
+
 """
 __author__ = 'Shannon Buckley', 12/27/15
 """
@@ -8,11 +10,18 @@ import subprocess
 import argparse
 import csv
 from os import path
+from math import sqrt
+import re
+import shutil
 import logging
 import logging.handlers
 from datetime import datetime
 import sys
-sys.path.append('/group_shares/PSYCH/code/release/utilities/executive_summary')
+from PIL import Image
+import glob
+
+script_path = os.path.dirname((os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(script_path)
 from helpers import shenanigans
 
 PROG = 'Image Summary'
@@ -51,7 +60,7 @@ _logger.addHandler(handler)
 _logger.info('\nprogram log: %s' % (date_stamp))
 
 
-def get_paths(subject_code_path):
+def get_paths(subject_code_path, use_ica=False):
     """
     PLACEHOLDER Takes subj_path and returns all relevant paths
     :param subject_code_path:
@@ -61,11 +70,39 @@ def get_paths(subject_code_path):
     sub_path = path.join(subject_code_path)
     _logger.debug('\nsubject path is %s\n' % sub_path)
 
-    #print '\n%s // %s // %s \n' % (sub_path.split('/')[-4], sub_path.split('/')[-3], sub_path.split('/')[-2])
-
     if path.exists(sub_path):
 
-        img_in_path = path.join(sub_path, 'summary')
+        v2_path = path.join(sub_path, 'summary_FNL_preproc_v2')
+
+        if path.exists(v2_path):
+            if use_ica:
+                cmd=['mkdir', v2_path + '_ica']
+                print cmd
+                subprocess.call(cmd)
+                img_in_path = v2_path + "_ica"
+                for f in os.listdir(v2_path):
+                    if "_ica_" in f:
+                        new_f_name = re.sub("ica_", "", f)
+                        cmd=["cp", v2_path + "/" + f, img_in_path + "/" + new_f_name]
+                        print cmd
+                        subprocess.call(cmd, shell=False)
+                    if "fMRI_" not in f:
+                        cmd="cp -rT " + v2_path + "/" + f + " " + img_in_path + "/" + f
+                        print cmd
+                        subprocess.call(cmd, shell=True)
+
+            else:
+                img_in_path = v2_path
+
+        else:
+
+            path_pattern = path.join(sub_path, '*summary*')
+            
+            try:
+                img_in_path = glob.glob(path_pattern)[0]
+            except IndexError:
+                print "Please make sure there is a summary folder within the subject path provided."
+                sys.exit()
 
         _logger.debug('\nimages in : %s\n' % img_in_path)
 
@@ -76,29 +113,9 @@ def get_paths(subject_code_path):
     else:
         _logger.error('\npath does not exist: %s' % sub_path)
 
-
 def get_subject_info(path_to_nii_file):
-    """
-    Takes path to nii or nii.gz file and returns a list of 3 elements: subjID, modality, series.
 
-    Super hacky!
-    :param path_to_nii_file: full-path to .nii or .nii.gz
-    :return: list of subject_code, modality, series
-    """
-
-    filename = path.join(path_to_nii_file)
-
-    subject_code, modality, series_num = '', '', ''
-
-    # TODO: fix this up a bit
-    if not path.join(path_to_nii_file).endswith('/'):
-
-        filename = path.basename(path_to_nii_file)
-        dirname = path.dirname(path_to_nii_file)
-    else:
-        print '%s is not a file and I reeeally needed a file, not a dir' % filename
-        _logger.error('\n%s is not a file...' % filename)
-        return
+    filename = path.basename(path_to_nii_file)
 
     if filename.endswith('.nii.gz'):
         filename = filename.strip('.nii.gz')
@@ -108,117 +125,31 @@ def get_subject_info(path_to_nii_file):
         print '%s is neither .nii nor nii.gz' % filename
         return
 
-    parts = filename.split('_')
+    # TODO: Make more specific (whatever immediately precedes modality)?
+    subject_code_re = re.compile('^\w+_')
+    # TODO: Come up with more flexible matching for task?
+    modality_re = re.compile('(rfMRI_REST\d+)|(ffMRI_REST\d+)|(tfMRI_MID\d+)|(tfMRI_MID\d+)|(tfMRI_nBack\d+)|(tfMRI_SST\d+)|(T1w)|(T2w)|(FieldMap_Magnitude)|(FieldMap_Phase)|(SpinEchoPhaseEncodePositive)|(SpinEchoPhaseEncodeNegative)|(ReversePhaseEncodeEPI)|(Scout)')
+    series_num_re = re.compile('\d+$')
 
-    p_count = len(parts)
+    re_list = [subject_code_re, modality_re, series_num_re]
 
-    _logger.debug('file string has %d parts: %s' % (p_count, parts))
+    series_info = []
 
-    if p_count < 2:
-        _logger.error('not enough file string parts for this to be a "good summary": %s' % p_count)
+    for regex in re_list:
+        match = regex.search(filename)
+        if match:
+            match = match.group()
+            if '_' in match:
+                match = re.sub('_', '', match)
+            if match == 'Scout':  # Special case for SBRef files
+                dirname = path.dirname(path_to_nii_file)
+                epi_type = path.basename(dirname).split('_')[-1]
+                match = 'SBRef_' + epi_type
+            series_info.append(match)
+        else:
+            series_info.append('Unknown')
 
-    elif p_count == 2 and 'Scout' in parts:
-
-        _logger.info('raw SBRef file: %s' % parts)
-        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = 'SBRef'
-
-        series_num = path.basename(path.dirname(path_to_nii_file))[-1]
-        # print 'series_num: %s' % series_num
-
-    elif p_count == 2 and 'SBRef' in parts[1]:
-
-        _logger.info('raw SBRef file: %s' % parts)
-        subject_code = parts[0]  # Needs to come from somewhere else given our scheme for pulling code from files
-        modality = parts[1]
-        series_num = parts[0]
-
-    elif p_count == 2 and 'REST' in parts[1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[1]
-
-    # to support ABCDPILOT_MSC02 type of subjectIDs with raw REST data... we hack
-    elif p_count == 3 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1]
-        modality = parts[2]
-        series_num = parts[2]
-
-    elif p_count == 3 and 'T1w' in parts:
-
-        _logger.info('T1 file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[2]
-
-    elif p_count == 3 and 'T2w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0]
-        modality = parts[1]
-        series_num = parts[2]
-
-    elif p_count == 4 and 'SBRef' in parts:
-
-        _logger.info('SBRef file: %s' % parts)
-        modality = parts[3]
-        series_num = parts[2]
-        subject_code = parts[1]
-        modality += '_' + series_num
-
-    elif p_count == 4 and 'SBRef' not in parts and 'REST' in parts[-1][0:4]:
-
-        _logger.info('raw REST file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[3]
-
-    elif p_count == 4 and 'SBRef' not in parts:
-
-        _logger.info('file string parts were: %s' % parts)
-        series_num = parts.pop()
-        modality = parts.pop()
-
-        if modality == 'T2w' or modality == 'T1w':
-
-            modality += series_num
-
-        if len(parts) == 2:  # parts now 2 fewer and we check what's left
-
-            subject_code = parts[1]
-
-    elif p_count == 5 and 'T1w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[4]
-
-    elif p_count == 5 and 'T2w' in parts:
-
-        _logger.info('T2 file: %s' % parts)
-        subject_code = parts[0] + '_' + parts[1] + '_' + parts[2]
-        modality = parts[3]
-        series_num = parts[4]
-
-    elif p_count == 5:
-
-        _logger.info('file parts: %s' % parts)
-        subject_code = parts[1]
-        modality = parts[3]
-        series_num = parts[4]
-
-    elif parts > 5:
-        _logger.error('this program will not process such files: %s\ntoo many parts (%s) in the string!' % (filename, len(parts)))
-        _logger.error('\nimage_summary: %s\nmodality: %s\nseries: %s\n' % (subject_code, modality, series_num))
-        pass
-
-    return [subject_code, modality, series_num]
-
+    return series_info
 
 def write_csv(data, filepath):
     """
@@ -242,7 +173,6 @@ def get_nii_info(path_to_nii, info=None):
     :parameter: info: optional info LIST of 3 items: subject_code, modality, series
     :return: row of data in a list, length 8
     """
-
     path_to_nii = path.join(path_to_nii)
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
@@ -279,11 +209,11 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
-
+    
     output = submit_command(cmd)
 
     output = output.strip('\n').split(',')
-
+    
     modality = output[0]
 
     floats_list = []
@@ -293,9 +223,9 @@ def get_nii_info(path_to_nii, info=None):
         try:
             value = format(float(value), '.2f')
             
-        # If there is non-number input, remove it
+        # If there is non-number input, format or remove it
         except ValueError:
-            if value:  # If not an empty string
+            if value.isdigit():
                 value = format(float(filter(lambda x: x.isdigit(), value)), '.2f')
             else:
                 value = 'Not found'
@@ -303,8 +233,6 @@ def get_nii_info(path_to_nii, info=None):
         floats_list.append(value)
 
     data = [modality] + floats_list
-
-    #print data
 
     return data
 
@@ -348,8 +276,9 @@ def get_list_of_data(src_folder):
     t1_data = []
     t2_data = []
     epi_data = []
-
+    print('getting list of data')
     for dir_name in tree:
+        print(dir_name)
 
         _logger.debug('dir: %s' % dir_name[0])
 
@@ -370,8 +299,9 @@ def get_list_of_data(src_folder):
             try:
 
                 data_info = get_nii_info(path.join(dir_name[0], file))
-
+                print(data_info)
                 modality = data_info[0]
+                print('modality = %s' % modality)
 
                 if 'T1w' in modality or 'T1' == modality:
 
@@ -383,7 +313,7 @@ def get_list_of_data(src_folder):
                     full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'SBRef' in modality or 'REST' in modality:
+                elif 'SBRef' or 'REST' or 'MID' or 'nBack' or 'SST' in modality:
 
                     full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -448,7 +378,6 @@ def super_slice_me(nii_gz_path, plane, slice_pos, dst):
         'x_y_or_z': plane,
         'slice_pos': slice_pos,
         'dest': dst}
-
     submit_command(cmd)
 
     return dst
@@ -489,10 +418,11 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
         'y': 55,
         'z': 45
     }
-
+    print("choose slices dict nifti_infor:")
+    print(nifti_info)
     if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
         slices_dict = sb_ref_slices
-    elif 'REST' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
+    elif 'REST' or 'MID' or 'SST' or 'nBack' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
         slices_dict = raw_rest_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices
@@ -527,10 +457,20 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
 
         for datum in list_of_data_paths:
 
+            print "Datum: "
+            print datum
+
+            print "Subject code: "
+            print subject_code
+
+            print "Modality: "
+            print modality
+
             if not subject_code:
                 subject_code = get_subject_info(datum)
 
             if modality:
+
                 slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % (modality)))
             else:
                 slice_image_to_ortho_row(datum, path.join(dest_dir, '%s.png' % subject_code))
@@ -543,6 +483,47 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                                                                                  (modality,
                                                                                   key,
                                                                                   dict[key])))
+
+
+def make_mosaic(png_path, mosaic_path):
+
+    """
+    Takes path to .png anatomical slices, creates a mosaic that can be
+    used in a BrainSprite viewer, and saves to a specified directory.
+
+    :return: None
+    """
+    
+    os.chdir(png_path)
+
+    def natural_sort(l): 
+	    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+	    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+	    return sorted(l, key = alphanum_key)
+
+    files = os.listdir(png_path)
+    files = natural_sort(files)
+    files = files[::-1]
+
+    image_dim = 218
+    images_per_side = int(sqrt(len(files)))
+    square_dim = image_dim * images_per_side
+    result = Image.new("RGB", (square_dim, square_dim))
+
+    for index, file in enumerate(files):
+        path = os.path.expanduser(file)
+        img = Image.open(path)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
+        x = index % images_per_side * image_dim
+        y = index // images_per_side * image_dim
+        w, h = img.size
+        result.paste(img, (x, y, x + w, y + h))
+
+    os.chdir(mosaic_path)
+
+    quality_val = 95
+    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
 
 
 def main():
@@ -586,6 +567,7 @@ def main():
 
     if args.nifti_path:
         nifti_path = path.join(args.nifti_path)
+        print(nifti_path)
         if path.exists(nifti_path):
             nii_params = get_nii_info(nifti_path)
             data_rows.append(nii_params)
