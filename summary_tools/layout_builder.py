@@ -714,18 +714,20 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    series_type_re = r'(ffMRI_REST\d+|rfMRI_REST\d+|rfMRIREST\d+|SST\d+|MID\d+|nBack\d+)'
+    series_type_re = r'(ffMRI_REST\d+|rfMRI_REST\d+|rfMRIREST\d+|ffMRIREST\d+|SST\d+|MID\d+|nBack\d+)'
     compiled_series_type = re.compile(series_type_re)
-    if len(list_of_img_paths) >= 6:
- 
-        series_type = compiled_series_type.search(list_of_img_paths[5])
-        if series_type:
-            series_type = series_type.group()
-        else:
-            series_type = "Unknown"
 
-    else:
+    for path in list_of_img_paths:
+        print path
+        series_type = compiled_series_type.search(path)
+        if series_type is not None:
+            series_type = series_type.group()
+            break
+
+    if series_type is None:
+        sys.exit()
         series_type = "Unknown"
+
     print "Making series panel for " + series_type
 
     series_panel_row = """
@@ -896,8 +898,8 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
     postreg_dvars_re = r'_DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
     series_t1_re     = r'(ffMRI_REST|REST|SST|MID|nBack)\d+_'
     t1_series_re     = r'_in_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
-    sbref_re         = r'.*SBRef_(REST|SST|MID|nBack)\d+'
-    rest_re          = r'.*(REST|SST|MID|nBack)\d+'
+    sbref_re         = r'SBRef_(?:[rtf]fMRI)?(REST|SST|MID|nBack)\d+'
+    rest_re          = r'(?:[rtf]fMRI)?(REST|SST|MID|nBack)\d+'
 
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
@@ -928,6 +930,7 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
             fmri_letter = 'r'
         else:
             fmri_letter = 't'
+
         if missing:
             
             last_missing = int(missing[-1]) + 1
@@ -938,13 +941,13 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
                 elif list_index == 1:
                     sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 2:
-                    sequence_text = str(x) + '_in_t1'
+                    sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
                 elif list_index == 3:
                     sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 4:
-                    sequence_text = 'SBRef_' + fmri_type + str(x)
+                    sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 5:
-                    sequence_text = fmri_type + str(x)
+                    sequence_text = fmri_letter + 'fMRI' + fmri_type + str(x)
 
                 match = [s for s in l if sequence_text in s]
                 if match:
@@ -955,7 +958,10 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
             corrected_lists.append(new_l)
 
     # If ffmri images exist, deal with those separately
-    if any("ffMRI" in path for path in image_path_lists):
+
+    flattened_image_paths = [p for sublist in image_path_lists for p in sublist]
+
+    if any("ffMRI" in path for path in flattened_image_paths):
 
         for l in image_path_lists:
             new_l = []
@@ -974,13 +980,13 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
                     elif list_index == 1:
                         sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                     elif list_index == 2:
-                        sequence_text = str(x) + '_in_t1'
+                        sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
                     elif list_index == 3:
                         sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                     elif list_index == 4:
-                        sequence_text = 'SBRef_' + fmri_type + str(x)
+                        sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                     elif list_index == 5:
-                        sequence_text = fmri_type + str(x)
+                        sequence_text = fmri_letter + 'fMRI' + fmri_type + str(x)
 
                     match = [s for s in l if sequence_text in s]
                     if match:
@@ -1537,11 +1543,10 @@ def main():
             if args.output_path:
 
                 user_out_path = path.join(args.output_path)
+                version_date = image_summary.date_stamp + '_summary_v' + VERSION
 
                 if path.exists(user_out_path):
                     print 'found path: %s, using this to copy for QC' % user_out_path
-
-                    version_date = image_summary.date_stamp + '_summary_v' + VERSION
 
                     qc_folder_out = path.join(user_out_path, version_date, subj_id)
 

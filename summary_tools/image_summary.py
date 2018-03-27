@@ -143,7 +143,7 @@ def get_subject_info(path_to_nii_file):
                 match = re.sub('_', '', match)
             if match == 'Scout':  # Special case for SBRef files
                 dirname = path.dirname(path_to_nii_file)
-                epi_type = path.basename(dirname).split('_')[-1]
+                epi_type = path.basename(dirname).split('_')[-2] + '_' + path.basename(dirname).split('_')[-1]
                 match = 'SBRef_' + epi_type
             series_info.append(match)
         else:
