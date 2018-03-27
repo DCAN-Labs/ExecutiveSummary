@@ -22,7 +22,7 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.5.0'
+VERSION = '1.5.1'
 LAST_MOD = '2-17-18'
 
 program_desc = """%(prog)s v%(ver)s:
