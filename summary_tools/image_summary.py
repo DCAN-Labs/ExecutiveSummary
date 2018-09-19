@@ -1,4 +1,4 @@
-#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+#! /usr/bin/env python2
 
 
 """

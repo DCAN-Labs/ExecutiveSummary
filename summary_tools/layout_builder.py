@@ -1,4 +1,4 @@
-#! /home/exacloud/lustre1/fnl_lab/code/external/utilities/anaconda2/bin/python
+#! /usr/bin/env python2
 
 """
 Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
@@ -22,8 +22,8 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.5.1'
-LAST_MOD = '2-17-18'
+VERSION = '1.5.2'
+LAST_MOD = '9-14-18'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
@@ -549,32 +549,6 @@ function brainsprite(params) {
             </div>
         </div>"""
 
-param_table_html_header = """
-        <div class="bottom-row">
-            <div class="params">
-                <table id="param_table">
-                    <thead>
-                        <th colspan="8">
-                            Acquisition Parameters
-                        </th>
-                    </thead>
-                    <tbody>
-                        <tr class="column-names">
-                            <td>Modality</td>
-                            <td>x <span>(mm)</span></td>
-                            <td>y <span>(mm)</span></td>
-                            <td>z <span>(mm)</span></td>
-                            <td>TE <span>(ms)</span></td>
-                            <td>TR <span>(ms)</span></td>
-                            <td>Frames <span>(n)</span></td>
-                            <td>TI <span>(ms)</span></td>
-                        </tr>"""
-
-param_table_footer = """
-                    </tbody>
-                </table>
-            </div>"""
-
 series_panel_header = """
             <div class="epi">
                 <table id="epi">
@@ -610,6 +584,7 @@ html_footer = """
 </html>
 """
 
+# End of HTML BUILDING BLOCKS
 
 def write_html(template, dest_dir, title="executive_summary.html"):
     """
@@ -669,43 +644,6 @@ def edit_html_chunk(html_string, thing_to_find, thing_that_replaces_it):
     return new_html_string
 
 
-def write_param_table_row(list_of_data):
-    """
-    Takes a list of data and fills in one row in the parameter table per datum
-
-    :parameter: list_of_data: list of data with 8 elements
-    :return: param_table_row with specific metrics (8 columns)
-    """
-
-#    if len(list_of_data) != 8 or list_of_data[5] == '' or list_of_data[0] == '':
-#        _logger.error('list of data is incomplete:\n%s' % list_of_data)
-#        print 'list of data is incomplete:\n%s' % list_of_data
-#        return
-
-    param_table_html_row = """
-                        <tr class="%(class_prefix)s_data">
-                            <td>%(modality)s</td>
-                            <td id="%(class_prefix)s_x" class="%(class_prefix)s_x">%(x_dim)s</td>
-                            <td id="%(class_prefix)s_y" class="%(class_prefix)s_y">%(y_dim)s</td>
-                            <td id="%(class_prefix)s_z" class="%(class_prefix)s_z">%(z_dim)s</td>
-                            <td id="%(class_prefix)s_te" class="te">%(te)s</td>
-                            <td id="%(class_prefix)s_tr">%(tr)s</td>
-                            <td id="%(class_prefix)s_frames" class="%(class_prefix)s_frames">%(frames)s</td>
-                            <td id="%(class_prefix)s_ti">%(ti)s</td>
-                        </tr>""" % {'modality': list_of_data[0],
-                                    'class_prefix': list_of_data[0].lower(),
-                                    'x_dim': list_of_data[1],
-                                    'y_dim': list_of_data[2],
-                                    'z_dim': list_of_data[3],
-                                    'te': list_of_data[4],
-                                    'tr': list_of_data[5],
-                                    'frames': list_of_data[6],
-                                    'ti': list_of_data[7]
-                                    }
-
-    return param_table_html_row
-
-
 def write_series_panel_row(list_of_img_paths):
     """
     Takes a list of image paths and builds one row of series images for the panel.
@@ -714,7 +652,7 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    series_type_re = r'(ffMRI_REST\d+|rfMRI_REST\d+|rfMRIREST\d+|ffMRIREST\d+|SST\d+|MID\d+|nBack\d+)'
+    series_type_re = r'(rest\d+|SST\d+|MID\d+|nback\d+)'
     compiled_series_type = re.compile(series_type_re)
 
     for path in list_of_img_paths:
@@ -758,7 +696,7 @@ def make_series_panel(series_rows_list, header=series_panel_header, footer=serie
     :parameter: series_rows_list: list of data rows (strings)
     :parameter: header: div section opener
     :parameter: footer: dev section closer
-    :return: html string for the whole epi-panel div (one row of images per REST)
+    :return: html string for the whole epi-panel div (one row of images per rest)
     """
 
     series_panel_html = header
@@ -770,7 +708,7 @@ def make_series_panel(series_rows_list, header=series_panel_header, footer=serie
     return series_panel_html
 
 
-def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA.png', dvars_concp_input_path='img/DVARS_and_FD_CONCP.png'):
+def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA_task-rest.png', dvars_concp_input_path='img/DVARS_and_FD_CONCP_task-rest.png'):
     """
     Takes a path to a specific image and writes up a div for it
 
@@ -882,7 +820,7 @@ def find_series_numbers(path_list, regex):
     return sorted_list
 
 
-def insert_placeholders(image_path_lists, fmri_type='REST'):
+def insert_placeholders(image_path_lists, fmri_type='rest'):
     """
     Fills in any gaps (missing series) in lists of image paths with placeholder
     images.
@@ -894,12 +832,12 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
 
     corrected_lists = []
 
-    dvars_re         = r'DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
-    postreg_dvars_re = r'_DVARS_and_FD_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
-    series_t1_re     = r'(ffMRI_REST|REST|SST|MID|nBack)\d+_'
-    t1_series_re     = r'_in_(?:[rtf]fMRI_)?(REST|SST|MID|nBack)\d+'
-    sbref_re         = r'SBRef_(?:[rtf]fMRI)?(REST|SST|MID|nBack)\d+'
-    rest_re          = r'(?:[rtf]fMRI)?(REST|SST|MID|nBack)\d+'
+    dvars_re         = r'DVARS_and_FD_task-(rest|SST|MID|nback)\d+'
+    postreg_dvars_re = r'postreg_DVARS_and_FD_task-(rest|SST|MID|nback)\d+'
+    series_t1_re     = r'(ffMRI_rest|rest|SST|MID|nback)\d+_'
+    t1_series_re     = r'_in_(?:[rtf]fMRI_)?(rest|SST|MID|nback)\d+'
+    sbref_re         = r'SBRef_(?:[rtf]fMRI)?(rest|SST|MID|nback)\d+'
+    rest_re          = r'(?:[rtf]fMRI)?(rest|SST|MID|nback)\d+'
 
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
@@ -926,10 +864,10 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
             placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
-        if (fmri_type == 'REST'):
+        if (fmri_type == 'rest'):
             fmri_letter = 'r'
-        else:
-            fmri_letter = 't'
+	else:
+	    fmri_letter = 't'
 
         if missing:
             
@@ -937,9 +875,9 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
 
             for x in xrange(int(missing[0]), last_missing):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    sequence_text = 'DVARS_and_FD_task-' + fmri_type + str(x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_task-' + fmri_type + str(x)
                 elif list_index == 2:
                     sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
                 elif list_index == 3:
@@ -947,7 +885,7 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
                 elif list_index == 4:
                     sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                 elif list_index == 5:
-                    sequence_text = fmri_letter + 'fMRI' + fmri_type + str(x)
+                    sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x)
 
                 match = [s for s in l if sequence_text in s]
                 if match:
@@ -971,14 +909,12 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
             else:
                 placeholder_path = './img/rectangular_placeholder_text.png'
 
-            fmri_letter = 'f'
-
             if missing:
                 for x in xrange(int(missing[0]), last_missing):
                     if list_index == 0:
-                        sequence_text = 'DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                        sequence_text = 'DVARS_and_FD_task-' + fmri_type + str(x)
                     elif list_index == 1:
-                        sequence_text = 'postreg_DVARS_and_FD_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                        sequence_text = 'postreg_DVARS_and_FD_task-' + fmri_type + str(x)
                     elif list_index == 2:
                         sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
                     elif list_index == 3:
@@ -986,7 +922,7 @@ def insert_placeholders(image_path_lists, fmri_type='REST'):
                     elif list_index == 4:
                         sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
                     elif list_index == 5:
-                        sequence_text = fmri_letter + 'fMRI' + fmri_type + str(x)
+                        sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x)
 
                     match = [s for s in l if sequence_text in s]
                     if match:
@@ -1181,15 +1117,15 @@ def main():
 
             # ------------------------- > Make lists of paths to be used in the series panel < -------------------------- #
             real_data = []
-            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('REST' in gif) and ('atlas' not in gif)])
+            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rest' in gif) and ('atlas' not in gif)])
             mid_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('MID' in gif) and ('atlas' not in gif)])
-            nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nBack' in gif) and ('atlas' not in gif)])
+            nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nback' in gif) and ('atlas' not in gif)])
             sst_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('SST' in gif) and ('atlas' not in gif)])
 
 
-            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('REST' in gif)])
+            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('rest' in gif)])
             t1_in_mid_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('MID' in gif)])
-            t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nBack' in gif)])
+            t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nback' in gif)])
             t1_in_sst_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('SST' in gif)])
 
 
@@ -1202,15 +1138,15 @@ def main():
             # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
             # TODO: improve this section with a more specific test
 
-#            if len(data['epi-data']) == len(glob.glob(path.join(sub_root,'REST*'))):  # we should have at least 1 raw REST and 1 SBRef per subject (pairs)
+#            if len(data['epi-data']) == len(glob.glob(path.join(sub_root,'rest*'))):  # we should have at least 1 raw rest and 1 SBRef per subject (pairs)
 #
 #                _logger.warning('odd number of epi files were found...')
 #                print '\nLooking for SBRef images...\n'
 #
-#                # locate an alternative source for SBRef images -> MNINonLinear/Results/REST*
+#                # locate an alternative source for SBRef images -> MNINonLinear/Results/rest*
 #
 #                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-#                # pattern = alt_sbref_path + '/REST*/REST*_SBRef.nii.gz'
+#                # pattern = alt_sbref_path + '/rest*/rest*_SBRef.nii.gz'
 #                # more_epi = glob.glob(pattern)
 #                #
 #                # for sbref in more_epi:
@@ -1218,7 +1154,7 @@ def main():
 #
 #                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
 #                alternate_sbref_path = path.join(sub_root)
-#                sbref_pattern = alternate_sbref_path + '/REST*/Scout_orig.nii.gz'
+#                sbref_pattern = alternate_sbref_path + '/rest*/Scout_orig.nii.gz'
 #
 #                more_sbref = glob.glob(sbref_pattern)
 #                # print 'found additional SBRef files: %s' % more_sbref
@@ -1228,7 +1164,7 @@ def main():
 
             print '\nLooking for SBRef images...\n'
             alternate_sbref_path = path.join(sub_root)
-            sbref_pattern = alternate_sbref_path + '/*REST*/Scout_orig.nii.gz'
+            sbref_pattern = alternate_sbref_path + '/*rest*/Scout_orig.nii.gz'
             task_sbref_pattern = alternate_sbref_path + '/*tfMRI*/Scout_orig.nii.gz'
             more_task_sbref = glob.glob(task_sbref_pattern)
             more_sbref = glob.glob(sbref_pattern)
@@ -1247,16 +1183,16 @@ def main():
                 print '\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series)
                 print 'slicing images for: \n%s' % list_entry
 
-                if 'REST' or 'SST' or 'MID' or 'nBack' in modality and 'SBRef' not in modality:
+                if 'rest' or 'SST' or 'MID' or 'nback' in modality and 'SBRef' not in modality:
 
                     image_summary.slice_list_of_data([list_entry], subject_code=subj_id, modality=modality,
                                                      dest_dir=img_out_path, also_xyz=True)
 
-                elif 'SBRef' in modality and 'REST' in modality:
+                elif 'SBRef' in modality and 'rest' in modality:
 
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
-                elif 'SBRef' in modality and 'SST' or 'MID' or 'nBack' in modality:
+                elif 'SBRef' in modality and 'SST' or 'MID' or 'nback' in modality:
 
                     image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
 
@@ -1315,15 +1251,6 @@ def main():
 
             head = html_header
 
-            html_params_panel = param_table_html_header
-
-            # BUILD PARAM PANEL
-
-            for data_row in real_data:
-                html_row = write_param_table_row(data_row)
-                html_params_panel += html_row
-
-            html_params_panel += param_table_footer
 
             # BUILD & WRITE THE STRUCTURAL PANEL
 
@@ -1336,22 +1263,18 @@ def main():
             else:
                 body = ''
 
-            # APPEND WITH PARAMS PANEL
-
-            new_body = body + html_params_panel
-
             pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
             # BUILD THE LISTS NEEDED FOR SERIES PANEL
 
-            raw_rest_img_pattern = path.join(img_out_path, '*REST*.png')
+            raw_rest_img_pattern = path.join(img_out_path, '*rest*.png')
             raw_rest_img_list = glob.glob(raw_rest_img_pattern)
 
             
             raw_mid_img_pattern = path.join(img_out_path, 'MID*.png')
             raw_mid_img_list = glob.glob(raw_mid_img_pattern)            
 
-            raw_nback_img_pattern = path.join(img_out_path, 'nBack*.png')
+            raw_nback_img_pattern = path.join(img_out_path, 'nback*.png')
             raw_nback_img_list = glob.glob(raw_nback_img_pattern)
 
             raw_sst_img_pattern = path.join(img_out_path, 'SST*.png')
@@ -1362,31 +1285,31 @@ def main():
             raw_nback_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_nback_img_list if '_' not in path.basename(img)])
             raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
 
-            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('REST' in img) and ('-' not in img)])  # Last condition excludes x, y, and z images
+            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('rest' in img) and ('-' not in img)])  # Last condition excludes x, y, and z images
             sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('MID' in img) and ('-' not in img)])
-            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nBack' in img) and ('-' not in img)])
+            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nback' in img) and ('-' not in img)])
             sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img) and ('-' not in img)])
 
             if args.ica:
 
-                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img)])
+                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])
                 mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
-                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img)])
+                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img)])
                 sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
 
-                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img)])
+                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img)])
                 mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
-                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img)]) 
+                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img)]) 
                 sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
             else:
-                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('tfMRI' not in img) and ('ica' not in img)])
+                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img) and ('ica' not in img)])
                 mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img) and ('ica' not in img)])
-                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nBack' in img) and ('ica' not in img)])
+                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img) and ('ica' not in img)])
                 sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img) and ('ica' not in img)])
 
-                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('tfMRI' not in img) and ('ica' not in img)])
+                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img) and ('ica' not in img)])
                 mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)]) 
-                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nBack' in img) and ('ica' not in img)]) 
+                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img) and ('ica' not in img)]) 
                 sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)]) 
 
 
@@ -1402,7 +1325,7 @@ def main():
             rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
 
             mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
-            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nBack')
+            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nback')
             sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, fmri_type='SST')
 
             num_rest_dvars = len(rest_dvars)
@@ -1413,7 +1336,7 @@ def main():
 
             # APPEND NEW SERIES PANEL SECTIONS
             series_rows = []
-            newer_body = new_body + series_panel_header
+            newer_body = body + series_panel_header
             for i in range(0, num_rest_dvars):
                 if rest_dvars:
                     series_rows.append(rest_dvars.pop(0))
