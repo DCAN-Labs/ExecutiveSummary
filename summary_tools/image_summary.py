@@ -128,7 +128,7 @@ def get_subject_info(path_to_nii_file):
     # TODO: Make more specific (whatever immediately precedes modality)?
     subject_code_re = re.compile('^\w+_')
     # TODO: Come up with more flexible matching for task?
-    modality_re = re.compile('(rfMRI_REST\d+)|(ffMRI_REST\d+)|(tfMRI_MID\d+)|(tfMRI_MID\d+)|(tfMRI_nBack\d+)|(tfMRI_SST\d+)|(T1w)|(T2w)|(FieldMap_Magnitude)|(FieldMap_Phase)|(SpinEchoPhaseEncodePositive)|(SpinEchoPhaseEncodeNegative)|(ReversePhaseEncodeEPI)|(Scout)')
+    modality_re = re.compile('(task-\D+\d+)|(T1w)|(T2w)|(FieldMap_Magnitude)|(FieldMap_Phase)|(SpinEchoPhaseEncodePositive)|(SpinEchoPhaseEncodeNegative)|(ReversePhaseEncodeEPI)|(Scout)')
     series_num_re = re.compile('\d+$')
 
     re_list = [subject_code_re, modality_re, series_num_re]
@@ -141,10 +141,10 @@ def get_subject_info(path_to_nii_file):
             match = match.group()
             if '_' in match:
                 match = re.sub('_', '', match)
-            if match == 'Scout':  # Special case for SBRef files
+            if match == 'Scout':  # Special case for sbref files
                 dirname = path.dirname(path_to_nii_file)
-                epi_type = path.basename(dirname).split('_')[-2] + '_' + path.basename(dirname).split('_')[-1]
-                match = 'SBRef_' + epi_type
+                epi_type = path.basename(dirname).split('/')[-1] 
+                match = epi_type + '_sbref'
             series_info.append(match)
         else:
             series_info.append('Unknown')
@@ -313,7 +313,7 @@ def get_list_of_data(src_folder):
                     full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'SBRef' or 'REST' or 'MID' or 'nBack' or 'SST' in modality:
+                elif 'sbref' or 'rest' or 'MID' or 'nback' or 'SST' in modality:
 
                     full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -328,9 +328,9 @@ def get_list_of_data(src_folder):
 
     data_lists = {'t1-data': t1_data, 't2-data': t2_data, 'epi-data': epi_data}
 
-    if 'SBRef' not in data_lists['epi-data'][-1:]:  # either of the last two paths in list
-        print 'no SBRef data in epi-data list'
-        _logger.info('missing SBRef data from /unprocessed/NIFTI... pulling from alternative')
+    if 'sbref' not in data_lists['epi-data'][-1:]:  # either of the last two paths in list
+        print 'no sbref data in epi-data list'
+        _logger.info('missing sbref data from /unprocessed/NIFTI... pulling from alternative')
 
     _logger.debug('\ndata_lists: %s' % data_lists)
 
@@ -420,9 +420,9 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
     }
     print("choose slices dict nifti_infor:")
     print(nifti_info)
-    if 'SBRef' in nifti_info[0]:  # grab these first since they may also contain 'REST' in their strings
+    if 'sbref' in nifti_info[0]:  # grab these first since they may also contain 'rest' in their strings
         slices_dict = sb_ref_slices
-    elif 'REST' or 'MID' or 'SST' or 'nBack' in nifti_info[0]:  # then grab all the remaining 'REST' data that do not have 'SBRef' in string
+    elif 'rest' or 'MID' or 'SST' or 'nback' in nifti_info[0]:  # then grab all the remaining 'rest' data that do not have 'sbref' in string
         slices_dict = raw_rest_slices
     elif 'T2' in nifti_info[0]:
         slices_dict = T2_slices

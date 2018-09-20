@@ -1,9 +1,13 @@
 #! /usr/bin/env python2
 
 """
-Call this program with -s, pointing to a subject-summary_tools path, to build the Executive Summary for that subject's
-processed data.
--o for optional output_directory; (default = user's home directory)
+Call this program with:
+    -p full path to the parent of the pipeline directory (e.g., parent of HCP)
+    -n name of the study
+    -s subject id
+    -vi visit (aka session id)
+    -e executive summary directory (e.g., summary_DCANBOLDProc_v4.0.0)
+    -o output directory
 
 __author__ = 'Shannon Buckley', 2/20/16
 """
@@ -23,11 +27,12 @@ from helpers import shenanigans
 
 PROG = 'Layout Builder'
 VERSION = '1.5.2'
-LAST_MOD = '9-14-18'
+LAST_MOD = '9-20-18'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
-Use -s /path/to/subjectfolder/with/summary_subfolder to launch and build a summary page.
+Use -p <path_to_pipeline_parent> -n <study> -s <subject> -vi <visit> -e <sum_dir> -o <output_dir> to launch and build a summary page.
+Note: -o is optional - user's path will be used if no -o is specified.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
 
@@ -36,16 +41,23 @@ def get_parser():
 
     parser = argparse.ArgumentParser(description=program_desc, prog=PROG, version=VERSION)
 
-    parser.add_argument('-s', '--subject_path', dest='subject_path', action='append',
-                        help='''Expects path to a subject-level directory of processed data, which should have a
-                        'summary' folder within (e.g./remote_home/bucklesh/Projects/TestData/ABCDPILOT_MSC02/)''')
+    parser.add_argument('-p', '--parent_path', dest='parent_path', action='store',
+                        help='Expects the full path to the parent of the pipeline directory.')
+
+    parser.add_argument('-n', '--study_name', dest='study_name', action='store',
+                        help='Expects the name of the study.')
+
+    parser.add_argument('-s', '--subject_id', dest='subject_id', action='store',
+                        help='Expects a subject id without sub- prefix.')
+
+    parser.add_argument('-vi', '--visit', dest='session', action='store',
+                        help='Expects a visit (aka session) id without ses- prefix.')
+
+    parser.add_argument('-e', '--ex_summ_dir', dest='summ_dir', action='store',
+                        help='Expects the name of the subdirectory used for the summary (e.g.: summary_DCANBOLDProc_v4.0.0)')
 
     parser.add_argument('-o', '--output_path', dest='output_path', action='store',
-                        help='''Expects path to a folder you can write to in order to copy final outputs there. Final
-                        goodies will be inside a directory on the output_path: date_stamp/SUBJ_ID.''')
-
-    parser.add_argument('-l', '--list_file', dest='list_file', required=False, help="""Optional: path to file containing
-    list of processed-subject-paths, e.g. /scratch/HCP/processed/ASD-blah/subjCode/VisitID/subjCode .""")
+                        help='Expects full path to a directory to which you can write, in order to copy final outputs there.')
 
     parser.add_argument('--ica', action='store_true')
 
@@ -568,7 +580,7 @@ series_panel_footer = """
 html_footer = """
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-        <script>$(document).ready(function(){$("img[src*=SBRef]").width(300).height(110),$('img').filter('.raw_rest_img').width(300).height(110),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
+        <script>$(document).ready(function(){$("img[src*=sbref]").width(300).height(110),$('img').filter('.raw_rest_img').width(300).height(110),$(".t1_tr").each(function(t,a){"2400.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t1_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_frames").each(function(t,a){"120"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_x").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_y").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_z").each(function(t,a){"3.8"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_tr").each(function(t,a){"2100.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".epi_te").each(function(t,a){"5.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_x").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_y").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_z").each(function(t,a){"1.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_tr").each(function(t,a){"3200.0"!=$(a).text()&&$(a).addClass("out-of-range")}),$(".t2_te").each(function(t,a){"4.97"!=$(a).text()&&$(a).addClass("out-of-range")}),$("div.params").draggable(),$("div.grayords").draggable(),$("div.epi").draggable()});
         </script>
         <script>
            $( window ).load(function() {
@@ -584,7 +596,7 @@ html_footer = """
 </html>
 """
 
-# End of HTML BUILDING BLOCKS
+# end of HTML BUILDING BLOCKS
 
 def write_html(template, dest_dir, title="executive_summary.html"):
     """
@@ -603,8 +615,9 @@ def write_html(template, dest_dir, title="executive_summary.html"):
         f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
         f.close()
+        print '\nSummary %s can be found in path %s.\n' % (title, dest_dir)
     except IOError:
-        print 'cannot write there for some reason...'
+        print '\ncannot write %s to %s for some reason...\n' % (title, dest_dir)
 
 
 def make_brainsprite_viewer(png_path, mosaic_path):
@@ -663,9 +676,11 @@ def write_series_panel_row(list_of_img_paths):
             break
 
     if series_type is None:
+        print 'Writing series panel but series type is unknown; program exiting...'
+        _logger.error('Writing series panel but series type is unknown; program exiting...')
         sys.exit()
-        series_type = "Unknown"
 
+    series_type = "Unknown"
     print "Making series panel for " + series_type
 
     series_panel_row = """
@@ -834,10 +849,10 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
 
     dvars_re         = r'DVARS_and_FD_task-(rest|SST|MID|nback)\d+'
     postreg_dvars_re = r'postreg_DVARS_and_FD_task-(rest|SST|MID|nback)\d+'
-    series_t1_re     = r'(ffMRI_rest|rest|SST|MID|nback)\d+_'
-    t1_series_re     = r'_in_(?:[rtf]fMRI_)?(rest|SST|MID|nback)\d+'
-    sbref_re         = r'SBRef_(?:[rtf]fMRI)?(rest|SST|MID|nback)\d+'
-    rest_re          = r'(?:[rtf]fMRI)?(rest|SST|MID|nback)\d+'
+    series_t1_re     = r'task-(rest|SST|MID|nback)_in_\d+_'
+    t1_series_re     = r'_in_task-(rest|SST|MID|nback)\d+'
+    sbref_re         = r'task-(rest|SST|MID|nback)\d+_sbref'
+    rest_re          = r'task-(rest|SST|MID|nback)\d+'
 
     dvars_nums = find_series_numbers(image_path_lists[0], dvars_re)
     postreg_dvars_nums = find_series_numbers(image_path_lists[1], postreg_dvars_re)
@@ -864,35 +879,31 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
             placeholder_path = './img/rectangular_placeholder_text.png'
 
         # Fill in gaps with placeholder images if necessary
-        if (fmri_type == 'rest'):
-            fmri_letter = 'r'
-	else:
-	    fmri_letter = 't'
-
         if missing:
             
             last_missing = int(missing[-1]) + 1
 
             for x in xrange(int(missing[0]), last_missing):
                 if list_index == 0:
-                    sequence_text = 'DVARS_and_FD_task-' + fmri_type + str(x)
+                    sequence_text = 'DVARS_and_FD_task-%s%02d' % (fmri_type, x)
                 elif list_index == 1:
-                    sequence_text = 'postreg_DVARS_and_FD_task-' + fmri_type + str(x)
+                    sequence_text = 'postreg_DVARS_and_FD_task-%s%02d' % (fmri_type, x)
                 elif list_index == 2:
-                    sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
+                    sequence_text = 'task-%s%02d_in_t1' % (fmri_type, x)
                 elif list_index == 3:
-                    sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    sequence_text = 't1_in_task-%s%02d' % (fmri_type, x)
                 elif list_index == 4:
-                    sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    sequence_text = 'task-%s%02d_sbref' % (fmri_type, x)
                 elif list_index == 5:
-                    sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x)
+                    sequence_text = 'task-%s%02d' % (fmri_type, x)
 
                 match = [s for s in l if sequence_text in s]
                 if match:
                     new_l.append(match[0])
                 else:
                     new_l.append(placeholder_path)
-                    _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
+                    print '\n%s image expected and not found in summary directory\n' % (sequence_text)
+                    _logger.error('\n%s image expected and not found in summary directory\n' % (sequence_text))
             corrected_lists.append(new_l)
 
     # If ffmri images exist, deal with those separately
@@ -916,20 +927,21 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
                     elif list_index == 1:
                         sequence_text = 'postreg_DVARS_and_FD_task-' + fmri_type + str(x)
                     elif list_index == 2:
-                        sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x) + '_in_t1'
+                        sequence_text = 'task-' + fmri_type + str(x) + '_in_t1'
                     elif list_index == 3:
-                        sequence_text = 't1_in_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                        sequence_text = 't1_in_' + 'task-' + fmri_type + str(x)
                     elif list_index == 4:
-                        sequence_text = 'SBRef_' + fmri_letter + 'fMRI_' + fmri_type + str(x)
+                        sequence_text = 'task-' + fmri_type + _sbref + str(x)
                     elif list_index == 5:
-                        sequence_text = fmri_letter + 'fMRI_' + fmri_type + str(x)
+                        sequence_text = 'task-' + fmri_type + str(x)
 
                     match = [s for s in l if sequence_text in s]
                     if match:
                         new_l.append(match[0])
                     else:
                         new_l.append(placeholder_path)
-                        _logger.error('\n%s image expected and not found in summary folder\n' % (sequence_text))
+                        print '\n%s image expected and not found in summary directory\n' % (sequence_text)
+                        _logger.error('\n%s image expected and not found in summary directory\n' % (sequence_text))
                 corrected_lists[list_index] += new_l
 
     if corrected_lists:
@@ -937,15 +949,21 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
     else:
         return image_path_lists
 
+def bids_dir_exists(bids_path):
+    if os.path.isdir(bids_path):
+        return 1
+    else:
+        print '\nRequired BIDS directory does not exist or is not a directory:\n\t%s\nExiting...' % bids_path
+        _logger.error('\nRequired BIDS directory does not exist or is not a directory:\n\t%s\nExiting...' % bids_path)
+        return 0
 
-def main():
+
+def get_args():
 
     parser = get_parser()
-
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
-
     args = parser.parse_args()
+
+    passing = 1;
 
     if args.verbose:
         _logger.setLevel(logging.INFO)
@@ -954,554 +972,567 @@ def main():
     else:
         _logger.setLevel(logging.ERROR)
 
-    if args.list_file:
+    # Make sure all required arguments were specified. If any is missing, 
+    # keep checking so user knows *all* of what is missing.
+    if not args.parent_path:
+        print '\nRequired path to the parent of the pipeline was not specified.\n'
+        _logger.error('\nRequired path to the parent of the pipeline was not specified.\n')
+        passing = 0
 
-        file_we_read_in = path.join(args.list_file)
+    if not args.study_name:
+        print '\nRequired study name was not specified.\n'
+        _logger.error('\nRequired study name was not specified.\n')
+        passing = 0
+        
+    if not args.subject_id:
+        print '\nRequired subject id was not specified.\n'
+        _logger.error('\nRequired subject id was not specified.\n')
+        passing = 0
+        
+    if not args.session:
+        print '\nRequired session id was not specified.\n'
+        _logger.error('\nRequired session id was not specified.\n')
+        passing = 0
+        
+    if not args.summ_dir:
+        print '\nRequired executive summary directory was not specified.\n'
+        _logger.error('\nRequired executive summary directory was not specified.\n')
+        passing = 0
 
-        if not path.exists(file_we_read_in) or not file_we_read_in.endswith('.txt'):
-            shenanigans.update_user('List FILE (.txt) does not exist, please verify your path to: \n%s' %
-                                    file_we_read_in)
+    # If we have all of the required arguments, return them.
+    if 1 == passing:
+        return args
+    else:
+        print '\nFailed to get all required arguments.\nExiting....\n'
+        _logger.error('\nFailed to get all required arguments.\nExiting....\n')
+        sys.exit()
 
-        if path.exists(file_we_read_in):
+def write_summ_file(out_path, args):
+    root = args.parent_path
+    study = args.study_name
+    sub_id = args.subject_id
+    ses_id = args.session
+    ex_sum = args.summ_dir
 
-            paths_to_process = shenanigans.read_list_file(file_we_read_in)
+    date = image_summary.date_stamp
 
-            # print paths_to_process
+    try:
+        summ_file = os.path.join(out_path, 'Summary_Report.txt')
+        with open(summ_file, 'w') as f:
 
-            for path_to_proc in paths_to_process:
+            info = '''
+                    Executive Summary ran on %s
+                    Using pipeline: %s 
+                    Data Path provided: \n%s
+                    Study Name: %s
+                    Subject Code: %s
+                    Visit ID: %s
+                    Executive summary subdir: %s
+                    Args: \n%s
+                    ''' % (date, 'HCP', root, study, sub_id, ses_id, ex_sum, args)
 
-                path_to_proc = path_to_proc.strip('\n')
+            f.write(info)
+            f.close()
 
-                command = 'python %s -s %s' % (sys.argv[0], path.join(path_to_proc))
+        print '\nInitial summary report can be found in:\n\t%s' % summ_file
+        _logger.info('\nInitial summary report can be found in:\n\t%s' % summ_file)
 
-                shenanigans.submit_command(command)
+        # All good!
+        return
+    
+    except OSError:
+        # Output path is not writable?
+        print '\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path
+        _logger.error('\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path)
+        sys.exit()
+       
 
-    if args.subject_path:
+def get_output_path(args):
+    # Output path is optional; if none is specified, use user's home directory.
+    if args.output_path:
 
-        for sub in args.subject_path:
+        out_path = os.path.join(args.output_path)
 
-            sub_root = path.join(sub)
+        # Does output path specify an existing directory?
+        if os.path.isdir(out_path):
+            print '\nFound output directory %s.' % out_path
+            _logger.info('\nFound output directory %s.' % out_path)
 
-            if path.exists(sub_root):
+        else:
 
-                sub_root = shenanigans.handle_trailing_slash(sub_root)
-
-                # ------------------------- > GATHER BASIC INFO < ------------------------- #
-
-                summary_path, data_path = image_summary.get_paths(sub_root, args.ica)
-
-                if sub_root.endswith('/'):
-                    sub_root = sub_root[:-1]
-
-                subj_id = sub_root.split('/')[-1]
-
-                visit_id = sub_root.split('/')[-3]
-
-                print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
-
-                pipeline_version = sub_root.split('/')[-2]
-
-                date = image_summary.date_stamp
-
-                if 'release' not in pipeline_version:
-                    print '\nthis may or may not workout if this is not a standard HCP_release! *fingers crossed*'
-
-                print '\npipeline_version is: %s\n' % pipeline_version
-
-                shenanigans.update_user('SubjID and Visit: \n%s %s\nPipeline: %s' % (subj_id, visit_id,
-                                                                                     pipeline_version))
-
-                date = image_summary.date_stamp
-
-                # ------------------------- > WRITE OUT SUMMARY REPORT < ------------------------- #
-                with open(path.join(sub_root, 'Summary_Report.txt'), 'w') as f:
-
-                    info = '''
-                            Executive Summary ran on %s
-                            pipeline %s was detected
-                            Subject Path provided: \n%s
-                            Subject Code: %s
-                            Visti_ID: %s
-                            Args: \n%s
-                            ''' % (date, pipeline_version, sub_root, subj_id, visit_id, args)
-
-                    f.write(info)
-                    f.close()
-
-            else:
-
-                print '\nNo subject directory found within %s \nexiting...' % sub
-                _logger.error('\nNo subject directory within %s \nexiting...' % sub)
-
-                continue
-
-            # --------------------------------- > SETUP PATHS < --------------------------------- #
-            if path.exists(summary_path):
-                v2_path = path.join(sub_root, 'summary_FNL_preproc_v2')
-
-                if path.exists(v2_path):
-                    if args.ica:
-                        img_out_path = path.join(v2_path + '_ica', 'img')
-                        T1_path = path.join(v2_path + '_ica', 'T1_pngs')
-                    else:
-                        img_out_path = path.join(v2_path, 'img')
-                        T1_path = path.join(v2_path, 'T1_pngs')
-
-                else:
-                    img_out_path = path.join(summary_path, 'img')
-                    T1_path = path.join(summary_path, 'T1_pngs')
-
-                img_in_path = summary_path
-                subject_code_folder = path.join(summary_path, subj_id + '_' + visit_id)
-
-            else:
-
-                print '\nMake sure a "summary" folder exists or this will not work...\n\tcheck in here: %s' % sub_root
-                _logger.error('\nno Summary folder exists within %s\n' % sub_root)
-
-                continue
-            # ------------------------- > MAKE /img or quit ... CHECK IMAGES < ------------------------- #
-            if path.exists(img_out_path):
-
-                shutil.rmtree(img_out_path,ignore_errors=True)
+            # Attempt to create path.
+            print '\n%s does not specify an existing directory; attempting to create...' %out_path
+            _logger.error('\n%s does not specify an existing directory; attempting to create...' %out_path)
 
             try:
-
-                os.makedirs(img_out_path)
-
-            except OSError:
-
-                print '\nCheck permissions to write to that path? \npath: %s' % summary_path
-                _logger.error('cannot make /img within /summary... permissions? \nPath: %s' % summary_path)
-
-                return
-
-            try:
-                gifs = [gif for gif in os.listdir(img_in_path) if gif.endswith('gif')]
-
-                if len(gifs) == 0:
-
-                    print img_in_path
-                    
-                    _logger.error('no .gifs in summary folder')
-                    print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
-                        'Check to make sure FNL_preproc has been ran? '
-
-                    return
-
-                else:
-
-                    copy_images(img_in_path, gifs, img_out_path)
-
-                    data = image_summary.get_list_of_data(data_path)
-
-                    _logger.debug('data are: %s' % data)
-
+                os.makedirs(out_path)
 
             except OSError:
-
-                    print '\n\tUnable to locate image sources...'
-
-                    return
-
-            # Copy DVARS pngs to /img folder
-
-            dvars = [img for img in os.listdir(img_in_path) if (img.endswith('png')) and 'DVARS' in img]
-            copy_images(img_in_path, dvars, img_out_path)
-
-            # Copy placeholder images to /img folder
-            placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
-            placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
-
-            copy_images(placeholder_path, placeholders, img_out_path)
-
-            # ------------------------- > Make lists of paths to be used in the series panel < -------------------------- #
-            real_data = []
-            rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rest' in gif) and ('atlas' not in gif)])
-            mid_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('MID' in gif) and ('atlas' not in gif)])
-            nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nback' in gif) and ('atlas' not in gif)])
-            sst_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('SST' in gif) and ('atlas' not in gif)])
-
-
-            t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('rest' in gif)])
-            t1_in_mid_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('MID' in gif)])
-            t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nback' in gif)])
-            t1_in_sst_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('SST' in gif)])
-
-
-            # setup an output directory
-            if path.exists(subject_code_folder):
-                shutil.rmtree(subject_code_folder,ignore_errors=True)
-
-            os.makedirs(subject_code_folder)
-
-            # ------------------------- > Check list of epi-data to ensure even numbers of files... < ---------------- #
-            # TODO: improve this section with a more specific test
-
-#            if len(data['epi-data']) == len(glob.glob(path.join(sub_root,'rest*'))):  # we should have at least 1 raw rest and 1 SBRef per subject (pairs)
-#
-#                _logger.warning('odd number of epi files were found...')
-#                print '\nLooking for SBRef images...\n'
-#
-#                # locate an alternative source for SBRef images -> MNINonLinear/Results/rest*
-#
-#                # alt_sbref_path = path.join(sub_root, 'MNINonLinear', 'Results')
-#                # pattern = alt_sbref_path + '/rest*/rest*_SBRef.nii.gz'
-#                # more_epi = glob.glob(pattern)
-#                #
-#                # for sbref in more_epi:
-#                #     data['epi-data'].append(sbref)
-#
-#                # TODO: TEST: LOCATE ANOTHER ALTERNATIVE SBRef SOURCE
-#                alternate_sbref_path = path.join(sub_root)
-#                sbref_pattern = alternate_sbref_path + '/rest*/Scout_orig.nii.gz'
-#
-#                more_sbref = glob.glob(sbref_pattern)
-#                # print 'found additional SBRef files: %s' % more_sbref
-#
-#                for sbref in more_sbref:
-#                    data['epi-data'].append(sbref)
-
-            print '\nLooking for SBRef images...\n'
-            alternate_sbref_path = path.join(sub_root)
-            sbref_pattern = alternate_sbref_path + '/*rest*/Scout_orig.nii.gz'
-            task_sbref_pattern = alternate_sbref_path + '/*tfMRI*/Scout_orig.nii.gz'
-            more_task_sbref = glob.glob(task_sbref_pattern)
-            more_sbref = glob.glob(sbref_pattern)
-            all_sbref = more_sbref + more_task_sbref            
-            for sbref in all_sbref:
-                data['epi-data'].append(sbref)
-            
-            # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
-
-            for list_entry in data['epi-data']:
-
-                info = image_summary.get_subject_info(list_entry)
-
-                # get modality / series so we can know how to slice & label ...
-                modality, series = info[1], info[2]
-                print '\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series)
-                print 'slicing images for: \n%s' % list_entry
-
-                if 'rest' or 'SST' or 'MID' or 'nback' in modality and 'SBRef' not in modality:
-
-                    image_summary.slice_list_of_data([list_entry], subject_code=subj_id, modality=modality,
-                                                     dest_dir=img_out_path, also_xyz=True)
-
-                elif 'SBRef' in modality and 'rest' in modality:
-
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
-
-                elif 'SBRef' in modality and 'SST' or 'MID' or 'nback' in modality:
-
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
-
-                elif 'SBRef' in modality:
-
-                    image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
-                                                                                                             series)))
-                                                                                                             
-            # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
-            for list_entry in data.values():
-
-                list_entry = sorted(list_entry)
-
-                for item in list_entry:
-
-                    information = image_summary.get_subject_info(item)
-
-                    modality, series = information[1], information[2]
-
-#                    dicom_for_te_grabber = shenanigans.get_airc_dicom_path_from_nifti_info(sub_root, modality)
-
-                    dicom_root_dir = path.join(sub_root, 'unprocessed/DICOM/')
-
-                    dicom_for_te_grabber = shenanigans.get_dicom_path_from_nifti_info(dicom_root_dir, modality)
-
-#                    if dicom_for_te_grabber is not None:
-
-#                        nifti_te = shenanigans.grab_te_from_dicom(dicom_for_te_grabber)
-
-#                    else:
-#                        nifti_te = 0.0
-
-#                    print '\nTE for this file was: %s\n' % nifti_te
-
-                    print '\nadding %s to list of data, for which we need parameters...\n' % item
-
-                    _logger.debug('data_list is: %s' % data)
-
-                    if dicom_for_te_grabber:
-                        alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
-                        print alt_params_row
-                        real_data.append(alt_params_row)
-
-                    else:
-                        params_row = image_summary.get_nii_info(item)
-                        real_data.append(params_row)
-
-                    #print '\nTESTING PARAMS GETTER.....\n'
-                    #print '\nOld Way params_row = %s\n' % params_row
-                    #print '\nNew Way alt_params_row = %s\n' % alt_params_row
-
-                    
-
-
-            # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
-
-            head = html_header
-
-
-            # BUILD & WRITE THE STRUCTURAL PANEL
-
-            # If there are T1 pngs, make the BrainSprite viewer
-            if os.path.exists(T1_path):
-                if os.listdir(T1_path):
-                    body = make_brainsprite_viewer(T1_path, img_out_path)
-                else:
-                    body = ''
-            else:
-                body = ''
-
-            pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
-
-            # BUILD THE LISTS NEEDED FOR SERIES PANEL
-
-            raw_rest_img_pattern = path.join(img_out_path, '*rest*.png')
-            raw_rest_img_list = glob.glob(raw_rest_img_pattern)
-
-            
-            raw_mid_img_pattern = path.join(img_out_path, 'MID*.png')
-            raw_mid_img_list = glob.glob(raw_mid_img_pattern)            
-
-            raw_nback_img_pattern = path.join(img_out_path, 'nback*.png')
-            raw_nback_img_list = glob.glob(raw_nback_img_pattern)
-
-            raw_sst_img_pattern = path.join(img_out_path, 'SST*.png')
-            raw_sst_img_list = glob.glob(raw_sst_img_pattern)
-
-            raw_rest_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
-            raw_mid_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_mid_img_list if '_' not in path.basename(img)])
-            raw_nback_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_nback_img_list if '_' not in path.basename(img)])
-            raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
-
-            sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('rest' in img) and ('-' not in img)])  # Last condition excludes x, y, and z images
-            sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('MID' in img) and ('-' not in img)])
-            sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('nback' in img) and ('-' not in img)])
-            sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('SBRef' in img) and ('SST' in img) and ('-' not in img)])
-
-            if args.ica:
-
-                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])
-                mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
-                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img)])
-                sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
-
-                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img)])
-                mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
-                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img)]) 
-                sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
-            else:
-                rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img) and ('ica' not in img)])
-                mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img) and ('ica' not in img)])
-                nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img) and ('ica' not in img)])
-                sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img) and ('ica' not in img)])
-
-                rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img) and ('ica' not in img)])
-                mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)]) 
-                nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img) and ('ica' not in img)]) 
-                sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)]) 
-
-
-
-            # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
-            print '\nAssembling series images to build panel...'
-
-            rest_image_paths = [rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths]
-            mid_image_paths = [mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths]
-            nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
-            sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
-
-            rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
-
-            mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
-            nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nback')
-            sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, fmri_type='SST')
-
-            num_rest_dvars = len(rest_dvars)
-
-            num_mid_dvars = len(mid_dvars)
-            num_nback_dvars = len(nback_dvars)
-            num_sst_dvars = len(sst_dvars)
-
-            # APPEND NEW SERIES PANEL SECTIONS
-            series_rows = []
-            newer_body = body + series_panel_header
-            for i in range(0, num_rest_dvars):
-                if rest_dvars:
-                    series_rows.append(rest_dvars.pop(0))
-                if rest_dvars_postreg:
-                    series_rows.append(rest_dvars_postreg.pop(0))
-                if rest_in_t1_gifs:
-                    series_rows.append(rest_in_t1_gifs.pop(0))
-                if t1_in_rest_gifs:
-                    series_rows.append(t1_in_rest_gifs.pop(0))
-                if sb_ref_rest_paths:
-                    series_rows.append(sb_ref_rest_paths.pop(0))
-                if raw_rest_paths:
-                    series_rows.append(raw_rest_paths.pop(0))
-
-                series_panel = write_series_panel_row(series_rows[:6])
-
-                if series_panel:
-                    newer_body += series_panel
-                _logger.debug('\nrest_rows were: %s' % series_rows)
-
-                series_rows = []
-
-            for i in range(0, num_mid_dvars):
-                if mid_dvars:
-                    series_rows.append(mid_dvars.pop(0))
-                if mid_dvars_postreg:
-                    series_rows.append(mid_dvars_postreg.pop(0))
-                if mid_in_t1_gifs:
-                    series_rows.append(mid_in_t1_gifs.pop(0))
-                if t1_in_mid_gifs:
-                    series_rows.append(t1_in_mid_gifs.pop(0))
-                if sb_ref_mid_paths:
-                    series_rows.append(sb_ref_mid_paths.pop(0))
-                if raw_mid_paths:
-                    series_rows.append(raw_mid_paths.pop(0))
-
-                series_panel = write_series_panel_row(series_rows[:6])
-
-                if series_panel:
-                    newer_body += series_panel
-                _logger.debug('\mid_rows were: %s' % series_rows)
-                series_rows = []
+                # Failed to make the path.
+                print '\nUnable to create path:\n\t%s\nPermissions?\n' % out_path
+                _logger.error('\nUnable to create path:\n\t%s\nPermissions?\n' % out_path)
+                print '\nCannot proceed without a writable path. Exiting....\n'
+                _logger.error('\nCannot proceed without a writable path. Exiting....\n')
+                sys.exit()
                 
-            for i in range(0, num_nback_dvars):
-                if nback_dvars:
-                    series_rows.append(nback_dvars.pop(0))
-                if nback_dvars_postreg:
-                    series_rows.append(nback_dvars_postreg.pop(0))
-                if nback_in_t1_gifs:
-                    series_rows.append(nback_in_t1_gifs.pop(0))
-                if t1_in_nback_gifs:
-                    series_rows.append(t1_in_nback_gifs.pop(0))
-                if sb_ref_nback_paths:
-                    series_rows.append(sb_ref_nback_paths.pop(0))
-                if raw_nback_paths:
-                    series_rows.append(raw_nback_paths.pop(0))
-
-                series_panel = write_series_panel_row(series_rows[:6])
-
-                if series_panel:
-                    newer_body += series_panel
-                _logger.debug('\nback_rows were: %s' % series_rows)
-                series_rows = []
-
-            for i in range(0, num_sst_dvars):
-                if sst_dvars:
-                    series_rows.append(sst_dvars.pop(0))
-                if sst_dvars_postreg:
-                    series_rows.append(sst_dvars_postreg.pop(0))
-                if sst_in_t1_gifs:
-                    series_rows.append(sst_in_t1_gifs.pop(0))
-                if t1_in_sst_gifs:
-                    series_rows.append(t1_in_sst_gifs.pop(0))
-                if sb_ref_sst_paths:
-                    series_rows.append(sb_ref_sst_paths.pop(0))
-                if raw_sst_paths:
-                    series_rows.append(raw_sst_paths.pop(0))
-
-                series_panel = write_series_panel_row(series_rows[:6])
-
-                if series_panel:
-                    newer_body += series_panel
-                _logger.debug('\sst_rows were: %s' % series_rows)
-                series_rows = []
-
-
-            # COMPLETE EPI PANEls
-
-            newer_body += series_panel_footer
-
-            _logger.debug('newer_body is : %s' % newer_body)
-
-#            try:
-
-#                copy_images(img_in_path, structural_img_labels, img_out_path)  # out: /summary/img/<blah>
-
-#            except IOError:
-
-#                _logger.warning('\nUnable to locate some structural images. Do they exist?')
-#                print '\nMake sure you have all 6 structural .png and DVARS available for this subject: %s_%s' % (
-#                    subj_id, visit_id)
-
-#                print '\nExpected path to required images: %s' % img_in_path
-
-            # FILL-IN THE CODE / VERSION INFO
-            new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s' % (subj_id))
-
-            new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
-
-            # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
-
-            html_doc = new_html_header + newer_body + write_dvars_panel()
-
-            html_doc += html_footer
-
-            write_html(html_doc, summary_path, title='executive_summary_%s.html' % (subj_id))
-
-            # -------------------------> END LAYOUT <------------------------- #
-
-            # -------------------------> PREPARE QC PACKET <------------------------- #
-            move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
-                        'sub_code_folder'  : subject_code_folder,
-                        'img_in_path'      : img_in_path}
-
-            image_summary.submit_command(move_cmd)
-
-            if args.output_path:
-
-                user_out_path = path.join(args.output_path)
-                version_date = image_summary.date_stamp + '_summary_v' + VERSION
-
-                if path.exists(user_out_path):
-                    print 'found path: %s, using this to copy for QC' % user_out_path
-
-                    qc_folder_out = path.join(user_out_path, version_date, subj_id)
-
-                    print '\nFind your images here: \n\t%s' % qc_folder_out
-
-                else:
-
-                    print 'output path not found: %s, attempting to create...' % user_out_path
-
-                    subprocess.call(['mkdir', user_out_path])
-                    
-                    qc_folder_out = path.join(user_out_path, version_date, subj_id)
-
-                    print '\nFind your images here: \n\t%s' % qc_folder_out
-
-            else:
-
-                user_home = os.path.expanduser('~')
-
-                qc_folder_out = path.join(user_home, version_date, subj_id)
-
-                print '\nusing default output path to copy images for QC: \n%s' % qc_folder_out
-
-            if not path.exists(qc_folder_out):
-
-                print '\ncopying to QC_folder\n\n'
-
-                shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
 
     else:
-        print '\nNo subject path provided!'
-        _logger.error('No subject path provided!')
+        # Output path was not specified. Default is users' directory.
+        out_path = os.path.expanduser('~')
+
+        print '\nOptional output path was not specified. Using default directory for output.\n\tPath: %s' %out_path
+        _logger.info('\nOptional output path was not specified. Using default directory for output.\n\tPath: %s' %out_path)
+
+
+    return out_path
+
+
+def get_paths(args):
+
+    root = args.parent_path
+    study = args.study_name
+    sub_id = args.subject_id
+    ses_id = args.session
+    ex_sum = args.summ_dir
+
+    # Output path is optional, but we need a place to write, so make sure we can do that.
+    out_path = get_output_path(args)
+    # Now we know we have a directory for output; make sure we can write to it.
+    write_summ_file(out_path, args)
+
+    # Currently, assume pipeline is HCP. (May need to specify in future.)
+    sub_dir = 'sub-' + sub_id
+    ses_dir = 'ses-' + ses_id
+
+    bids_unproc_paths = ['HCP', 'sorted', study, sub_dir, ses_dir, 'func']
+    unprocessed_files = os.path.join(root, *bids_unproc_paths )
+
+    bids_proc_paths = ['HCP', 'processed', study, sub_dir, ses_dir, 'files']
+    processed_files = os.path.join(root, *bids_proc_paths )
+
+    # Check that unprocessed data are available to us.
+    if (bids_dir_exists(unprocessed_files)):
+        print '\nUnprocessed data will be found in path:\n\t%s' % unprocessed_files
+        _logger.info('\nUnprocessed data will be found in path:\n\t%s' % unprocessed_files)
+
+    else:
+        print '\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files
+        _logger.error('\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files)
+        sys.exit()
+
+               
+    # The summary dir lives in the processed_files dir; it should already be there; if not, create it.
+    summary_path = os.path.join(processed_files, ex_sum)
+
+    if os.path.isdir(summary_path):
+        print '\nData will be processed in path:\n\t%s' % processed_files
+        _logger.info( '\nData will be processed in path:\n\t%s' % processed_files)
+    else:
+        try:
+            os.makedirs(summary_path)
+
+        except OSError:
+            print '\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files)
+            _logger.error('\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files))
+            print '\nExiting....\n'
+            sys.exit()
+
+    # Subdirs within summary directory:
+    img_path = os.path.join(summary_path, 'img')
+    sub_ses_path = os.path.join(summary_path, sub_id + '_' + ses_id)
+
+    if os.path.exists(img_path):
+        shutil.rmtree(img_path, ignore_errors=True)
+
+    if path.exists(sub_ses_path):
+        shutil.rmtree(sub_ses_path, ignore_errors=True)
+
+    try:
+        os.makedirs(img_path)
+        os.makedirs(sub_ses_path)
+
+    except OSError:
+        print '\nCheck permissions to write to path:\n %s' % summary_path
+        _logger.error('cannot make img or pngs folder within path... permissions? \nPath: %s' % summary_path)
+        print '\nExiting....\n'
+        sys.exit()
+
+    t1_path = os.path.join(summary_path, 'T1_pngs') 
+
+    paths = {
+            'unprocessed' : unprocessed_files,
+            'processed' : processed_files,
+            'summary' : summary_path,
+            't1' : t1_path,
+            'img' : img_path,
+            'sub_ses' : sub_ses_path,
+            'output' : out_path,
+    }
+
+    return paths
+
+
+def copy_gifs(source_dir, target_dir):
+
+    # Find .gif files in source directory; copy to target directory.
+    # Return the list of gif filenames (no paths).
+    try:
+        gifs = [gif for gif in os.listdir(source_dir) if gif.endswith('gif')]
+
+        if len(gifs) > 0:
+            copy_images(source_dir, gifs, target_dir)
+            return gifs
+
+        else:
+            _logger.error('no .gifs in summary directory %s', source_dir)
+            print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
+                'Check to make sure executive_summary_prep.sh has been run. Exiting....'
+            sys.exit()
+
+    except OSError:
+            print '\nOS Error trying to locate gifs in path:\n\t %s...' % source_dir
+            print '\nExiting....\n'
+            sys.exit()
+
+
+def main():
+
+    # Initialization:
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+
+
+    # Get arguments.
+    args = get_args()
+
+    subj_id = 'sub-' + args.subject_id
+
+    # Use arguments to get paths. Make sure required paths are in place.
+    paths = get_paths(args)
+
+    data_path = paths['unprocessed']
+    sub_root = paths['processed']
+    summary_path = paths['summary']
+    img_out_path = paths['img']
+    T1_path = paths['t1']
+    subject_code_folder = paths['sub_ses']
+    user_out_path = paths['output']
+
+    # Copy gif files from the summary_path to the img_out_path. 
+    # If none are found, the prep program must be run. 
+    gifs = copy_gifs(summary_path, img_out_path)
+    
+    # Get a list of nifti files in the unprocessed path. 
+    # The data variable will contain lists for 't1-data', 't2-data', and 'epi-data'.
+    # (Would be nice to have more descriptive variables than data and data_path.)
+    data = image_summary.get_list_of_data(data_path)
+    _logger.debug('data are: %s' % data)
+
+    # Copy DVARS pngs to img directory
+    dvars = [img for img in os.listdir(summary_path) if (img.endswith('png')) and 'DVARS' in img]
+    copy_images(summary_path, dvars, img_out_path)
+
+    # Copy placeholder images to img directory
+    placeholders = ['square_placeholder_text.png', 'rectangular_placeholder_text.png']
+    placeholder_path = os.path.join(program_dir, 'placeholder_pictures')
+    copy_images(placeholder_path, placeholders, img_out_path)
+
+    # ------------------------- > Make lists of paths to be used in the series panel < -------------------------- #
+    real_data = []
+    rest_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('rest' in gif) and ('atlas' not in gif)])
+    mid_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('MID' in gif) and ('atlas' not in gif)])
+    nback_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('nback' in gif) and ('atlas' not in gif)])
+    sst_in_t1_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_in_t1.gif' in gif) and ('SST' in gif) and ('atlas' not in gif)])
+
+
+    t1_in_rest_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('rest' in gif)])
+    t1_in_mid_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('MID' in gif)])
+    t1_in_nback_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('nback' in gif)])
+    t1_in_sst_gifs = natural_sort([path.join('./img', path.basename(gif)) for gif in gifs if ('_t1_in_' in gif) and ('SST' in gif)])
+
+
+    # Get SBRefs.
+    print '\nLooking for sbref images...\n'
+    task_sbref_pattern = path.join(sub_root) + '/*task-*/Scout_orig.nii.gz'
+    all_sbref = glob.glob(task_sbref_pattern)
+    for sbref in all_sbref:
+        data['epi-data'].append(sbref)
+            
+    # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
+
+    for list_entry in data['epi-data']:
+
+        info = image_summary.get_subject_info(list_entry)
+
+        # get modality / series so we can know how to slice & label ...
+        modality, series = info[1], info[2]
+        print '\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series)
+        print 'slicing images for: \n%s' % list_entry
+
+        if 'rest' or 'SST' or 'MID' or 'nback' in modality and 'sbref' not in modality:
+
+            image_summary.slice_list_of_data([list_entry], subject_code=subj_id, modality=modality,
+                                             dest_dir=img_out_path, also_xyz=True)
+
+        elif 'sbref' in modality and 'rest' or 'SST' or 'MID' or 'nback' in modality:
+
+            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s.png' % modality))
+
+        elif 'sbref' in modality:
+
+            image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
+                                                                                                     series)))
+                                                                                                             
+    # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
+    for list_entry in data.values():
+
+        list_entry = sorted(list_entry)
+
+        for item in list_entry:
+
+            information = image_summary.get_subject_info(item)
+
+            modality, series = information[1], information[2]
+
+            dicom_for_te_grabber = shenanigans.get_dicom_path_from_nifti_info(data_path, modality)
+
+            print '\nadding %s to list of data, for which we need parameters...\n' % item
+
+            _logger.debug('data_list is: %s' % data)
+
+            if dicom_for_te_grabber:
+                alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
+                print alt_params_row
+                real_data.append(alt_params_row)
+
+            else:
+                params_row = image_summary.get_nii_info(item)
+                real_data.append(params_row)
+
+
+
+
+    # -------------------------> START TO BUILD THE LAYOUT <------------------------- #
+
+    head = html_header
+
+
+    # BUILD & WRITE THE STRUCTURAL PANEL
+
+    # If there are T1 pngs, make the BrainSprite viewer
+    if os.path.isdir(T1_path):
+        if os.listdir(T1_path):
+            body = make_brainsprite_viewer(T1_path, img_out_path)
+        else:
+            body = ''
+    else:
+        body = ''
+
+    pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
+
+    # BUILD THE LISTS NEEDED FOR SERIES PANEL
+    # This gets the lists of files from the 'img' subdir that matches each pattern. 
+    raw_rest_img_pattern = path.join(img_out_path, '*task-rest*.png')
+    raw_rest_img_list = glob.glob(raw_rest_img_pattern)
+    
+    raw_mid_img_pattern = path.join(img_out_path, 'task-MID*.png')
+    raw_mid_img_list = glob.glob(raw_mid_img_pattern)            
+
+    raw_nback_img_pattern = path.join(img_out_path, 'task-nback*.png')
+    raw_nback_img_list = glob.glob(raw_nback_img_pattern)
+
+    raw_sst_img_pattern = path.join(img_out_path, 'task-SST*.png')
+    raw_sst_img_list = glob.glob(raw_sst_img_pattern)
+
+    # This copies the lists just made but excludes any file that has '_' in its file name.
+    # That's to get rid of things like task-restrun-01_x-65.png and just leave task-restrun-01.png,
+    raw_rest_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_rest_img_list if '_' not in path.basename(img)])
+    raw_mid_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_mid_img_list if '_' not in path.basename(img)])
+    raw_nback_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_nback_img_list if '_' not in path.basename(img)])
+    raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
+
+    # This uses the pngs list and tries to get the sbref files.
+    sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('rest' in img)])  
+    sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('MID' in img)])
+    sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('nback' in img)])
+    sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('SST' in img)])
+
+    # We are skipping all ica stuff for now -- KJS 9/20/18
+    if args.ica:
+
+        rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])
+        mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img)])
+        nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img)])
+        sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
+
+        rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img)])
+        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
+        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img)]) 
+        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
+    else:
+        rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img) and ('ica' not in img)])
+        mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img) and ('ica' not in img)])
+        nback_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('nback' in img) and ('ica' not in img)])
+        sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img) and ('ica' not in img)])
+
+        rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img) and ('ica' not in img)])
+        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)]) 
+        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img) and ('ica' not in img)]) 
+        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)]) 
+
+
+    # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
+    print '\nAssembling series images to build panel...'
+
+    # Combines all of the lists from above. 
+    # Currently, since not using ica, only  sb_ref_<task>_paths and raw_<task>_paths have anything in them.
+    rest_image_paths = [rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths]
+    mid_image_paths = [mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths]
+    nback_image_paths = [nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths]
+    sst_image_paths = [sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths]
+
+    # Insert placeholder uses regular expressions and searches for images that match what is expected. Sort of.
+    rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths = insert_placeholders(rest_image_paths)
+    mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths = insert_placeholders(mid_image_paths, fmri_type='MID')
+    nback_dvars, nback_dvars_postreg, nback_in_t1_gifs, t1_in_nback_gifs, sb_ref_nback_paths, raw_nback_paths = insert_placeholders(nback_image_paths, fmri_type='nback')
+    sst_dvars, sst_dvars_postreg, sst_in_t1_gifs, t1_in_sst_gifs, sb_ref_sst_paths, raw_sst_paths = insert_placeholders(sst_image_paths, fmri_type='SST')
+
+    num_rest_dvars = len(rest_dvars)
+    num_mid_dvars = len(mid_dvars)
+    num_nback_dvars = len(nback_dvars)
+    num_sst_dvars = len(sst_dvars)
+
+    # APPEND NEW SERIES PANEL SECTIONS
+    series_rows = []
+    newer_body = body + series_panel_header
+    for i in range(0, num_rest_dvars):
+        if rest_dvars:
+            series_rows.append(rest_dvars.pop(0))
+        if rest_dvars_postreg:
+            series_rows.append(rest_dvars_postreg.pop(0))
+        if rest_in_t1_gifs:
+            series_rows.append(rest_in_t1_gifs.pop(0))
+        if t1_in_rest_gifs:
+            series_rows.append(t1_in_rest_gifs.pop(0))
+        if sb_ref_rest_paths:
+            series_rows.append(sb_ref_rest_paths.pop(0))
+        if raw_rest_paths:
+            series_rows.append(raw_rest_paths.pop(0))
+
+        series_panel = write_series_panel_row(series_rows[:6])
+
+        if series_panel:
+            newer_body += series_panel
+        _logger.debug('\nrest_rows were: %s' % series_rows)
+
+        series_rows = []
+
+    for i in range(0, num_mid_dvars):
+        if mid_dvars:
+            series_rows.append(mid_dvars.pop(0))
+        if mid_dvars_postreg:
+            series_rows.append(mid_dvars_postreg.pop(0))
+        if mid_in_t1_gifs:
+            series_rows.append(mid_in_t1_gifs.pop(0))
+        if t1_in_mid_gifs:
+            series_rows.append(t1_in_mid_gifs.pop(0))
+        if sb_ref_mid_paths:
+            series_rows.append(sb_ref_mid_paths.pop(0))
+        if raw_mid_paths:
+            series_rows.append(raw_mid_paths.pop(0))
+
+        series_panel = write_series_panel_row(series_rows[:6])
+
+        if series_panel:
+            newer_body += series_panel
+        _logger.debug('\mid_rows were: %s' % series_rows)
+        series_rows = []
+        
+    for i in range(0, num_nback_dvars):
+        if nback_dvars:
+            series_rows.append(nback_dvars.pop(0))
+        if nback_dvars_postreg:
+            series_rows.append(nback_dvars_postreg.pop(0))
+        if nback_in_t1_gifs:
+            series_rows.append(nback_in_t1_gifs.pop(0))
+        if t1_in_nback_gifs:
+            series_rows.append(t1_in_nback_gifs.pop(0))
+        if sb_ref_nback_paths:
+            series_rows.append(sb_ref_nback_paths.pop(0))
+        if raw_nback_paths:
+            series_rows.append(raw_nback_paths.pop(0))
+
+        series_panel = write_series_panel_row(series_rows[:6])
+
+        if series_panel:
+            newer_body += series_panel
+        _logger.debug('\nback_rows were: %s' % series_rows)
+        series_rows = []
+
+    for i in range(0, num_sst_dvars):
+        if sst_dvars:
+            series_rows.append(sst_dvars.pop(0))
+        if sst_dvars_postreg:
+            series_rows.append(sst_dvars_postreg.pop(0))
+        if sst_in_t1_gifs:
+            series_rows.append(sst_in_t1_gifs.pop(0))
+        if t1_in_sst_gifs:
+            series_rows.append(t1_in_sst_gifs.pop(0))
+        if sb_ref_sst_paths:
+            series_rows.append(sb_ref_sst_paths.pop(0))
+        if raw_sst_paths:
+            series_rows.append(raw_sst_paths.pop(0))
+
+        series_panel = write_series_panel_row(series_rows[:6])
+
+        if series_panel:
+            newer_body += series_panel
+        _logger.debug('\sst_rows were: %s' % series_rows)
+        series_rows = []
+
+
+    # COMPLETE EPI PANEls
+
+    newer_body += series_panel_footer
+
+    _logger.debug('newer_body is : %s' % newer_body)
+
+
+    # FILL-IN THE CODE / VERSION INFO
+    new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s' % (subj_id))
+
+    new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
+
+    # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
+
+    html_doc = new_html_header + newer_body + write_dvars_panel()
+
+    html_doc += html_footer
+
+    write_html(html_doc, summary_path, title='executive_summary_%s.html' % (subj_id))
+
+    # -------------------------> END LAYOUT <------------------------- #
+
+    # -------------------------> PREPARE QC PACKET <------------------------- #
+    move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
+                'sub_code_folder'  : subject_code_folder,
+                'img_in_path'      : summary_path}
+
+    image_summary.submit_command(move_cmd)
+
+    version_str = '_summary_v' + VERSION
+
+    qc_folder_out = path.join(user_out_path, version_str, subj_id)
+
+    print '\nFind your images here: \n\t%s' % qc_folder_out
+
+    if not path.exists(qc_folder_out):
+        print '\ncopying to QC_folder\n\n'
+        shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
+
+    else:
+        print '\nPath already exists; cannot write.\n\tPath: %s.' % qc_folder_out
+        _logger.error('\nPath already exists; cannot write.\n\tPath: %s.' % qc_folder_out)
 
 if __name__ == '__main__':
 
