@@ -3,7 +3,7 @@
 # Note: This file was copied from FNL_preproc_wrapper.sh. 
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o p:n:i:v:e:h -l path:,name:,id:,visit:,ex-folder:,help -n 'executive_summary_prep.sh' -- $@`
+options=`getopt -o p:n:s:v:e:h -l parent_path:,study_name:,subject_id:,visit:,ex-folder:,help -n 'executive_summary_prep.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...] "
@@ -11,9 +11,9 @@ function display_help() {
     echo "           <path_to_data=>/HCP/[processed,sorted]/<study_name>/sub-<subject_id>/ses-<visit>/files/<ex_summary_folder>"
     echo " "
     echo "      Required:"
-    echo "      -p|--path               Path to data (i.e., parent of HCP) "
-    echo "      -n|--name               Study Name "
-    echo "      -i|--id                 Subject ID "
+    echo "      -p|--parent_path        Full path to data (i.e., parent of HCP) "
+    echo "      -n|--study_name         Study Name "
+    echo "      -s|--subject_id         Subject ID "
     echo "      -v|--visit              Visit (aka session) "
     echo "      -e|--ex-folder          Executive Summary Folder "
     echo "                                example: summary_DCANBOLDProc_v4.0.0 "
@@ -28,15 +28,15 @@ debug=0
 # extract options and their arguments into variables.
 while true ; do
     case "$1" in
-        -p|--path)
+        -p|--parent_path)
             path_to_data="$2"
             shift 2
             ;;
-        -n|--name)
+        -n|--study_name)
             study_name="$2"
             shift 2
             ;;
-        -i|--id)
+        -s|--subject_id)
             subject="$2"
             shift 2
             ;;
@@ -60,9 +60,9 @@ done
 # Use command line args to setup paths
 ProcessedRoot="${path_to_data}/HCP/processed/"
 UnprocessedRoot="${path_to_data}/HCP/sorted/"
-PathToFiles="${study_name}/sub-${subject}/ses-${visit}/files/"
-ProcessedFiles="${ProcessedRoot}/${PathToFiles}"
-UnprocessedFiles="${UnprocessedRoot}/${PathToFiles}"
+PathToFiles="${study_name}/sub-${subject}/ses-${visit}"
+ProcessedFiles="${ProcessedRoot}/${PathToFiles}/files/"
+UnprocessedFiles="${UnprocessedRoot}/${PathToFiles}/func/"
 
 echo "COMMAND LINE ARGUMENTS"
 echo path_to_data=${path_to_data}
@@ -202,12 +202,12 @@ if [[ ! -e ${t2} ]] ; then
 fi
 
 #make t1 2mm isovoxel brain
-echo flirt uses ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain KJS...
+echo flirt uses ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain 
 flirt -in ${t1_brain} -ref ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain -applyisoxfm 2 -out ${t1_2_brain}
 if [[ -e ${t1_2_brain} ]] ; then
-   echo success: result of flirt is in ${t1_2_brain} ...KJS.
+   echo success: result of flirt is in ${t1_2_brain} 
 else
-   echo bummer: ${t1_2_brain} does not exist ...KJS.
+   echo failed: ${t1_2_brain} does not exist 
 fi
 
 #create summary images 
@@ -223,6 +223,7 @@ do
         echo "skipping t2 image"
     else
         create_image_from_template "${ex_sum_Dir}/${image_names[$i]}.png" $scenenum
+        echo create_image_from_template "${ex_sum_Dir}/${image_names[$i]}.png" $scenenum
     fi
 done
 
