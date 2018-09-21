@@ -665,22 +665,20 @@ def write_series_panel_row(list_of_img_paths):
     :return: one row of an html table, <tr> to </tr> with epi or task images for a given series
     """
 
-    series_type_re = r'(rest\d+|SST\d+|MID\d+|nback\d+)'
+    series_type_re = r'(task-rest\d+|task-SST\d+|task-MID\d+|task-nback\d+)'
     compiled_series_type = re.compile(series_type_re)
 
     for path in list_of_img_paths:
         print path
-        series_type = compiled_series_type.search(path)
-        if series_type is not None:
-            series_type = series_type.group()
+        series_type_match = compiled_series_type.search(path)
+        if series_type_match is None:
+            print 'Writing series panel but series type is unknown; program exiting...'
+            _logger.error('Writing series panel but series type is unknown; program exiting...')
+            series_type = "Unknown"
+        else:
+            series_type = series_type_match.group()
             break
 
-    if series_type is None:
-        print 'Writing series panel but series type is unknown; program exiting...'
-        _logger.error('Writing series panel but series type is unknown; program exiting...')
-        sys.exit()
-
-    series_type = "Unknown"
     print "Making series panel for " + series_type
 
     series_panel_row = """
