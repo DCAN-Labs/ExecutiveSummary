@@ -3,20 +3,20 @@
 # Note: This file was copied from FNL_preproc_wrapper.sh. 
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o p:n:s:v:e:h -l parent_path:,study_name:,subject_id:,visit:,ex-folder:,help -n 'executive_summary_prep.sh' -- $@`
+options=`getopt -o u:d:s:v:e:h -l unproc_path:,deriv_path:,subject_id:,visit:,ex-folder:,help -n 'executive_summary_prep.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...] "
-    echo "      Assumes BIDS file structure, as follows:"
-    echo "           <path_to_data=>/HCP/[processed,sorted]/<study_name>/sub-<subject_id>/ses-<visit>/files/<ex_summary_folder>"
+    echo "      Assumes BIDS & DCAN file structure, as follows:"
+    echo "           <unproc_path>/sub-<subject_id>/ses-<visit>/func"
+    echo "           <deriv_path>/sub-<subject_id>/ses-<visit>/files/<ex_summary_folder>"
     echo " "
     echo "      Required:"
-    echo "      -p|--parent_path        Full path to data (i.e., parent of HCP) "
-    echo "      -n|--study_name         Study Name "
-    echo "      -s|--subject_id         Subject ID "
-    echo "      -v|--visit              Visit (aka session) "
-    echo "      -e|--ex-folder          Executive Summary Folder "
-    echo "                                example: summary_DCANBOLDProc_v4.0.0 "
+    echo "      -u|--unproc_path        Path to unprocessed data set, ending at parent of sub-<subject_id> "
+    echo "      -d|--deriv_path         Path to derivatives files, ending at parent of sub-<subject_id> "
+    echo "      -s|--subject_id         Subject ID without sub- prefix"
+    echo "      -v|--visit              Visit (aka session) ID without ses- prefix"
+    echo "      -e|--ex-folder          Executive Summary Folder, for example: summary_DCANBOLDProc_v4.0.0 "
     echo " "
     echo "      Optional:"
     echo "      -h|--help        Display this message"
@@ -28,12 +28,12 @@ debug=0
 # extract options and their arguments into variables.
 while true ; do
     case "$1" in
-        -p|--parent_path)
-            path_to_data="$2"
+        -u|--unproc_path)
+            path_to_unproc="$2"
             shift 2
             ;;
-        -n|--study_name)
-            study_name="$2"
+        -d|--deriv_path)
+            path_to_deriv="$2"
             shift 2
             ;;
         -s|--subject_id)
@@ -58,15 +58,13 @@ done
 # We should check that the required args are there!
 
 # Use command line args to setup paths
-ProcessedRoot="${path_to_data}/HCP/processed/"
-UnprocessedRoot="${path_to_data}/HCP/sorted/"
-PathToFiles="${study_name}/sub-${subject}/ses-${visit}"
-ProcessedFiles="${ProcessedRoot}/${PathToFiles}/files/"
-UnprocessedFiles="${UnprocessedRoot}/${PathToFiles}/func/"
+sub_ses_path="/sub-${subject}/ses-${visit}"
+ProcessedFiles="${path_to_deriv}/${sub_ses_path}/files/"
+UnprocessedFiles="${path_to_unproc}/${sub_ses_path}/func/"
 
 echo "COMMAND LINE ARGUMENTS"
-echo path_to_data=${path_to_data}
-echo study_name=${study_name}
+echo path_to_unproc=${path_to_unproc}
+echo path_to_deriv=${path_to_deriv}
 echo subject_id=${subject}
 echo visit=${visit}
 echo ex_summary_folder=${ex_summary_folder}

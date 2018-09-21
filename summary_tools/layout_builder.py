@@ -2,10 +2,10 @@
 
 """
 Call this program with:
-    -p full path to the parent of the pipeline directory (e.g., parent of HCP)
-    -n name of the study
-    -s subject id
-    -vi visit (aka session id)
+    -u full path to the root of the directory containing unprocessed files (root = parent of sub-<subject_id>)
+    -p full path to the root of the directory containing derivatives (root = parent of sub-<subject_id>)
+    -s subject - id without sub- prefix
+    -vi visit (aka session id) - id without ses- prefix
     -e executive summary directory (e.g., summary_DCANBOLDProc_v4.0.0)
     -o output directory
 
@@ -27,11 +27,11 @@ from helpers import shenanigans
 
 PROG = 'Layout Builder'
 VERSION = '1.5.2'
-LAST_MOD = '9-20-18'
+LAST_MOD = '9-21-18'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
-Use -p <path_to_pipeline_parent> -n <study> -s <subject> -vi <visit> -e <sum_dir> -o <output_dir> to launch and build a summary page.
+Use -u <unproc_root> -d <deriv_root> -s <subject> -vi <visit> -e <sum_dir> -o <output_dir> to launch and build a summary page.
 Note: -o is optional - user's path will be used if no -o is specified.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
@@ -41,11 +41,11 @@ def get_parser():
 
     parser = argparse.ArgumentParser(description=program_desc, prog=PROG, version=VERSION)
 
-    parser.add_argument('-p', '--parent_path', dest='parent_path', action='store',
-                        help='Expects the full path to the parent of the pipeline directory.')
+    parser.add_argument('-u', '--unproc_root', dest='unproc_root', action='store',
+                        help='Expects the full path to the parent of the sub-<subject> directory of unprocessed files.')
 
-    parser.add_argument('-n', '--study_name', dest='study_name', action='store',
-                        help='Expects the name of the study.')
+    parser.add_argument('-d', '--deriv_root', dest='proc_root', action='store',
+                        help='Expects the full path to the parent of the sub-<subject> directory of derivative files.')
 
     parser.add_argument('-s', '--subject_id', dest='subject_id', action='store',
                         help='Expects a subject id without sub- prefix.')
@@ -974,16 +974,16 @@ def get_args():
 
     # Make sure all required arguments were specified. If any is missing, 
     # keep checking so user knows *all* of what is missing.
-    if not args.parent_path:
-        print '\nRequired path to the parent of the pipeline was not specified.\n'
-        _logger.error('\nRequired path to the parent of the pipeline was not specified.\n')
+    if not args.unproc_root:
+        print '\nRequired path to the root of unprocessed files was not specified.\n'
+        _logger.error('\nRequired path to the root of unprocessed files was not specified.\n')
         passing = 0
 
-    if not args.study_name:
-        print '\nRequired study name was not specified.\n'
-        _logger.error('\nRequired study name was not specified.\n')
+    if not args.proc_root:
+        print '\nRequired path to the root of derivative files was not specified.\n'
+        _logger.error('\nRequired path to the root of derivative files was not specified.\n')
         passing = 0
-        
+
     if not args.subject_id:
         print '\nRequired subject id was not specified.\n'
         _logger.error('\nRequired subject id was not specified.\n')
@@ -1008,8 +1008,8 @@ def get_args():
         sys.exit()
 
 def write_summ_file(out_path, args):
-    root = args.parent_path
-    study = args.study_name
+    unproc_root = args.unproc_root
+    proc_root = args.proc_root
     sub_id = args.subject_id
     ses_id = args.session
     ex_sum = args.summ_dir
@@ -1022,14 +1022,13 @@ def write_summ_file(out_path, args):
 
             info = '''
                     Executive Summary ran on %s
-                    Using pipeline: %s 
-                    Data Path provided: \n%s
-                    Study Name: %s
+                    Unprocessed Data Path provided: \n%s
+                    Derivative Files Path provided: \n%s
                     Subject Code: %s
                     Visit ID: %s
                     Executive summary subdir: %s
                     Args: \n%s
-                    ''' % (date, 'HCP', root, study, sub_id, ses_id, ex_sum, args)
+                    ''' % (date, unproc_root, proc_root, sub_id, ses_id, ex_sum, args)
 
             f.write(info)
             f.close()
@@ -1089,8 +1088,8 @@ def get_output_path(args):
 
 def get_paths(args):
 
-    root = args.parent_path
-    study = args.study_name
+    unproc_root = args.unproc_root
+    proc_root = args.proc_root
     sub_id = args.subject_id
     ses_id = args.session
     ex_sum = args.summ_dir
@@ -1104,11 +1103,11 @@ def get_paths(args):
     sub_dir = 'sub-' + sub_id
     ses_dir = 'ses-' + ses_id
 
-    bids_unproc_paths = ['HCP', 'sorted', study, sub_dir, ses_dir, 'func']
-    unprocessed_files = os.path.join(root, *bids_unproc_paths )
+    bids_unproc_paths = [sub_dir, ses_dir, 'func']
+    unprocessed_files = os.path.join(unproc_root, *bids_unproc_paths )
 
-    bids_proc_paths = ['HCP', 'processed', study, sub_dir, ses_dir, 'files']
-    processed_files = os.path.join(root, *bids_proc_paths )
+    bids_proc_paths = [sub_dir, ses_dir, 'files']
+    processed_files = os.path.join(proc_root, *bids_proc_paths )
 
     # Check that unprocessed data are available to us.
     if (bids_dir_exists(unprocessed_files)):
