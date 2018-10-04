@@ -7,7 +7,7 @@ Call this program with:
     -s subject - id without sub- prefix
     -vi visit (aka session id) - id without ses- prefix
     -e executive summary directory (e.g., summary_DCANBOLDProc_v4.0.0)
-    -o output directory
+    -o output directory (optional); if specified, must be a path to a non-existing dir.
 
 __author__ = 'Shannon Buckley', 2/20/16
 """
@@ -32,7 +32,7 @@ LAST_MOD = '9-21-18'
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
 Use -u <unproc_root> -d <deriv_root> -s <subject> -vi <visit> -e <sum_dir> -o <output_dir> to launch and build a summary page.
-Note: -o is optional - user's path will be used if no -o is specified.
+Note: -o is optional - if not specified, the directory of processed files will do.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
 
@@ -57,7 +57,7 @@ def get_parser():
                         help='Expects the name of the subdirectory used for the summary (e.g.: summary_DCANBOLDProc_v4.0.0)')
 
     parser.add_argument('-o', '--output_path', dest='output_path', action='store',
-                        help='Expects full path to a directory to which you can write, in order to copy final outputs there.')
+                        help='Expects full path to a non-existing directory; will copy final outputs there.')
 
     parser.add_argument('--ica', action='store_true')
 
@@ -590,7 +590,7 @@ html_footer = """
                  nbSlice: { 'Y':218 , 'Z':218 },
                  flagCoordinates: true,
                });
-           });           
+           });
        </script>
     </body>
 </html>
@@ -802,10 +802,10 @@ def natural_sort(l):
 
     :parameter: l: list of strings
     :return: same list of strings with natural sort
-    """ 
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
- 
+    """
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+
     return sorted(l, key = alphanum_key)
 
 
@@ -860,7 +860,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
     rest_nums = find_series_numbers(image_path_lists[5], rest_re)
 
     numbers_lists = [dvars_nums, postreg_dvars_nums, series_t1_nums, t1_series_nums, sbref_nums, rest_nums]
- 
+
     # Check if there are any gaps in image sequence that need to be filled by placeholders
     missing = []
     for x in xrange(0, len(numbers_lists)):
@@ -878,7 +878,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
 
         # Fill in gaps with placeholder images if necessary
         if missing:
-            
+
             last_missing = int(missing[-1]) + 1
 
             for x in xrange(int(missing[0]), last_missing):
@@ -970,7 +970,7 @@ def get_args():
     else:
         _logger.setLevel(logging.ERROR)
 
-    # Make sure all required arguments were specified. If any is missing, 
+    # Make sure all required arguments were specified. If any is missing,
     # keep checking so user knows *all* of what is missing.
     if not args.unproc_root:
         print '\nRequired path to the root of unprocessed files was not specified.\n'
@@ -986,12 +986,12 @@ def get_args():
         print '\nRequired subject id was not specified.\n'
         _logger.error('\nRequired subject id was not specified.\n')
         passing = 0
-        
+
     if not args.session:
         print '\nRequired session id was not specified.\n'
         _logger.error('\nRequired session id was not specified.\n')
         passing = 0
-        
+
     if not args.summ_dir:
         print '\nRequired executive summary directory was not specified.\n'
         _logger.error('\nRequired executive summary directory was not specified.\n')
@@ -1036,50 +1036,38 @@ def write_summ_file(out_path, args):
 
         # All good!
         return
-    
+
     except OSError:
         # Output path is not writable?
         print '\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path
         _logger.error('\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path)
         sys.exit()
-       
 
-def get_output_path(args):
-    # Output path is optional; if none is specified, use user's home directory.
-    if args.output_path:
 
-        out_path = os.path.join(args.output_path)
+def get_output_path(out_path):
 
-        # Does output path specify an existing directory?
-        if os.path.isdir(out_path):
-            print '\nFound output directory %s.' % out_path
-            _logger.info('\nFound output directory %s.' % out_path)
+    out_path = os.path.join(output_path)
 
-        else:
-
-            # Attempt to create path.
-            print '\n%s does not specify an existing directory; attempting to create...' %out_path
-            _logger.error('\n%s does not specify an existing directory; attempting to create...' %out_path)
-
-            try:
-                os.makedirs(out_path)
-
-            except OSError:
-                # Failed to make the path.
-                print '\nUnable to create path:\n\t%s\nPermissions?\n' % out_path
-                _logger.error('\nUnable to create path:\n\t%s\nPermissions?\n' % out_path)
-                print '\nCannot proceed without a writable path. Exiting....\n'
-                _logger.error('\nCannot proceed without a writable path. Exiting....\n')
-                sys.exit()
-                
+    # Does output path specify an existing directory?
+    if os.path.isdir(out_path):
+        _logger.info('\nFound output directory %s.' % out_path)
 
     else:
-        # Output path was not specified. Default is users' directory.
-        out_path = os.path.expanduser('~')
 
-        print '\nOptional output path was not specified. Using default directory for output.\n\tPath: %s' %out_path
-        _logger.info('\nOptional output path was not specified. Using default directory for output.\n\tPath: %s' %out_path)
+        # Attempt to create path.
+        print '\n%s does not specify an existing directory; attempting to create...' %out_path
+        _logger.info('\n%s does not specify an existing directory; attempting to create...' %out_path)
 
+        try:
+            os.makedirs(out_path)
+
+        except OSError:
+            # Failed to make the path.
+            print '\nUnable to create path:\n\t%s\nPermissions?\n' % out_path
+            _logger.error('\nUnable to create path:\n\t%s\nPermissions?\n' % out_path)
+            print '\nCannot proceed without a writable path. Exiting....\n'
+            _logger.error('\nCannot proceed without a writable path. Exiting....\n')
+            sys.exit()
 
     return out_path
 
@@ -1091,11 +1079,6 @@ def get_paths(args):
     sub_id = args.subject_id
     ses_id = args.session
     ex_sum = args.summ_dir
-
-    # Output path is optional, but we need a place to write, so make sure we can do that.
-    out_path = get_output_path(args)
-    # Now we know we have a directory for output; make sure we can write to it.
-    write_summ_file(out_path, args)
 
     # Currently, assume pipeline is HCP. (May need to specify in future.)
     sub_dir = 'sub-' + sub_id
@@ -1117,7 +1100,7 @@ def get_paths(args):
         _logger.error('\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files)
         sys.exit()
 
-               
+
     # The summary dir lives in the processed_files dir; it should already be there; if not, create it.
     summary_path = os.path.join(processed_files, ex_sum)
 
@@ -1134,27 +1117,51 @@ def get_paths(args):
             print '\nExiting....\n'
             sys.exit()
 
-    # Subdirs within summary directory:
+    # Subdirectories within the summary directory:
+
+    # There will need to be a subdirectory, called executivesummary, where the html (and eventually images) will live.
+    execsumm_subdir_name = 'executivesummary'
+    execsumm_path = os.path.join(summary_path, execsumm_subdir_name)
+
+    # Also, a subdirectory for the images the html will use. During processing, this lives in the outer summary
+    # folder. Later it will be moved into the executivesummary folder where the html lives. Sigh.
     img_path = os.path.join(summary_path, 'img')
-    sub_ses_path = os.path.join(summary_path, sub_id + '_' + ses_id)
 
     if os.path.exists(img_path):
         shutil.rmtree(img_path, ignore_errors=True)
 
-    if path.exists(sub_ses_path):
-        shutil.rmtree(sub_ses_path, ignore_errors=True)
+    if path.exists(execsumm_path):
+        shutil.rmtree(execsumm_path, ignore_errors=True)
 
     try:
         os.makedirs(img_path)
-        os.makedirs(sub_ses_path)
+        os.makedirs(execsumm_path)
 
     except OSError:
         print '\nCheck permissions to write to path:\n %s' % summary_path
-        _logger.error('cannot make img or pngs folder within path... permissions? \nPath: %s' % summary_path)
+        _logger.error('cannot make img or executivesummary folder within path... permissions? \nPath: %s' % summary_path)
         print '\nExiting....\n'
         sys.exit()
 
-    t1_path = os.path.join(summary_path, 'T1_pngs') 
+    # And a subdirectory for the T1_pngs. This one might or might not already exist.
+    t1_path = os.path.join(summary_path, 'T1_pngs')
+
+    # Output path is optional; if none is specified, use processed files - we know it exists and is writable.
+    if args.output_path:
+        out_path = get_output_path(args.output_path)
+    else:
+        out_path = processed_files
+        print '\nOptional output path not specified; using default path for output.\n\tPath: %s' %out_path
+        _logger.info('\nOptional output path not specified; using default path for output.\n\tPath: %s' %out_path)
+
+    # Later we will copy the executive summary subdir to the output path.
+    # Make sure there isn't one there already.
+    copy_path = os.path.join(out_path, execsumm_subdir_name)
+    if path.exists(copy_path):
+        shutil.rmtree(copy_path, ignore_errors=True)
+
+    # Now we know we have a writable directory for output.
+    write_summ_file(out_path, args)
 
     paths = {
             'unprocessed' : unprocessed_files,
@@ -1162,8 +1169,9 @@ def get_paths(args):
             'summary' : summary_path,
             't1' : t1_path,
             'img' : img_path,
-            'sub_ses' : sub_ses_path,
+            'execsumm' : execsumm_path,
             'output' : out_path,
+            'copy' : copy_path,
     }
 
     return paths
@@ -1212,14 +1220,15 @@ def main():
     summary_path = paths['summary']
     img_out_path = paths['img']
     T1_path = paths['t1']
-    subject_code_folder = paths['sub_ses']
+    executivesummary_path = paths['execsumm']
     user_out_path = paths['output']
+    copy_path = paths['copy']
 
-    # Copy gif files from the summary_path to the img_out_path. 
-    # If none are found, the prep program must be run. 
+    # Copy gif files from the summary_path to the img_out_path.
+    # If none are found, the prep program must be run.
     gifs = copy_gifs(summary_path, img_out_path)
-    
-    # Get a list of nifti files in the unprocessed path. 
+
+    # Get a list of nifti files in the unprocessed path.
     # The data variable will contain lists for 't1-data', 't2-data', and 'epi-data'.
     # (Would be nice to have more descriptive variables than data and data_path.)
     data = image_summary.get_list_of_data(data_path)
@@ -1254,7 +1263,7 @@ def main():
     all_sbref = glob.glob(task_sbref_pattern)
     for sbref in all_sbref:
         data['epi-data'].append(sbref)
-            
+
     # ------------------------- > SLICING UP IMAGES FOR EPI DATA LIST < ------------------------- #
 
     for list_entry in data['epi-data']:
@@ -1279,7 +1288,7 @@ def main():
 
             image_summary.slice_image_to_ortho_row(list_entry, path.join(img_out_path, '%s%s.png' % (modality,
                                                                                                      series)))
-                                                                                                             
+
     # ITERATE through data dictionary keys, sort the list (value), then iterate through each list for params
     for list_entry in data.values():
 
@@ -1328,12 +1337,12 @@ def main():
     pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
     # BUILD THE LISTS NEEDED FOR SERIES PANEL
-    # This gets the lists of files from the 'img' subdir that matches each pattern. 
+    # This gets the lists of files from the 'img' subdir that matches each pattern.
     raw_rest_img_pattern = path.join(img_out_path, '*task-rest*.png')
     raw_rest_img_list = glob.glob(raw_rest_img_pattern)
-    
+
     raw_mid_img_pattern = path.join(img_out_path, 'task-MID*.png')
-    raw_mid_img_list = glob.glob(raw_mid_img_pattern)            
+    raw_mid_img_list = glob.glob(raw_mid_img_pattern)
 
     raw_nback_img_pattern = path.join(img_out_path, 'task-nback*.png')
     raw_nback_img_list = glob.glob(raw_nback_img_pattern)
@@ -1349,7 +1358,7 @@ def main():
     raw_sst_paths = natural_sort([path.join('./img', path.basename(img)) for img in raw_sst_img_list if '_' not in path.basename(img)])
 
     # This uses the pngs list and tries to get the sbref files.
-    sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('rest' in img)])  
+    sb_ref_rest_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('rest' in img)])
     sb_ref_mid_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('MID' in img)])
     sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('nback' in img)])
     sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('SST' in img)])
@@ -1363,9 +1372,9 @@ def main():
         sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img)])
 
         rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img)])
-        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)]) 
-        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img)]) 
-        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)]) 
+        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img)])
+        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img)])
+        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img)])
     else:
         rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img) and ('ica' not in img)])
         mid_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('MID' in img) and ('ica' not in img)])
@@ -1373,15 +1382,15 @@ def main():
         sst_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('SST' in img) and ('ica' not in img)])
 
         rest_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('rest' in img) and ('ica' not in img)])
-        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)]) 
-        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img) and ('ica' not in img)]) 
-        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)]) 
+        mid_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('MID' in img) and ('ica' not in img)])
+        nback_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('nback' in img) and ('ica' not in img)])
+        sst_dvars_postreg = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' in img) and ('SST' in img) and ('ica' not in img)])
 
 
     # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
     print '\nAssembling series images to build panel...'
 
-    # Combines all of the lists from above. 
+    # Combines all of the lists from above.
     # Currently, since not using ica, only  sb_ref_<task>_paths and raw_<task>_paths have anything in them.
     rest_image_paths = [rest_dvars, rest_dvars_postreg, rest_in_t1_gifs, t1_in_rest_gifs, sb_ref_rest_paths, raw_rest_paths]
     mid_image_paths = [mid_dvars, mid_dvars_postreg, mid_in_t1_gifs, t1_in_mid_gifs, sb_ref_mid_paths, raw_mid_paths]
@@ -1444,7 +1453,7 @@ def main():
             newer_body += series_panel
         _logger.debug('\mid_rows were: %s' % series_rows)
         series_rows = []
-        
+
     for i in range(0, num_nback_dvars):
         if nback_dvars:
             series_rows.append(nback_dvars.pop(0))
@@ -1511,25 +1520,22 @@ def main():
     # -------------------------> END LAYOUT <------------------------- #
 
     # -------------------------> PREPARE QC PACKET <------------------------- #
-    move_cmd = "mv %(img_in_path)s/*.html %(sub_code_folder)s; mv %(img_in_path)s/img %(sub_code_folder)s" % {
-                'sub_code_folder'  : subject_code_folder,
-                'img_in_path'      : summary_path}
+    # Move the img subdirectory into the directory where the html was created.
+    move_cmd = "mv %(img_in_path)s/*.html %(executivesummary_path)s; mv %(img_in_path)s/img %(executivesummary_path)s" % {
+                'executivesummary_path'  : executivesummary_path,
+                'img_in_path'            : summary_path}
 
     image_summary.submit_command(move_cmd)
 
-    version_str = '_summary_v' + VERSION
+    # Copy the whole package to the output directory.
+    print '\nFind your images here: \n\t%s' % copy_path
 
-    qc_folder_out = path.join(user_out_path, version_str, subj_id)
+    if path.exists(copy_path):
+        shutil.rmtree(copy_path, ignore_errors=True)
 
-    print '\nFind your images here: \n\t%s' % qc_folder_out
+    print '\ncopying to %s\n\n' % copy_path
+    shutil.copytree(executivesummary_path, copy_path)
 
-    if not path.exists(qc_folder_out):
-        print '\ncopying to QC_folder\n\n'
-        shutil.copytree(subject_code_folder, qc_folder_out)  # only works if the des_dir doesn't already exist
-
-    else:
-        print '\nPath already exists; cannot write.\n\tPath: %s.' % qc_folder_out
-        _logger.error('\nPath already exists; cannot write.\n\tPath: %s.' % qc_folder_out)
 
 if __name__ == '__main__':
 
