@@ -1,6 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
 
-# Note: This file was copied from FNL_preproc_wrapper.sh. 
+# Note: This file was copied from FNL_preproc_wrapper.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
 options=`getopt -o u:d:s:v:e:o:h:x -l unproc_root:,deriv_root:,subject_id:,visit:,ex_summ_dir:,output_path:,skip_sprite:,help: -n 'executive_summary_prep.sh' -- $@`
@@ -93,7 +93,7 @@ source `dirname $0`"/setup_env.sh"
 # Use the command line args to setup the requied paths
 sub_ses_path="sub-${subject_id}/ses-${visit}"
 ProcessedFiles="${deriv_root}/${sub_ses_path}/files"
-if [ -d ${ProcessedFiles} ]; then 
+if [ -d ${ProcessedFiles} ]; then
     echo ProcessedFiles=${ProcessedFiles}
 else
     echo "Directory of derivatives does not exist: ${ProcessedFiles}" >&2
@@ -103,7 +103,7 @@ else
 fi
 
 UnprocessedFiles="${unproc_root}/${sub_ses_path}/func"
-if [ -d ${UnprocessedFiles} ]; then 
+if [ -d ${UnprocessedFiles} ]; then
     echo UnprocessedFiles=${UnprocessedFiles}
 else
     echo "Directory of unprocessed data does not exist: ${UnprocessedFiles}" >&2
@@ -114,7 +114,7 @@ fi
 
 # The summary subdirectory must alread exist, since DCANBOLDProc must already have been run.
 ExSummPath="${ProcessedFiles}/${ex_summ_dir}/"
-if [ -d ${ExSummPath} ]; then 
+if [ -d ${ExSummPath} ]; then
     echo Path to summary : ${ExSummPath}
 else
     echo "Summary directory does not exist: ${ExSummPath}" >&2
@@ -160,7 +160,7 @@ fi
     build_txw_scene_from_template_169(){
         if [ "$6" -eq 1 ] ; then
         	temp_scene=${ProcessedFiles}/t1_169_scene.scene
-            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene 
+            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene
 
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
@@ -176,7 +176,7 @@ fi
 
         elif [ "$6" -eq 2 ] ; then
 			temp_scene=${ProcessedFiles}/t2_169_scene.scene
-            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene 
+            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene
 
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
@@ -211,9 +211,9 @@ fi
             elif [ "$1" -eq 2 ]; then
                 scene_file=${ProcessedFiles}/t2_169_scene.scene
 			    out=${ExSummPath}/T2_pngs/P_T2_frame_${i}.png
-            fi  			
+            fi
             echo $i
-   			echo ${wb_command} -show-scene ${scene_file} ${i} ${out} 900 800 
+   			echo ${wb_command} -show-scene ${scene_file} ${i} ${out} 900 800
             ${wb_command} -show-scene ${scene_file} ${i} ${out} 900 800
 
         done
@@ -236,17 +236,19 @@ vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
 echo
 echo "START: executive summary"
 
-#Should we use $FSLDIR/data/standard instead of ./templates??
+# Should we use $FSLDIR/data/standard instead of ./templates?? -- KJS
 atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
-t1="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
+t1_mask="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
 else
-    slices ${t1} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
-    slices ${atlas} ${t1} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
+    slices ${t1_mask} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
+    slices ${atlas} ${t1_mask} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
 fi
 
+# From here on, use the whole T1 file rather than the mask (used above).
+t1="${OutputFolder}/MNINonLinear/T1w_restore.nii.gz"
 t2="${ProcessedFiles}/MNINonLinear/T2w_restore.nii.gz"
 has_t2=1
 if [[ ! -e ${t2} ]] ; then
@@ -265,12 +267,12 @@ t1_2_brain="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.2.nii.gz"
 #make t1 2mm isovoxel brain
 flirt -in ${t1_brain} -ref ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain -applyisoxfm 2 -out ${t1_2_brain}
 if [[ -e ${t1_2_brain} ]] ; then
-   echo result of flirt is in ${t1_2_brain} 
+   echo result of flirt is in ${t1_2_brain}
 else
-   echo failed: ${t1_2_brain} does not exist 
+   echo failed: ${t1_2_brain} does not exist
 fi
 
-#create summary images 
+#create summary images
 build_scene_from_template $t2 $t1 $rp $lp $rw $lw
 declare -a image_names=('T1-Axial-InferiorTemporal-Cerebellum' 'T2-Axial-InferiorTemporal-Cerebellum' 'T1-Axial-BasalGangila-Putamen' 'T2-Axial-BasalGangila-Putamen' 'T1-Axial-SuperiorFrontal' 'T2-Axial-SuperiorFrontal' 'T1-Coronal-PosteriorParietal-Lingual' 'T2-Coronal-PosteriorParietal-Lingual' 'T1-Coronal-Caudate-Amygdala' 'T2-Coronal-Caudate-Amygdala' 'T1-Coronal-OrbitoFrontal' 'T2-Coronal-OrbitoFrontal' 'T1-Sagittal-Insula-FrontoTemporal' 'T2-Sagittal-Insula-FrontoTemporal' 'T1-Sagittal-CorpusCallosum' 'T2-Sagittal-CorpusCallosum' 'T1-Sagittal-Insula-Temporal-HippocampalSulcus' 'T2-Sagittal-Insula-Temporal-HippocampalSulcus')
 ((num_wb_scenes=${#image_names[@]}-1))
@@ -321,15 +323,25 @@ for TASK in `ls -d ${ProcessedFiles}/*task-*` ; do
 done
 
 echo "DONE: executive summary prep"
-echo 
-echo "Entering layout of html file"
+echo
+echo "Entering layout of html file."
+echo
+echo "Parameters to layout_builder.py: "
+echo "--unproc_root=" ${unproc_root}
+echo "--deriv_root=" ${deriv_root}
+echo "--subject_id=" ${subject_id}
+echo "--visit=" ${visit}
+echo "--ex_summ_dir=" ${ex_summ_dir}
+echo "--output_path=" ${output_path}
+echo
+
 if [[ -z ${output_path} ]] ; then
     `dirname $0`/layout_builder.py \
           --unproc_root="${unproc_root}" \
           --deriv_root="${deriv_root}" \
           --subject_id="${subject_id}" \
           --visit="${visit}" \
-          --ex_summ_dir="${ex_summ_dir}" 
+          --ex_summ_dir="${ex_summ_dir}"
 else
     `dirname $0`/layout_builder.py \
           --unproc_root="${unproc_root}" \
