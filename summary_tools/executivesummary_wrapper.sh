@@ -147,15 +147,12 @@ fi
         declare -a templates=('T2_IMG' 'T1_IMG' 'RPIAL' 'LPIAL' 'RWHITE' 'LWHITE')
         declare -a paths=($1 $2 $3 $4 $5 $6)
 
-        echo ${KJS} Building scene from image_template_temp.scene.
-
         for i in `seq 0 5`;
         do
             #replace templated pathnames and filenames in scene
             sed -i "s!${templates[$i]}_PATH!${paths[$i]}!g" $temp_scene
             filename=$(basename "${paths[$i]}")
             sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
-            echo ${KJS}      temp_scene: ${temp_scene}
         done
     }
 
@@ -167,8 +164,6 @@ fi
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
 
-            echo ${KJS} Building scene from t1_169_scene.scene.
-
             for i in `seq 0 4`; do
             	#replace templated pathnames and filenames in scene
                 echo sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" $temp_scene
@@ -178,16 +173,12 @@ fi
                 sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
            	done
 
-            echo ${KJS}      temp_scene: ${temp_scene}
-
         elif [ "$6" -eq 2 ] ; then
 			temp_scene=${ProcessedFiles}/t2_169_scene.scene
             cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene
 
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
-
-            echo ${KJS} Building scene from t2_169_scene.scene.
 
             for i in `seq 0 4`; do
             	#replace templated pathnames and filenames in scene
@@ -196,7 +187,6 @@ fi
             	sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
         	done
 
-            echo ${KJS}      temp_scene: ${temp_scene}
 	fi
     }
 
@@ -212,8 +202,6 @@ fi
     }
 
     create_image_from_template_169() {
-
-        echo ${KJS} Creating 169 frames using t${1}_169_scene.scene
 
  		total_frames=169
 		for ((i=1 ; i<=${total_frames} ;  i++)); do
@@ -254,7 +242,6 @@ if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
 else
-    echo ${KJS} Creating atlas-in-T1 and T1-in-atlas using ${atlas} and ${t1_mask}.
     slices ${t1_mask} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
     slices ${atlas} ${t1_mask} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
 fi
