@@ -21,7 +21,7 @@ elif [[ `hostname` == "exa"* ]]; then
     PMU_EXTRACT_DIR="/home/exacloud/lustre1/fnl_lab/code/internal/utilities/PMU_DICOM_extract"
 else
     echo "ERROR: SERVER HOST NOT RECOGNIZED. CHECK set_env.sh"
-    exit
+    #exit
 fi    
 
 path_to_movment_regressor_check=${UTILITIES_DIR}/movmnt_regressor_check/movmnt_regressor_check.py

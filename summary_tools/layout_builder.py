@@ -1084,7 +1084,7 @@ def get_paths(args):
     sub_dir = 'sub-' + sub_id
     ses_dir = 'ses-' + ses_id
 
-    bids_unproc_paths = [sub_dir, ses_dir, 'func']
+    bids_unproc_paths = [ses_dir, 'func']
     unprocessed_files = os.path.join(unproc_root, *bids_unproc_paths )
 
     bids_proc_paths = [sub_dir, ses_dir, 'files']

@@ -91,8 +91,7 @@ source `dirname $0`"/setup_env.sh"
 #matlab_template=`dirname $0`"/template_FNL_preproc_Matlab.m"
 
 # Use the command line args to setup the requied paths
-sub_ses_path="sub-${subject_id}/ses-${visit}"
-ProcessedFiles="${deriv_root}/${sub_ses_path}/files"
+ProcessedFiles="${deriv_root}/sub-${subject_id}/ses-${visit}/files"
 if [ -d ${ProcessedFiles} ]; then 
     echo ProcessedFiles=${ProcessedFiles}
 else
@@ -102,7 +101,7 @@ else
     exit
 fi
 
-UnprocessedFiles="${unproc_root}/${sub_ses_path}/func"
+UnprocessedFiles="${unproc_root}/ses-${visit}/func"
 if [ -d ${UnprocessedFiles} ]; then 
     echo UnprocessedFiles=${UnprocessedFiles}
 else
