@@ -1397,7 +1397,6 @@ def main():
     sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('nback' in img)])
     sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('SST' in img)])
 
-    # We are skipping all ica stuff for now -- KJS 9/20/18
     if args.ica:
 
         rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])
