@@ -97,7 +97,7 @@ def get_paths(subject_code_path, use_ica=False):
         else:
 
             path_pattern = path.join(sub_path, '*summary*')
-
+            
             try:
                 img_in_path = glob.glob(path_pattern)[0]
             except IndexError:
@@ -143,7 +143,7 @@ def get_subject_info(path_to_nii_file):
                 match = re.sub('_', '', match)
             if match == 'Scout':  # Special case for sbref files
                 dirname = path.dirname(path_to_nii_file)
-                epi_type = path.basename(dirname).split('/')[-1]
+                epi_type = path.basename(dirname).split('/')[-1] 
                 match = epi_type + '_sbref'
             series_info.append(match)
         else:
@@ -209,11 +209,11 @@ def get_nii_info(path_to_nii, info=None):
     cmd += '`mri_info %s | grep TR | awk %s`,' % (path_to_nii, "'{print $2}'")  # TR
     cmd += '`fslval %s dim4`,' % path_to_nii  # nframes
     cmd += '`mri_info %s | grep TI | awk %s`' % (path_to_nii, "'{print $8}'")  # TI via mri_info
-
+    
     output = submit_command(cmd)
 
     output = output.strip('\n').split(',')
-
+    
     modality = output[0]
 
     floats_list = []
@@ -222,7 +222,7 @@ def get_nii_info(path_to_nii, info=None):
 
         try:
             value = format(float(value), '.2f')
-
+            
         # If there is non-number input, format or remove it
         except ValueError:
             if value.isdigit():
@@ -489,19 +489,16 @@ def make_mosaic(png_path, mosaic_path):
 
     """
     Takes path to .png anatomical slices, creates a mosaic that can be
-    used in a BrainSprite viewer, and saves to a specified filename.
+    used in a BrainSprite viewer, and saves to a specified directory.
 
     :return: None
     """
-
-    # Get the cwd so we can get back.
-    cwd = os.getcwd()
-
+    
     os.chdir(png_path)
 
-    def natural_sort(l):
-	    convert = lambda text: int(text) if text.isdigit() else text.lower()
-	    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    def natural_sort(l): 
+	    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+	    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
 	    return sorted(l, key = alphanum_key)
 
     files = os.listdir(png_path)
@@ -523,12 +520,10 @@ def make_mosaic(png_path, mosaic_path):
         w, h = img.size
         result.paste(img, (x, y, x + w, y + h))
 
-    # Back to original working dir.
-    os.chdir(cwd)
+    os.chdir(mosaic_path)
 
     quality_val = 95
-    dest = os.path.join(mosaic_path)
-    result.save(dest, 'JPEG', quality=quality_val)
+    result.save('mosaic.jpg', 'JPEG', quality=quality_val)
 
 
 def main():

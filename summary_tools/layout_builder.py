@@ -5,7 +5,6 @@ Call this program with:
     -u full path to the root of the directory containing unprocessed files (root = parent of sub-<subject_id>)
     -p full path to the root of the directory containing derivatives (root = parent of sub-<subject_id>)
     -s subject - id without sub- prefix
-    -vi visit (aka session id) - id without ses- prefix
     -e executive summary directory (e.g., summary_DCANBOLDProc_v4.0.0)
     -o output directory (optional); if specified, must be a path to a non-existing dir.
 
@@ -31,7 +30,7 @@ LAST_MOD = '9-21-18'
 
 program_desc = """%(prog)s v%(ver)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
-Use -u <unproc_root> -d <deriv_root> -s <subject> -vi <visit> -e <sum_dir> -o <output_dir> to launch and build a summary page.
+Use -u <unproc_root> -d <deriv_root> -s <subject> -e <sum_dir> -o <output_dir> to launch and build a summary page.
 Note: -o is optional - if not specified, the directory of processed files will do.
 Has embedded css & jquery elements.
 """ % {'prog': PROG, 'ver': VERSION}
@@ -49,9 +48,6 @@ def get_parser():
 
     parser.add_argument('-s', '--subject_id', dest='subject_id', action='store',
                         help='Expects a subject id without sub- prefix.')
-
-    parser.add_argument('-vi', '--visit', dest='session', action='store',
-                        help='Expects a visit (aka session) id without ses- prefix.')
 
     parser.add_argument('-e', '--ex_summ_dir', dest='summ_dir', action='store',
                         help='Expects the name of the subdirectory used for the summary (e.g.: summary_DCANBOLDProc_v4.0.0)')
@@ -585,18 +581,8 @@ html_footer = """
         <script>
            $( window ).load(function() {
                var brain = brainsprite({
-                 canvas: "viewer1",
-                 sprite: "spriteImg1",
-                 nbSlice: { 'Y':218 , 'Z':218 },
-                 flagCoordinates: true,
-               });
-           });
-       </script>
-       <script>
-           $( window ).load(function() {
-               var brain = brainsprite({
-                 canvas: "viewer2",
-                 sprite: "spriteImg2",
+                 canvas: "viewer",
+                 sprite: "spriteImg",
                  nbSlice: { 'Y':218 , 'Z':218 },
                  flagCoordinates: true,
                });
@@ -630,51 +616,25 @@ def write_html(template, dest_dir, title="executive_summary.html"):
         print '\ncannot write %s to %s for some reason...\n' % (title, dest_dir)
 
 
-def make_brainsprite_viewers(T1_path, T2_path, img_out_path):
+def make_brainsprite_viewer(png_path, mosaic_path):
     """
-    Builds HTML panel for BrainSprite viewer(s) so users can click through 3d anatomical images.
+    Builds HTML panel for BrainSprite viewer so users can click through 3d anatomical images.
 
-    :return: string of html containing up to 2 div rows, each with a canvas and hidden BrainSprite mosaic image
+    :return: string of html containing a div row with a canvas and hidden BrainSprite mosaic image
     """
-    structural_html_panel = ''
 
-    # If there are T1 pngs, make a BrainSprite viewer T1.
-    # KJS: hardcoding file names, ids, etc. bc this whole thing assumes "./img" and
-    # there is no way to make it more general until the redesign. I would just be
-    # faking it.
-    if (os.path.isdir(T1_path)) and (os.listdir(T1_path)):
+    image_summary.make_mosaic(png_path, mosaic_path)
 
-        out_path = os.path.join(img_out_path, "T1_mosaic.jpg")
-        image_summary.make_mosaic(T1_path, out_path)
-
-        structural_html_panel += """
-        <div class="top-row">
-                <div class="structural">
-                    <div style="max-width:100%;height:auto;">
-                        <p>BrainSprite Viewer: T1</p>
-                        <canvas id="viewer1" style="max-width:100%;">
-                        <img id="spriteImg1" class="hidden" src="./img/T1_mosaic.jpg" >
-                    </div>
+    structural_html_panel = """
+    <div class="top-row">
+            <div class="structural">
+                <div style="max-width:100%;height:auto;">
+                    <p>BrainSprite Viewer: T1</p>
+                    <canvas id="viewer" style="max-width:100%;">
+                    <img id="spriteImg" class="hidden" src="./img/mosaic.jpg">
                 </div>
-        </div>"""
-
-    # If there are T2 pngs, make a BrainSprite viewer T2.
-    if (os.path.isdir(T2_path)) and (os.listdir(T2_path)):
-
-        out_path = os.path.join(img_out_path, "T2_mosaic.jpg")
-        image_summary.make_mosaic(T2_path, out_path)
-
-        structural_html_panel += """
-        <div class="top-row">
-                <div class="structural">
-                    <div style="max-width:100%;height:auto;">
-                        <p>BrainSprite Viewer: T2</p>
-                        <canvas id="viewer2" style="max-width:100%;">
-                        <img id="spriteImg2" class="hidden" src="./img/T2_mosaic.jpg" >
-                    </div>
-                </div>
-        </div>"""
-
+            </div>
+    </div>"""
     return structural_html_panel
 
 
@@ -1023,11 +983,6 @@ def get_args():
         _logger.error('\nRequired subject id was not specified.\n')
         passing = 0
 
-    if not args.session:
-        print '\nRequired session id was not specified.\n'
-        _logger.error('\nRequired session id was not specified.\n')
-        passing = 0
-
     if not args.summ_dir:
         print '\nRequired executive summary directory was not specified.\n'
         _logger.error('\nRequired executive summary directory was not specified.\n')
@@ -1045,7 +1000,6 @@ def write_summ_file(out_path, args):
     unproc_root = args.unproc_root
     proc_root = args.proc_root
     sub_id = args.subject_id
-    ses_id = args.session
     ex_sum = args.summ_dir
 
     date = image_summary.date_stamp
@@ -1059,10 +1013,9 @@ def write_summ_file(out_path, args):
                     Unprocessed Data Path provided: \n%s
                     Derivative Files Path provided: \n%s
                     Subject Code: %s
-                    Visit ID: %s
                     Executive summary subdir: %s
                     Args: \n%s
-                    ''' % (date, unproc_root, proc_root, sub_id, ses_id, ex_sum, args)
+                    ''' % (date, unproc_root, proc_root, sub_id, ex_sum, args)
 
             f.write(info)
             f.close()
@@ -1110,21 +1063,12 @@ def get_output_path(out_path):
 
 def get_paths(args):
 
-    unproc_root = args.unproc_root
-    proc_root = args.proc_root
+    unprocessed_files = args.unproc_root
+    processed_files = args.proc_root
     sub_id = args.subject_id
-    ses_id = args.session
     ex_sum = args.summ_dir
 
     # Currently, assume pipeline is HCP. (May need to specify in future.)
-    sub_dir = 'sub-' + sub_id
-    ses_dir = 'ses-' + ses_id
-
-    bids_unproc_paths = [sub_dir, ses_dir, 'func']
-    unprocessed_files = os.path.join(unproc_root, *bids_unproc_paths )
-
-    bids_proc_paths = [sub_dir, ses_dir, 'files']
-    processed_files = os.path.join(proc_root, *bids_proc_paths )
 
     # Check that unprocessed data are available to us.
     if (bids_dir_exists(unprocessed_files)):
@@ -1179,9 +1123,8 @@ def get_paths(args):
         print '\nExiting....\n'
         sys.exit()
 
-    # And subdirectories for the T1 and T2 pngs. These might or might not already exist.
+    # And a subdirectory for the T1_pngs. This one might or might not already exist.
     t1_path = os.path.join(summary_path, 'T1_pngs')
-    t2_path = os.path.join(summary_path, 'T2_pngs')
 
     # Output path is optional; if none is specified, use processed files - we know it exists and is writable.
     if args.output_path:
@@ -1205,7 +1148,6 @@ def get_paths(args):
             'processed' : processed_files,
             'summary' : summary_path,
             't1' : t1_path,
-            't2' : t2_path,
             'img' : img_path,
             'execsumm' : execsumm_path,
             'output' : out_path,
@@ -1258,7 +1200,6 @@ def main():
     summary_path = paths['summary']
     img_out_path = paths['img']
     T1_path = paths['t1']
-    T2_path = paths['t2']
     executivesummary_path = paths['execsumm']
     user_out_path = paths['output']
     copy_path = paths['copy']
@@ -1364,9 +1305,14 @@ def main():
 
     # BUILD & WRITE THE STRUCTURAL PANEL
 
-    body = ''
-    # Make BrainSprite viewer(s).
-    body = make_brainsprite_viewers(T1_path, T2_path, img_out_path)
+    # If there are T1 pngs, make the BrainSprite viewer
+    if os.path.isdir(T1_path):
+        if os.listdir(T1_path):
+            body = make_brainsprite_viewer(T1_path, img_out_path)
+        else:
+            body = ''
+    else:
+        body = ''
 
     pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
@@ -1397,6 +1343,7 @@ def main():
     sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('nback' in img)])
     sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('SST' in img)])
 
+    # We are skipping all ica stuff for now -- KJS 9/20/18
     if args.ica:
 
         rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])

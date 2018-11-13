@@ -3,7 +3,7 @@
 # Note: This file was copied from FNL_preproc_wrapper.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o u:d:s:v:e:o:h:x -l unproc_root:,deriv_root:,subject_id:,visit:,ex_summ_dir:,output_path:,skip_sprite:,help: -n 'executive_summary_prep.sh' -- $@`
+options=`getopt -o u:d:s:e:o:h:x -l unproc_root:,deriv_root:,subject_id:,,ex_summ_dir:,output_path:,skip_sprite:,help: -n 'executive_summary_prep.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...] "
@@ -12,10 +12,9 @@ function display_help() {
     echo "           <deriv_root>/sub-<subject_id>/ses-<visit>/files/<ex_summ_dir>"
     echo " "
     echo "      Required:"
-    echo "      -u|--unproc_root        Path to unprocessed data set, ending at parent of sub-<subject_id> "
-    echo "      -d|--deriv_root         Path to derivatives files, ending at parent of sub-<subject_id> "
+    echo "      -u|--unproc_root        Path to unprocessed data set, ending 'func' or 'anat' or whatever."
+    echo "      -d|--deriv_root         Path to derivatives files, ending at files. "
     echo "      -s|--subject_id         Subject ID without sub- prefix"
-    echo "      -v|--visit              Visit (aka session) ID without ses- prefix"
     echo "      -e|--ex_summ_dir        Executive summary subdirectory, for example: summary_DCANBOLDProc_v4.0.0 "
     echo " "
     echo "      Optional:"
@@ -40,10 +39,6 @@ while true ; do
             ;;
         -s|--subject_id)
             subject_id="$2"
-            shift 2
-            ;;
-        -v|--visit)
-            visit="$2"
             shift 2
             ;;
         -e|--ex_summ_dir)
@@ -72,7 +67,6 @@ echo "COMMAND LINE ARGUMENTS:"
 echo unproc_root=${unproc_root?}
 echo deriv_root=${deriv_root?}
 echo subject_id=${subject_id?}
-echo visit=${visit?}
 echo ex_summ_dir=${ex_summ_dir?}
 if [[ ! -z ${output_path} ]] ; then
     echo output_path=${output_path}
@@ -82,6 +76,7 @@ if [[ ! -z ${skip_sprite} ]] ; then
 else
     echo "End of args"
 fi
+echo "DO NOT TOUCH THESE ARGUMENTS"
 echo
 
 ### SET UP ENVIRONMENT VARIABLES ###
@@ -90,8 +85,7 @@ source `dirname $0`"/setup_env.sh"
 #matlab_template=`dirname $0`"/template_FNL_preproc_Matlab.m"
 
 # Use the command line args to setup the requied paths
-sub_ses_path="sub-${subject_id}/ses-${visit}"
-ProcessedFiles="${deriv_root}/${sub_ses_path}/files"
+ProcessedFiles="${deriv_root}"
 if [ -d ${ProcessedFiles} ]; then
     echo ProcessedFiles=${ProcessedFiles}
 else
@@ -101,7 +95,7 @@ else
     exit
 fi
 
-UnprocessedFiles="${unproc_root}/${sub_ses_path}/func"
+UnprocessedFiles="${unproc_root}"
 if [ -d ${UnprocessedFiles} ]; then
     echo UnprocessedFiles=${UnprocessedFiles}
 else
@@ -186,7 +180,6 @@ fi
             	filename=$(basename "${paths[$i]}")
             	sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
         	done
-
 	fi
     }
 
@@ -236,18 +229,17 @@ vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
 echo
 echo "START: executive summary"
 
+#Should we use $FSLDIR/data/standard instead of ./templates??
 atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
-t1_mask="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
+t1="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
 else
-    slices ${t1_mask} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
-    slices ${atlas} ${t1_mask} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
+    slices ${t1} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
+    slices ${atlas} ${t1} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
 fi
 
-# From here on, use the whole T1 file rather than the mask (used above).
-t1="${ProcessedFiles}/MNINonLinear/T1w_restore.nii.gz"
 t2="${ProcessedFiles}/MNINonLinear/T2w_restore.nii.gz"
 has_t2=1
 if [[ ! -e ${t2} ]] ; then
@@ -323,32 +315,18 @@ done
 
 echo "DONE: executive summary prep"
 echo
-date
-echo
-echo "Entering layout of html file."
-echo
-echo "Parameters to layout_builder.py: "
-echo "--unproc_root=" ${unproc_root}
-echo "--deriv_root=" ${deriv_root}
-echo "--subject_id=" ${subject_id}
-echo "--visit=" ${visit}
-echo "--ex_summ_dir=" ${ex_summ_dir}
-echo "--output_path=" ${output_path}
-echo
-
+echo "Entering layout of html file"
 if [[ -z ${output_path} ]] ; then
     `dirname $0`/layout_builder.py \
           --unproc_root="${unproc_root}" \
           --deriv_root="${deriv_root}" \
           --subject_id="${subject_id}" \
-          --visit="${visit}" \
           --ex_summ_dir="${ex_summ_dir}"
 else
     `dirname $0`/layout_builder.py \
           --unproc_root="${unproc_root}" \
           --deriv_root="${deriv_root}" \
           --subject_id="${subject_id}" \
-          --visit="${visit}" \
           --ex_summ_dir="${ex_summ_dir}" \
           --output_path="${output_path}"
 fi
