@@ -25,13 +25,12 @@ sys.path.append(script_path)
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.7.0'
 
-program_desc = """%(prog)s v%(ver)s:
+program_desc = """%(prog)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
 structural and functional images, and grayordinates results into one file for efficient QC (of the
 FNL_preproc pipeline).
-""" % {'prog': PROG, 'ver': VERSION}
+""" % {'prog': PROG}
 
 date_stamp = "{:%Y_%m_%d_%H_%M}".format(datetime.now())
 
@@ -42,7 +41,7 @@ logfile = os.path.join(os.getcwd(), 'logs', 'log-%s.log' % date_stamp)
 
 logging.basicConfig(filename=logfile, level=logging.ERROR)
 
-_logger = logging.getLogger('Image_Summary_v%s' % VERSION)
+_logger = logging.getLogger('Image_Summary')
 
 # trying out a different format...
 fmt = '%(asctime)s %(filename)-8s %(levelname)-8s: %(message)s'

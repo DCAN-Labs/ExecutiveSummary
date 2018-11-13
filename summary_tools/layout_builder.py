@@ -25,20 +25,19 @@ import sys
 from helpers import shenanigans
 
 PROG = 'Layout Builder'
-VERSION = '1.5.2'
-LAST_MOD = '9-21-18'
+LAST_MOD = '11-13-18'
 
-program_desc = """%(prog)s v%(ver)s:
+program_desc = """%(prog)s:
 Builds the layout for the Executive Summary by writing-out chunks of html with some help from image_summary methods.
 Use -u <unproc_root> -d <deriv_root> -s <subject> -e <sum_dir> -o <output_dir> to launch and build a summary page.
 Note: -o is optional - if not specified, the directory of processed files will do.
 Has embedded css & jquery elements.
-""" % {'prog': PROG, 'ver': VERSION}
+""" % {'prog': PROG}
 
 
 def get_parser():
 
-    parser = argparse.ArgumentParser(description=program_desc, prog=PROG, version=VERSION)
+    parser = argparse.ArgumentParser(description=program_desc, prog=PROG)
 
     parser.add_argument('-u', '--unproc_root', dest='unproc_root', action='store',
                         help='Expects the full path to the parent of the sub-<subject> directory of unprocessed files.')
@@ -553,7 +552,6 @@ function brainsprite(params) {
     <body>
         <div class="header">
             <h1>CODE_VISIT</h1>
-            <p>VERSION</p>
             </div>
         </div>"""
 
@@ -1517,10 +1515,9 @@ def main():
     _logger.debug('newer_body is : %s' % newer_body)
 
 
-    # FILL-IN THE CODE / VERSION INFO
+    # FILL-IN THE CODE INFO
     new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s' % (subj_id))
-
-    new_html_header = edit_html_chunk(new_html_header, 'VERSION', 'Executive Summary_v' + VERSION)
+    new_html_header = edit_html_chunk(new_html_header, 'Executive Summary' )
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
 
