@@ -76,7 +76,6 @@ if [[ ! -z ${skip_sprite} ]] ; then
 else
     echo "End of args"
 fi
-echo "DO NOT TOUCH THESE ARGUMENTS"
 echo
 
 ### SET UP ENVIRONMENT VARIABLES ###
@@ -231,15 +230,17 @@ echo "START: executive summary"
 
 #Should we use $FSLDIR/data/standard instead of ./templates??
 atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
-t1="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
+t1_mask="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
 else
-    slices ${t1} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
-    slices ${atlas} ${t1} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
+    slices ${t1_mask} ${atlas} -o "${ExSummPath}/${subject_id}_atlas_in_t1.gif"
+    slices ${atlas} ${t1_mask} -o "${ExSummPath}/${subject_id}_t1_in_atlas.gif"
 fi
 
+# From here on, use the whole T1 file rather than the mask (used above).
+t1="${ProcessedFiles}/MNINonLinear/T1w_restore.nii.gz"
 t2="${ProcessedFiles}/MNINonLinear/T2w_restore.nii.gz"
 has_t2=1
 if [[ ! -e ${t2} ]] ; then
@@ -315,7 +316,19 @@ done
 
 echo "DONE: executive summary prep"
 echo
-echo "Entering layout of html file"
+date
+echo
+echo "Entering layout of html file."
+echo
+echo "Parameters to layout_builder.py: "
+echo "--unproc_root=" ${unproc_root}
+echo "--deriv_root=" ${deriv_root}
+echo "--subject_id=" ${subject_id}
+echo "--visit=" ${visit}
+echo "--ex_summ_dir=" ${ex_summ_dir}
+echo "--output_path=" ${output_path}
+echo
+
 if [[ -z ${output_path} ]] ; then
     `dirname $0`/layout_builder.py \
           --unproc_root="${unproc_root}" \

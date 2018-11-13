@@ -581,8 +581,18 @@ html_footer = """
         <script>
            $( window ).load(function() {
                var brain = brainsprite({
-                 canvas: "viewer",
-                 sprite: "spriteImg",
+                 canvas: "viewer1",
+                 sprite: "spriteImg1",
+                 nbSlice: { 'Y':218 , 'Z':218 },
+                 flagCoordinates: true,
+               });
+           });
+       </script>
+       <script>
+           $( window ).load(function() {
+               var brain = brainsprite({
+                 canvas: "viewer2",
+                 sprite: "spriteImg2",
                  nbSlice: { 'Y':218 , 'Z':218 },
                  flagCoordinates: true,
                });
@@ -616,25 +626,51 @@ def write_html(template, dest_dir, title="executive_summary.html"):
         print '\ncannot write %s to %s for some reason...\n' % (title, dest_dir)
 
 
-def make_brainsprite_viewer(png_path, mosaic_path):
+def make_brainsprite_viewers(T1_path, T2_path, img_out_path):
     """
-    Builds HTML panel for BrainSprite viewer so users can click through 3d anatomical images.
+    Builds HTML panel for BrainSprite viewer(s) so users can click through 3d anatomical images.
 
-    :return: string of html containing a div row with a canvas and hidden BrainSprite mosaic image
+    :return: string of html containing up to 2 div rows, each with a canvas and hidden BrainSprite mosaic image
     """
+    structural_html_panel = ''
 
-    image_summary.make_mosaic(png_path, mosaic_path)
+    # If there are T1 pngs, make a BrainSprite viewer T1.
+    # KJS: hardcoding file names, ids, etc. bc this whole thing assumes "./img" and
+    # there is no way to make it more general until the redesign. I would just be
+    # faking it.
+    if (os.path.isdir(T1_path)) and (os.listdir(T1_path)):
 
-    structural_html_panel = """
-    <div class="top-row">
-            <div class="structural">
-                <div style="max-width:100%;height:auto;">
-                    <p>BrainSprite Viewer: T1</p>
-                    <canvas id="viewer" style="max-width:100%;">
-                    <img id="spriteImg" class="hidden" src="./img/mosaic.jpg">
+        out_path = os.path.join(img_out_path, "T1_mosaic.jpg")
+        image_summary.make_mosaic(T1_path, out_path)
+
+        structural_html_panel += """
+        <div class="top-row">
+                <div class="structural">
+                    <div style="max-width:100%;height:auto;">
+                        <p>BrainSprite Viewer: T1</p>
+                        <canvas id="viewer1" style="max-width:100%;">
+                        <img id="spriteImg1" class="hidden" src="./img/T1_mosaic.jpg" >
+                    </div>
                 </div>
-            </div>
-    </div>"""
+        </div>"""
+
+    # If there are T2 pngs, make a BrainSprite viewer T2.
+    if (os.path.isdir(T2_path)) and (os.listdir(T2_path)):
+
+        out_path = os.path.join(img_out_path, "T2_mosaic.jpg")
+        image_summary.make_mosaic(T2_path, out_path)
+
+        structural_html_panel += """
+        <div class="top-row">
+                <div class="structural">
+                    <div style="max-width:100%;height:auto;">
+                        <p>BrainSprite Viewer: T2</p>
+                        <canvas id="viewer2" style="max-width:100%;">
+                        <img id="spriteImg2" class="hidden" src="./img/T2_mosaic.jpg" >
+                    </div>
+                </div>
+        </div>"""
+
     return structural_html_panel
 
 
@@ -1123,8 +1159,9 @@ def get_paths(args):
         print '\nExiting....\n'
         sys.exit()
 
-    # And a subdirectory for the T1_pngs. This one might or might not already exist.
+    # And subdirectories for the T1 and T2 pngs. These might or might not already exist.
     t1_path = os.path.join(summary_path, 'T1_pngs')
+    t2_path = os.path.join(summary_path, 'T2_pngs')
 
     # Output path is optional; if none is specified, use processed files - we know it exists and is writable.
     if args.output_path:
@@ -1148,6 +1185,7 @@ def get_paths(args):
             'processed' : processed_files,
             'summary' : summary_path,
             't1' : t1_path,
+            't2' : t2_path,
             'img' : img_path,
             'execsumm' : execsumm_path,
             'output' : out_path,
@@ -1200,6 +1238,7 @@ def main():
     summary_path = paths['summary']
     img_out_path = paths['img']
     T1_path = paths['t1']
+    T2_path = paths['t2']
     executivesummary_path = paths['execsumm']
     user_out_path = paths['output']
     copy_path = paths['copy']
@@ -1305,14 +1344,9 @@ def main():
 
     # BUILD & WRITE THE STRUCTURAL PANEL
 
-    # If there are T1 pngs, make the BrainSprite viewer
-    if os.path.isdir(T1_path):
-        if os.listdir(T1_path):
-            body = make_brainsprite_viewer(T1_path, img_out_path)
-        else:
-            body = ''
-    else:
-        body = ''
+    body = ''
+    # Make BrainSprite viewer(s).
+    body = make_brainsprite_viewers(T1_path, T2_path, img_out_path)
 
     pngs = [png for png in os.listdir(img_out_path) if png.endswith('png')]
 
@@ -1343,7 +1377,6 @@ def main():
     sb_ref_nback_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('nback' in img)])
     sb_ref_sst_paths = natural_sort([path.join('./img', img) for img in pngs if ('sbref.png' in img) and ('SST' in img)])
 
-    # We are skipping all ica stuff for now -- KJS 9/20/18
     if args.ica:
 
         rest_dvars = natural_sort([path.join('./img', img) for img in pngs if ('DVARS' in img) and ('CONC' not in img) and ('postreg' not in img) and ('rest' in img)])
