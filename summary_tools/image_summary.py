@@ -13,8 +13,6 @@ from os import path
 from math import sqrt
 import re
 import shutil
-import logging
-import logging.handlers
 from datetime import datetime
 import sys
 from PIL import Image
@@ -25,39 +23,25 @@ sys.path.append(script_path)
 from helpers import shenanigans
 
 PROG = 'Image Summary'
-VERSION = '0.7.0'
 
-program_desc = """%(prog)s v%(ver)s:
+program_desc = """%(prog)s:
 Gathers data and images for a given subjectcode and presents panels showing: acquisition parameters, post-processed
 structural and functional images, and grayordinates results into one file for efficient QC (of the
 FNL_preproc pipeline).
-""" % {'prog': PROG, 'ver': VERSION}
+""" % {'prog': PROG}
 
 date_stamp = "{:%Y_%m_%d_%H_%M}".format(datetime.now())
 
-if not path.exists(path.join(os.getcwd(), 'logs')):
-    os.makedirs('logs')
 
-logfile = os.path.join(os.getcwd(), 'logs', 'log-%s.log' % date_stamp)
-
-logging.basicConfig(filename=logfile, level=logging.ERROR)
-
-_logger = logging.getLogger('Image_Summary_v%s' % VERSION)
+print('Image_Summary')
 
 # trying out a different format...
 fmt = '%(asctime)s %(filename)-8s %(levelname)-8s: %(message)s'
 
 fmt_date = '%Y_%m_%d %H:%M %T%Z'
 
-formatter = logging.Formatter(fmt, fmt_date)
 
-handler = logging.handlers.RotatingFileHandler('_log', backupCount=2)
-
-handler.setFormatter(formatter)
-
-_logger.addHandler(handler)
-
-_logger.info('\nprogram log: %s' % (date_stamp))
+print('\nprogram log: %s' % (date_stamp))
 
 
 def get_paths(subject_code_path, use_ica=False):
@@ -68,7 +52,6 @@ def get_paths(subject_code_path, use_ica=False):
     """
 
     sub_path = path.join(subject_code_path)
-    _logger.debug('\nsubject path is %s\n' % sub_path)
 
     if path.exists(sub_path):
 
@@ -104,14 +87,11 @@ def get_paths(subject_code_path, use_ica=False):
                 print "Please make sure there is a summary folder within the subject path provided."
                 sys.exit()
 
-        _logger.debug('\nimages in : %s\n' % img_in_path)
-
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
-        _logger.debug('\ndata are in : %s\n' % data_path)
 
         return img_in_path, data_path
     else:
-        _logger.error('\npath does not exist: %s' % sub_path)
+        print('\npath does not exist: %s' % sub_path)
 
 def get_subject_info(path_to_nii_file):
 
@@ -177,15 +157,13 @@ def get_nii_info(path_to_nii, info=None):
 
     if not path.basename(path_to_nii).endswith('.nii.gz'):
         if not path.basename(path_to_nii).endswith('.nii'):
-            _logger.error('\nwrong file type: %s' % path.basename(path_to_nii))
+            print('\nwrong file type: %s' % path.basename(path_to_nii))
             return
 
-    _logger.info("\ngetting params on %s\n" % path_to_nii)
+    print("\ngetting params on %s\n" % path_to_nii)
 
     if not info:
         info = get_subject_info(path_to_nii)
-
-    _logger.debug('\ndata-info is: %s\n' % info)
 
     try:
 
@@ -239,13 +217,11 @@ def get_nii_info(path_to_nii, info=None):
 
 def submit_command(cmd):
     """
-    Takes a string (command-line) and runs it in a sub-shell, collecting either errors or info (output) in logger.
+    Takes a string (command-line) and runs it in a sub-shell, collecting either errors or info (output).
 
     :param cmd: string (command-line you might otherwise run in a terminal)
     :return: output from the command that ran
     """
-
-    _logger.debug(cmd)
 
     proc = subprocess.Popen(
         cmd
@@ -257,9 +233,9 @@ def submit_command(cmd):
     (output, error) = proc.communicate()
 
     if error:
-        _logger.error(error)
+        print('Error: %s' % error)
     if output:
-        _logger.info(output)
+        print(output)
 
     return output
 
@@ -280,8 +256,6 @@ def get_list_of_data(src_folder):
     for dir_name in tree:
         print(dir_name)
 
-        _logger.debug('dir: %s' % dir_name[0])
-
         for file in dir_name[2]:
             # limit which files are processed...
 
@@ -294,7 +268,7 @@ def get_list_of_data(src_folder):
             elif 'FieldMap' in path.abspath(file):
                 continue
 
-            _logger.info('processing nifti file: %s' % file)
+            print('processing nifti file: %s' % file)
 
             try:
 
@@ -323,16 +297,14 @@ def get_list_of_data(src_folder):
                     continue
 
             except IndexError, e:
-                _logger.error(e)
+                print(e)
                 continue
 
     data_lists = {'t1-data': t1_data, 't2-data': t2_data, 'epi-data': epi_data}
 
     if 'sbref' not in data_lists['epi-data'][-1:]:  # either of the last two paths in list
         print 'no sbref data in epi-data list'
-        _logger.info('missing sbref data from /unprocessed/NIFTI... pulling from alternative')
-
-    _logger.debug('\ndata_lists: %s' % data_lists)
+        print('missing sbref data from /unprocessed/NIFTI... pulling from alternative')
 
     return data_lists
 
@@ -495,13 +467,13 @@ def make_mosaic(png_path, mosaic_path):
     """
 
     # Get the cwd so we can get back.
-    cwd - os.getcwd()
+    cwd = os.getcwd()
 
     os.chdir(png_path)
 
     def natural_sort(l):
         convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key)
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
         return sorted(l, key = alphanum_key)
 
     files = os.listdir(png_path)
@@ -547,17 +519,8 @@ def main():
 
     args = parser.parse_args()
 
-    _logger.debug('args are: %s' % args)
-
     # write out the first row of our data rows to setup column headers
     data_rows = [['Modality', 'x', 'y', 'z', 'TE', 'TR', 'frames', 'TI']]
-
-    if args.verbose:
-        _logger.setLevel(logging.INFO)
-    elif args.very_verbose:
-        _logger.setLevel(logging.DEBUG)
-    else:
-        _logger.setLevel(logging.ERROR)
 
     if args.dicom_path:
         dcm_path = path.join(args.dicom_path)
@@ -567,8 +530,7 @@ def main():
             print 'parameters are: %s ' % dcm_params
             return dcm_params
         else:
-            _logger.error('path does not exist: \n\t%s ' % dcm_path)
-            print 'oops that path is no good!'
+            print('path does not exist: \n\t%s ' % dcm_path)
 
     if args.nifti_path:
         nifti_path = path.join(args.nifti_path)
@@ -581,8 +543,7 @@ def main():
             data_rows.append(nii_params)
             write_csv(data_rows, param_table)
         else:
-            _logger.error('path does not exist: \n\t%s ' % nifti_path)
-            print 'oops that path is no good!'
+            print('path does not exist: \n\t%s ' % nifti_path)
 
 
 if __name__ == '__main__':

@@ -79,7 +79,8 @@ fi
 echo
 
 ### SET UP ENVIRONMENT VARIABLES ###
-source `dirname $0`"/setup_env.sh"
+# . `dirname $0`"/setup_env.sh"
+export wb_command=${CARET7DIR}/wb_command
 
 #matlab_template=`dirname $0`"/template_FNL_preproc_Matlab.m"
 
@@ -324,7 +325,6 @@ echo "Parameters to layout_builder.py: "
 echo "--unproc_root=" ${unproc_root}
 echo "--deriv_root=" ${deriv_root}
 echo "--subject_id=" ${subject_id}
-echo "--visit=" ${visit}
 echo "--ex_summ_dir=" ${ex_summ_dir}
 echo "--output_path=" ${output_path}
 echo

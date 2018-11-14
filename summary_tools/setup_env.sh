@@ -1,36 +1,22 @@
-#!/bin/bash 
+#!/bin/bash
 
 FNL_preproc_dir=`dirname $0`
-#FNL_preproc_version=`basename ${FNL_preproc_dir}`
+wb_command=${CARET7DIR}/wb_command
 
-if [[ `hostname` == "rushmore" ]]; then
-    UTILITIES_DIR="/mnt/max/shared/code/internal/utilities"
-    FSL_DIR="/usr/share/fsl/5.0/"
-    wb_command="/usr/local/bin/wb_command"
-    path_to_label_files="/mnt/max/shared/ROI_sets/Surface_schemes/Human/"
-    Matlab_Runtime_Env="/mnt/max/shared/code/external/utilities/Matlab2016bRuntime/v91"
-    MCC_FILE="/mnt/max/software/MATLAB/R2016b/bin/mcc"
-    PMU_EXTRACT_DIR="/mnt/max/shared/code/external/utilities/PMU_DICOM_extract"
-elif [[ `hostname` == "exa"* ]]; then
-    UTILITIES_DIR="/home/exacloud/lustre1/fnl_lab/code/internal/utilities"
-    FSL_DIR="/home/exacloud/lustre1/fnl_lab/code/bin/fsl/fsl"
-    wb_command="/home/exacloud/lustre1/fnl_lab/code/external/utilities/workbench-1.2.3-HCP/bin_rh_linux64/wb_command"
-    path_to_label_files="/home/exacloud/lustre1/fnl_lab/ROI_sets/Surface_schemes/Human/"
-    Matlab_Runtime_Env="/home/exacloud/lustre1/fnl_lab/code/external/utilities/Matlab2016bRuntime/v91"
-    MCC_FILE=""
-    PMU_EXTRACT_DIR="/home/exacloud/lustre1/fnl_lab/code/internal/utilities/PMU_DICOM_extract"
-else
-    echo "ERROR: SERVER HOST NOT RECOGNIZED. CHECK set_env.sh"
-    #exit
-fi    
+#    UTILITIES_DIR="/home/exacloud/lustre1/fnl_lab/code/internal/utilities"
+#    FSL_DIR="/home/exacloud/lustre1/fnl_lab/code/bin/fsl/fsl"
+#    path_to_label_files="/home/exacloud/lustre1/fnl_lab/ROI_sets/Surface_schemes/Human/"
+#    Matlab_Runtime_Env="/home/exacloud/lustre1/fnl_lab/code/external/utilities/Matlab2016bRuntime/v91"
+#    MCC_FILE=""
+#    PMU_EXTRACT_DIR="/home/exacloud/lustre1/fnl_lab/code/internal/utilities/PMU_DICOM_extract"
 
-path_to_movment_regressor_check=${UTILITIES_DIR}/movmnt_regressor_check/movmnt_regressor_check.py
-framewise_disp_path=${UTILITIES_DIR}/framewise_displacement
-HCP_Mat_Path=${UTILITIES_DIR}/HCP_Matlab
+#path_to_movment_regressor_check=${UTILITIES_DIR}/movmnt_regressor_check/movmnt_regressor_check.py
+#framewise_disp_path=${UTILITIES_DIR}/framewise_displacement
+#HCP_Mat_Path=${UTILITIES_DIR}/HCP_Matlab
 
-FSLDIR=${FSL_DIR}
-PATH=$FSLDIR/bin:$PATH
-export PATH FSLDIR
+#FSLDIR=${FSL_DIR}
+#PATH=$FSLDIR/bin:$PATH
+#export PATH FSLDIR
 . ${FSLDIR}/etc/fslconf/fsl.sh
 
 motion_filename="motion_numbers.txt"

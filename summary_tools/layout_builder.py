@@ -17,7 +17,6 @@ import re
 import argparse
 import subprocess
 import image_summary
-from image_summary import _logger
 import glob
 import shutil
 import logging
@@ -704,8 +703,7 @@ def write_series_panel_row(list_of_img_paths):
         print path
         series_type_match = compiled_series_type.search(path)
         if series_type_match is None:
-            print 'Writing series panel but series type is unknown; program exiting...'
-            _logger.error('Writing series panel but series type is unknown; program exiting...')
+            print('Writing series panel but series type is unknown; program exiting...')
             series_type = "Unknown"
         else:
             series_type = series_type_match.group()
@@ -932,8 +930,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
                     new_l.append(match[0])
                 else:
                     new_l.append(placeholder_path)
-                    print '\n%s image expected and not found in summary directory\n' % (sequence_text)
-                    _logger.error('\n%s image expected and not found in summary directory\n' % (sequence_text))
+                    print('\n%s image expected and not found in summary directory\n' % (sequence_text))
             corrected_lists.append(new_l)
 
     # If ffmri images exist, deal with those separately
@@ -970,8 +967,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
                         new_l.append(match[0])
                     else:
                         new_l.append(placeholder_path)
-                        print '\n%s image expected and not found in summary directory\n' % (sequence_text)
-                        _logger.error('\n%s image expected and not found in summary directory\n' % (sequence_text))
+                        print('\n%s image expected and not found in summary directory\n' % (sequence_text))
                 corrected_lists[list_index] += new_l
 
     if corrected_lists:
@@ -983,8 +979,7 @@ def bids_dir_exists(bids_path):
     if os.path.isdir(bids_path):
         return 1
     else:
-        print '\nRequired BIDS directory does not exist or is not a directory:\n\t%s\nExiting...' % bids_path
-        _logger.error('\nRequired BIDS directory does not exist or is not a directory:\n\t%s\nExiting...' % bids_path)
+        print('\nRequired BIDS directory does not exist or is not a directory:\n\t%s\nExiting...' % bids_path)
         return 0
 
 
@@ -995,41 +990,29 @@ def get_args():
 
     passing = 1;
 
-    if args.verbose:
-        _logger.setLevel(logging.INFO)
-    elif args.very_verbose:
-        _logger.setLevel(logging.DEBUG)
-    else:
-        _logger.setLevel(logging.ERROR)
-
     # Make sure all required arguments were specified. If any is missing,
     # keep checking so user knows *all* of what is missing.
     if not args.unproc_root:
-        print '\nRequired path to the root of unprocessed files was not specified.\n'
-        _logger.error('\nRequired path to the root of unprocessed files was not specified.\n')
+        print('\nRequired path to the root of unprocessed files was not specified.\n')
         passing = 0
 
     if not args.proc_root:
-        print '\nRequired path to the root of derivative files was not specified.\n'
-        _logger.error('\nRequired path to the root of derivative files was not specified.\n')
+        print('\nRequired path to the root of derivative files was not specified.\n')
         passing = 0
 
     if not args.subject_id:
-        print '\nRequired subject id was not specified.\n'
-        _logger.error('\nRequired subject id was not specified.\n')
+        print('\nRequired subject id was not specified.\n')
         passing = 0
 
     if not args.summ_dir:
-        print '\nRequired executive summary directory was not specified.\n'
-        _logger.error('\nRequired executive summary directory was not specified.\n')
+        print('\nRequired executive summary directory was not specified.\n')
         passing = 0
 
     # If we have all of the required arguments, return them.
     if 1 == passing:
         return args
     else:
-        print '\nFailed to get all required arguments.\nExiting....\n'
-        _logger.error('\nFailed to get all required arguments.\nExiting....\n')
+        print('\nFailed to get all required arguments.\nExiting....\n')
         sys.exit()
 
 def write_summ_file(out_path, args):
@@ -1056,16 +1039,14 @@ def write_summ_file(out_path, args):
             f.write(info)
             f.close()
 
-        print '\nInitial summary report can be found in:\n\t%s' % summ_file
-        _logger.info('\nInitial summary report can be found in:\n\t%s' % summ_file)
+        print('\nInitial summary report can be found in:\n\t%s' % summ_file)
 
         # All good!
         return
 
     except OSError:
         # Output path is not writable?
-        print '\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path
-        _logger.error('\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path)
+        print('\nCannot write to output path; check permissions.\n\tPath: %s\nExiting....' % out_path)
         sys.exit()
 
 
@@ -1075,23 +1056,20 @@ def get_output_path(out_path):
 
     # Does output path specify an existing directory?
     if os.path.isdir(out_path):
-        _logger.info('\nFound output directory %s.' % out_path)
+        print('\nFound output directory %s.' % out_path)
 
     else:
 
         # Attempt to create path.
-        print '\n%s does not specify an existing directory; attempting to create...' %out_path
-        _logger.info('\n%s does not specify an existing directory; attempting to create...' %out_path)
+        print('\n%s does not specify an existing directory; attempting to create...' %out_path)
 
         try:
             os.makedirs(out_path)
 
         except OSError:
             # Failed to make the path.
-            print '\nUnable to create path:\n\t%s\nPermissions?\n' % out_path
-            _logger.error('\nUnable to create path:\n\t%s\nPermissions?\n' % out_path)
-            print '\nCannot proceed without a writable path. Exiting....\n'
-            _logger.error('\nCannot proceed without a writable path. Exiting....\n')
+            print('\nUnable to create path:\n\t%s\nPermissions?\n' % out_path)
+            print('\nCannot proceed without a writable path. Exiting....\n')
             sys.exit()
 
     return out_path
@@ -1108,12 +1086,10 @@ def get_paths(args):
 
     # Check that unprocessed data are available to us.
     if (bids_dir_exists(unprocessed_files)):
-        print '\nUnprocessed data will be found in path:\n\t%s' % unprocessed_files
-        _logger.info('\nUnprocessed data will be found in path:\n\t%s' % unprocessed_files)
+        print('\nUnprocessed data will be found in path:\n\t%s' % unprocessed_files)
 
     else:
-        print '\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files
-        _logger.error('\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files)
+        print('\nPath to unprocessed data does not exist.\n\tPath: %s\nExiting....\n' % unprocessed_files)
         sys.exit()
 
 
@@ -1121,15 +1097,13 @@ def get_paths(args):
     summary_path = os.path.join(processed_files, ex_sum)
 
     if os.path.isdir(summary_path):
-        print '\nData will be processed in path:\n\t%s' % processed_files
-        _logger.info( '\nData will be processed in path:\n\t%s' % processed_files)
+        print( '\nData will be processed in path:\n\t%s' % processed_files)
     else:
         try:
             os.makedirs(summary_path)
 
         except OSError:
-            print '\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files)
-            _logger.error('\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files))
+            print('\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files))
             print '\nExiting....\n'
             sys.exit()
 
@@ -1153,9 +1127,9 @@ def get_paths(args):
         os.makedirs(img_path)
         os.makedirs(execsumm_path)
 
-    except OSError:
-        print '\nCheck permissions to write to path:\n %s' % summary_path
-        _logger.error('cannot make img or executivesummary folder within path... permissions? \nPath: %s' % summary_path)
+    except OSError as err:
+        print('cannot make img or executivesummary folder within path... permissions? \nPath: %s' % summary_path)
+        print('OSError: %s' % err)
         print '\nExiting....\n'
         sys.exit()
 
@@ -1168,8 +1142,7 @@ def get_paths(args):
         out_path = get_output_path(args.output_path)
     else:
         out_path = processed_files
-        print '\nOptional output path not specified; using default path for output.\n\tPath: %s' %out_path
-        _logger.info('\nOptional output path not specified; using default path for output.\n\tPath: %s' %out_path)
+        print('\nOptional output path not specified; using default path for output.\n\tPath: %s' %out_path)
 
     # Later we will copy the executive summary subdir to the output path.
     # Make sure there isn't one there already.
@@ -1207,13 +1180,12 @@ def copy_gifs(source_dir, target_dir):
             return gifs
 
         else:
-            _logger.error('no .gifs in summary directory %s', source_dir)
-            print '\nNo summary .gifs were found! There should be some .gifs and I do not make those! '\
-                'Check to make sure executive_summary_prep.sh has been run. Exiting....'
+            print('no .gifs in summary directory %s', source_dir)
             sys.exit()
 
-    except OSError:
+    except OSError as err:
             print '\nOS Error trying to locate gifs in path:\n\t %s...' % source_dir
+            print '\nOS Error: %s...' % err
             print '\nExiting....\n'
             sys.exit()
 
@@ -1251,7 +1223,6 @@ def main():
     # The data variable will contain lists for 't1-data', 't2-data', and 'epi-data'.
     # (Would be nice to have more descriptive variables than data and data_path.)
     data = image_summary.get_list_of_data(data_path)
-    _logger.debug('data are: %s' % data)
 
     # Copy DVARS pngs to img directory
     dvars = [img for img in os.listdir(summary_path) if (img.endswith('png')) and 'DVARS' in img]
@@ -1322,8 +1293,6 @@ def main():
             dicom_for_te_grabber = shenanigans.get_dicom_path_from_nifti_info(data_path, modality)
 
             print '\nadding %s to list of data, for which we need parameters...\n' % item
-
-            _logger.debug('data_list is: %s' % data)
 
             if dicom_for_te_grabber:
                 alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
@@ -1442,7 +1411,6 @@ def main():
 
         if series_panel:
             newer_body += series_panel
-        _logger.debug('\nrest_rows were: %s' % series_rows)
 
         series_rows = []
 
@@ -1464,7 +1432,6 @@ def main():
 
         if series_panel:
             newer_body += series_panel
-        _logger.debug('\mid_rows were: %s' % series_rows)
         series_rows = []
 
     for i in range(0, num_nback_dvars):
@@ -1485,7 +1452,6 @@ def main():
 
         if series_panel:
             newer_body += series_panel
-        _logger.debug('\nback_rows were: %s' % series_rows)
         series_rows = []
 
     for i in range(0, num_sst_dvars):
@@ -1506,15 +1472,12 @@ def main():
 
         if series_panel:
             newer_body += series_panel
-        _logger.debug('\sst_rows were: %s' % series_rows)
         series_rows = []
 
 
     # COMPLETE EPI PANEls
 
     newer_body += series_panel_footer
-
-    _logger.debug('newer_body is : %s' % newer_body)
 
 
     # FILL-IN THE CODE / VERSION INFO
