@@ -1,13 +1,13 @@
-# Executive Summary v1.5.0
+# Executive Summary v1.6.1
 
 ## System Requirements
-- Imaging Software Packages Required: 
+- Imaging Software Packages Required:
   - fsl v4.1.9 or later
   - freesurfer v5.3
-- Environment: python 2.7.x 
+- Environment: python 2.7.x
   - argparse
   - PIL (Python Image Library)
-  
+
 ## Intended Usage
 - run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been run
 - _Note: you can move the HTML to any other directory, but it needs its 'img' folder along with it to view the images!_
@@ -20,12 +20,12 @@
   - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
      - all __raw__ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
   - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
-  
-### Expected naming convention for imaging data 
+
+### Expected naming convention for imaging data
   - Structural: `StudyName_SubjectID_T1w_MPR<series_num>.nii.gz`, `StudyName_SubjectID_T2w_SPC<series_num>.nii.gz`
   - for resting-state and SBRef: `StudyName_SubjectID_REST<series_num>_[SBRef].nii.gz`
   - e.g. _ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2\_SBRef.nii.gz,  ADHD-Youth\_1234-1\_REST3.nii.gz_
-  
+
 ## Program Launch
 - run `layout_builder.py` from appropriate local path
   - flags to add:
@@ -56,16 +56,16 @@
 #### layout_builder.py
    - use -l and a path to a .txt file containing your subject-paths (single column)
    - use -s and paths to subject folders, separated by spaces
-   - add -o </output/path> to control where the final product is copied 
+   - add -o </output/path> to control where the final product is copied
    - add --verbose for verbose output to _log file
    - add -vv for extra debugging output to _log file
    - use -h to print usage
-   
+
 #### image_summary.py
    - use -n to print parameters for any single nifti
    - use -d to print parameters for any single dicom
-   - use --verbose for extra logging 
-   - use -vv to do even more logging 
+   - use --verbose for extra logging
+   - use -vv to do even more logging
    - use -h to print usage
 
 ### /helpers
@@ -80,6 +80,6 @@
 
 ## Feature Requests
  - https://trello.com/b/R9xPDQNi/executive-summary-project
- 
+
 ## Additional Documentation (under construction)
  - https://fair_lab.gitlab.io/executivesummary/index.html
