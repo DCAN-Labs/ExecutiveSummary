@@ -1,4 +1,4 @@
-# Executive Summary v1.6.1
+# Executive Summary
 
 ## System Requirements
 - Imaging Software Packages Required:
