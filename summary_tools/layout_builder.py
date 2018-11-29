@@ -1480,7 +1480,6 @@ def main():
 
     # FILL-IN THE CODE INFO
     new_html_header = edit_html_chunk(head, 'CODE_VISIT', '%s' % (subj_id))
-    new_html_header = edit_html_chunk(new_html_header, 'Executive Summary' )
 
     # ASSEMBLE THE WHOLE DOC, THEN WRITE IT!
 
