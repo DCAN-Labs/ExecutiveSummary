@@ -3,7 +3,7 @@
 # Note: This file was copied from FNL_preproc_wrapper.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o u:d:s:e:o:h:x -l unproc_root:,deriv_root:,subject_id:,,ex_summ_dir:,output_path:,skip_sprite:,help: -n 'executive_summary_prep.sh' -- $@`
+options=`getopt -o u:d:s:e:o:h:a:x -l unproc_root:,deriv_root:,subject_id:,,ex_summ_dir:,output_path:,skip_sprite:,atlas:,help: -n 'executive_summary_prep.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...] "
@@ -19,6 +19,7 @@ function display_help() {
     echo " "
     echo "      Optional:"
     echo "      -o|--output_path        Path to a writable directory where a copy of the output will be placed "
+    echo "      -a|--atlas              atlas file for generation of rest image. Overrides MNI 1mm atlas"
     echo "      -h|--help               Display this message"
     exit $1
 }
@@ -53,6 +54,10 @@ while true ; do
             skip_sprite="skip"
             shift 1
             ;;
+        -a|--atlas)
+            atlas="$1"
+            shift 2
+            ;;
         -h|--help)
             display_help;;
         --) shift ; break ;;
@@ -75,6 +80,9 @@ if [[ ! -z ${skip_sprite} ]] ; then
     echo "Skipping sprite processing."
 else
     echo "End of args"
+fi
+if [[ -z ${atlas} ]]; then
+    atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
 fi
 echo
 
@@ -230,7 +238,6 @@ echo
 echo "START: executive summary"
 
 #Should we use $FSLDIR/data/standard instead of ./templates??
-atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
 t1_mask="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
@@ -256,14 +263,6 @@ lw="${ProcessedFiles}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.white.32k_fs_
 lp="${ProcessedFiles}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
 t1_brain="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 t1_2_brain="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.2.nii.gz"
-
-#make t1 2mm isovoxel brain
-flirt -in ${t1_brain} -ref ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain -applyisoxfm 2 -out ${t1_2_brain}
-if [[ -e ${t1_2_brain} ]] ; then
-   echo result of flirt is in ${t1_2_brain}
-else
-   echo failed: ${t1_2_brain} does not exist
-fi
 
 #create summary images
 build_scene_from_template $t2 $t1 $rp $lp $rw $lw
@@ -306,11 +305,23 @@ else
     create_image_from_template_169 1
 fi
 
+if [[ -e ${t1_2_brain} ]] ; then
+    echo "removing old resampled t1 brain"
+    rm ${t1_2_brain}
+fi
+
 #make figures
 for TASK in `ls -d ${ProcessedFiles}/*task-*` ; do
     fMRIName=`basename ${TASK}`
     echo "Making figures for TASK: ${TASK}"
     rest_img="${ProcessedFiles}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
+    #make t1 isovoxel brain with rest dim
+    if [[ ! -e ${t1_2_brain} ]] ; then
+        flirt -in ${t1_brain} -ref ${rest_img} -applyxfm -out ${t1_2_brain}
+        echo result of flirt is in ${t1_2_brain}
+    else
+        echo failed: ${t1_2_brain} does not exist
+    fi
     slices ${t1_2_brain} ${rest_img} -s 2 -o "${ExSummPath}/${subject_id}_${fMRIName}_in_t1.gif"
     slices ${rest_img} ${t1_2_brain} -s 2 -o "${ExSummPath}/${subject_id}_t1_in_${fMRIName}.gif"
 done
