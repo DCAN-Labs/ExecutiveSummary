@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
 
 """
 Call this program with:
@@ -618,9 +618,9 @@ def write_html(template, dest_dir, title="executive_summary.html"):
         f = open(path.join(dest_dir, title), 'w')
         f.writelines(template)
         f.close()
-        print '\nSummary %s can be found in path %s.\n' % (title, dest_dir)
+        print('\nSummary %s can be found in path %s.\n' % (title, dest_dir))
     except IOError:
-        print '\ncannot write %s to %s for some reason...\n' % (title, dest_dir)
+        print('\ncannot write %s to %s for some reason...\n' % (title, dest_dir))
 
 
 def make_brainsprite_viewers(T1_path, T2_path, img_out_path):
@@ -698,7 +698,7 @@ def write_series_panel_row(list_of_img_paths):
     compiled_series_type = re.compile(series_type_re)
 
     for path in list_of_img_paths:
-        print path
+        print(path)
         series_type_match = compiled_series_type.search(path)
         if series_type_match is None:
             print('Writing series panel but series type is unknown; program exiting...')
@@ -707,7 +707,7 @@ def write_series_panel_row(list_of_img_paths):
             series_type = series_type_match.group()
             break
 
-    print "Making series panel for " + series_type
+    print("Making series panel for " + series_type)
 
     series_panel_row = """
                     <tr>
@@ -891,7 +891,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
 
     # Check if there are any gaps in image sequence that need to be filled by placeholders
     missing = []
-    for x in xrange(0, len(numbers_lists)):
+    for x in range(0, len(numbers_lists)):
         for l in numbers_lists:
             missing += [obj for obj in l if obj not in numbers_lists[x]]
         missing = natural_sort(list(set(missing)))
@@ -909,7 +909,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
 
             last_missing = int(missing[-1]) + 1
 
-            for x in xrange(int(missing[0]), last_missing):
+            for x in range(int(missing[0]), last_missing):
                 if list_index == 0:
                     sequence_text = 'DVARS_and_FD_task-%s%02d' % (fmri_type, x)
                 elif list_index == 1:
@@ -946,7 +946,7 @@ def insert_placeholders(image_path_lists, fmri_type='rest'):
                 placeholder_path = './img/rectangular_placeholder_text.png'
 
             if missing:
-                for x in xrange(int(missing[0]), last_missing):
+                for x in range(int(missing[0]), last_missing):
                     if list_index == 0:
                         sequence_text = 'DVARS_and_FD_task-' + fmri_type + str(x)
                     elif list_index == 1:
@@ -1102,7 +1102,7 @@ def get_paths(args):
 
         except OSError:
             print('\nUnable to make dir %s in path; check path and permissions.\n %s' % (ex_sum, processed_files))
-            print '\nExiting....\n'
+            print('\nExiting....\n')
             sys.exit()
 
     # Subdirectories within the summary directory:
@@ -1128,7 +1128,7 @@ def get_paths(args):
     except OSError as err:
         print('cannot make img or executivesummary folder within path... permissions? \nPath: %s' % summary_path)
         print('OSError: %s' % err)
-        print '\nExiting....\n'
+        print('\nExiting....\n')
         sys.exit()
 
     # And subdirectories for the T1 and T2 pngs. These might or might not already exist.
@@ -1182,9 +1182,9 @@ def copy_gifs(source_dir, target_dir):
             sys.exit()
 
     except OSError as err:
-            print '\nOS Error trying to locate gifs in path:\n\t %s...' % source_dir
-            print '\nOS Error: %s...' % err
-            print '\nExiting....\n'
+            print('\nOS Error trying to locate gifs in path:\n\t %s...' % source_dir)
+            print('\nOS Error: %s...' % err)
+            print('\nExiting....\n')
             sys.exit()
 
 
@@ -1246,7 +1246,7 @@ def main():
 
 
     # Get SBRefs.
-    print '\nLooking for sbref images...\n'
+    print('\nLooking for sbref images...\n')
     task_sbref_pattern = path.join(sub_root) + '/*task-*/Scout_orig.nii.gz'
     all_sbref = glob.glob(task_sbref_pattern)
     for sbref in all_sbref:
@@ -1260,8 +1260,8 @@ def main():
 
         # get modality / series so we can know how to slice & label ...
         modality, series = info[1], info[2]
-        print '\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series)
-        print 'slicing images for: \n%s' % list_entry
+        print('\nPROCESSING subject_code: %s, modality: %s, series: %s' % (subj_id, modality, series))
+        print('slicing images for: \n%s' % list_entry)
 
         if 'rest' or 'SST' or 'MID' or 'nback' in modality and 'sbref' not in modality:
 
@@ -1290,11 +1290,11 @@ def main():
 
             dicom_for_te_grabber = shenanigans.get_dicom_path_from_nifti_info(data_path, modality)
 
-            print '\nadding %s to list of data, for which we need parameters...\n' % item
+            print('\nadding %s to list of data, for which we need parameters...\n' % item)
 
             if dicom_for_te_grabber:
                 alt_params_row = shenanigans.get_dcm_info(dicom_for_te_grabber, item, modality)
-                print alt_params_row
+                print(alt_params_row)
                 real_data.append(alt_params_row)
 
             else:
@@ -1368,7 +1368,7 @@ def main():
 
 
     # INITIALIZE AND BUILD NEW LIST WITH MATCHED SERIES CODES FOR EACH SERIES TYPE
-    print '\nAssembling series images to build panel...'
+    print('\nAssembling series images to build panel...')
 
     # Combines all of the lists from above.
     # Currently, since not using ica, only  sb_ref_<task>_paths and raw_<task>_paths have anything in them.
@@ -1500,12 +1500,12 @@ def main():
     image_summary.submit_command(move_cmd)
 
     # Copy the whole package to the output directory.
-    print '\nFind your images here: \n\t%s' % copy_path
+    print('\nFind your images here: \n\t%s' % copy_path)
 
     if path.exists(copy_path):
         shutil.rmtree(copy_path, ignore_errors=True)
 
-    print '\ncopying to %s\n\n' % copy_path
+    print('\ncopying to %s\n\n' % copy_path)
     shutil.copytree(executivesummary_path, copy_path)
 
 
@@ -1513,4 +1513,4 @@ if __name__ == '__main__':
 
     main()
 
-    print '\nall done!'
+    print('\nall done!')

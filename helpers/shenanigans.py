@@ -82,7 +82,7 @@ def get_dcm_info(path_to_dicom, path_to_nii, modality=None):
         for value in output[1:]:
             try:
                 value = format(float(value), '.2f')
-            
+
             # If there is non-number input, format or remove it
             except ValueError:
                 if value.isdigit():
@@ -138,9 +138,9 @@ def submit_command(cmd):
     (output, error) = proc.communicate()
 
     if error:
-        print 'error! %s' % error
+        print('error! %s' % error)
     if output:
-        print 'output: %s' % output
+        print('output: %s' % output)
 
     return output
 
@@ -154,13 +154,13 @@ def grab_te_from_dicom(path_to_dicom):
     path_to_dicom = os.path.join(path_to_dicom)
 
     cmd = 'echo `mri_info %s | grep "TE" | awk %s`' % (path_to_dicom, "'{print $5}'")
-    print cmd
+    print (cmd)
 
     output = submit_command(cmd)
-    print output
+    print (output)
 
     echo_time = output.strip("\n").split(',')
-    print echo_time
+    print (echo_time)
 
     return format(float(echo_time), '.2f')
 
@@ -173,7 +173,7 @@ def update_user(info):
     :return: None
     """
 
-    print '\n%s\n' % info
+    print('\n%s\n' % info)
 
 
 def read_list_file(path_to_file):
@@ -222,7 +222,7 @@ def get_airc_dicom_path_from_nifti_info(processed_subject_path, modality_name):
     if os.path.exists(dicom_root_dir):
 
         acquisitions = os.listdir(dicom_root_dir)
-        print 'Folders found within dicom root directory for this subject: \n%s' % acquisitions
+        print('Folders found within dicom root directory for this subject: \n%s' % acquisitions)
 
         for folder in acquisitions:
             if modality_name in folder:
@@ -246,7 +246,7 @@ def get_dicom_path_from_nifti_info(dicom_root_dir, modality_name):
     if os.path.exists(dicom_root_dir):
 
         dicoms = os.listdir(dicom_root_dir)
-#        print 'Folders found within dicom root directory for this subject: \n%s' % acquisitions
+#        print('Folders found within dicom root directory for this subject: \n%s' % acquisitions)
 
         for dicom in dicoms:
             if modality_name in dicom:
@@ -282,7 +282,7 @@ def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
         visit_id = path_parts[-2]
         subj_id = path_parts[-3]
 
-    print '\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id)
+    print('\nSubjID and Visit: %s %s: \n\n' % (subj_id, visit_id))
 
     update_user('pipeline_version is: %s\n' % pipeline_version)
 
@@ -308,7 +308,7 @@ def get_searchable_parts_from_processed_path(path_to_processed_subject_data):
     update_user('dicom root is: \n%s' % dicom_root)
 
     if path.exists(dicom_root):
-        print os.listdir(dicom_root)[0]
+        print (os.listdir(dicom_root)[0])
     else:
         update_user('Unable to locate dicom root on the airc...\ncheck: %s' % dicom_root)
 

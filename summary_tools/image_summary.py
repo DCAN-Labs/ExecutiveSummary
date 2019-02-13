@@ -60,18 +60,18 @@ def get_paths(subject_code_path, use_ica=False):
         if path.exists(v2_path):
             if use_ica:
                 cmd=['mkdir', v2_path + '_ica']
-                print cmd
+                print(cmd)
                 subprocess.call(cmd)
                 img_in_path = v2_path + "_ica"
                 for f in os.listdir(v2_path):
                     if "_ica_" in f:
                         new_f_name = re.sub("ica_", "", f)
                         cmd=["cp", v2_path + "/" + f, img_in_path + "/" + new_f_name]
-                        print cmd
+                        print(cmd)
                         subprocess.call(cmd, shell=False)
                     if "fMRI_" not in f:
                         cmd="cp -rT " + v2_path + "/" + f + " " + img_in_path + "/" + f
-                        print cmd
+                        print(cmd)
                         subprocess.call(cmd, shell=True)
 
             else:
@@ -84,7 +84,7 @@ def get_paths(subject_code_path, use_ica=False):
             try:
                 img_in_path = glob.glob(path_pattern)[0]
             except IndexError:
-                print "Please make sure there is a summary folder within the subject path provided."
+                print("Please make sure there is a summary folder within the subject path provided.")
                 sys.exit()
 
         data_path = path.join(sub_path, 'unprocessed', 'NIFTI')
@@ -102,7 +102,7 @@ def get_subject_info(path_to_nii_file):
     elif filename.endswith('.nii'):
         filename = filename.strip('.nii')
     else:
-        print '%s is neither .nii nor nii.gz' % filename
+        print('%s is neither .nii nor nii.gz' % filename)
         return
 
     # TODO: Make more specific (whatever immediately precedes modality)?
@@ -171,7 +171,7 @@ def get_nii_info(path_to_nii, info=None):
 
     except TypeError:
 
-        print '\n--->%s... is the wrong file type<---' % path.join(path_to_nii)
+        print('\n--->%s... is the wrong file type<---' % path.join(path_to_nii))
 
     if modality == '':
         modality = 'UnknownModality'
@@ -190,7 +190,7 @@ def get_nii_info(path_to_nii, info=None):
 
     output = submit_command(cmd)
 
-    output = output.strip('\n').split(',')
+    output = output.strip(b'\n').split(b',')
 
     modality = output[0]
 
@@ -296,14 +296,14 @@ def get_list_of_data(src_folder):
 
                     continue
 
-            except IndexError, e:
-                print(e)
+            except IndexError:
+                print("Index error while attempting to get the list of nifti data.")
                 continue
 
     data_lists = {'t1-data': t1_data, 't2-data': t2_data, 'epi-data': epi_data}
 
     if 'sbref' not in data_lists['epi-data'][-1:]:  # either of the last two paths in list
-        print 'no sbref data in epi-data list'
+        print('no sbref data in epi-data list')
         print('missing sbref data from /unprocessed/NIFTI... pulling from alternative')
 
     return data_lists
@@ -392,16 +392,16 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
     }
     print("choose slices dict nifti_infor:")
     print(nifti_info)
-    if 'sbref' in nifti_info[0]:  # grab these first since they may also contain 'rest' in their strings
+    if b'sbref' in nifti_info[0]:  # grab these first since they may also contain 'rest' in their strings
         slices_dict = sb_ref_slices
-    elif 'rest' or 'MID' or 'SST' or 'nback' in nifti_info[0]:  # then grab all the remaining 'rest' data that do not have 'sbref' in string
+    elif b'rest' or b'MID' or b'SST' or b'nback' in nifti_info[0]:  # then grab all the remaining 'rest' data that do not have 'sbref' in string
         slices_dict = raw_rest_slices
-    elif 'T2' in nifti_info[0]:
+    elif b'T2' in nifti_info[0]:
         slices_dict = T2_slices
-    elif 'T1' in nifti_info[0]:
+    elif b'T1' in nifti_info[0]:
         slices_dict = T1_slices
     else:
-        print 'not in the standard set of slices...\nDefaulting to T1 slices'
+        print('not in the standard set of slices...\nDefaulting to T1 slices')
         slices_dict = T1_slices
 
     return slices_dict
@@ -429,14 +429,14 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
 
         for datum in list_of_data_paths:
 
-            print "Datum: "
-            print datum
+            print("Datum: ")
+            print(datum)
 
-            print "Subject code: "
-            print subject_code
+            print("Subject code: ")
+            print(subject_code)
 
-            print "Modality: "
-            print modality
+            print("Modality: ")
+            print(modality)
 
             if not subject_code:
                 subject_code = get_subject_info(datum)
@@ -451,10 +451,10 @@ def slice_list_of_data(list_of_data_paths, subject_code=None, modality=None, des
                 dict = choose_slices_dict(datum, subject_code)
                 for key in dict.keys():
 
-                    print super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
+                    print(super_slice_me(datum, key, dict[key], os.path.join(dest_dir, '%s_%s-%d.png' %
                                                                                  (modality,
                                                                                   key,
-                                                                                  dict[key])))
+                                                                                  dict[key]))))
 
 
 def make_mosaic(png_path, mosaic_path):
@@ -527,7 +527,7 @@ def main():
         if path.exists(dcm_path):
             dcm_params = shenanigans.get_dcm_info(dcm_path)
 
-            print 'parameters are: %s ' % dcm_params
+            print('parameters are: %s ' % dcm_params)
             return dcm_params
         else:
             print('path does not exist: \n\t%s ' % dcm_path)
@@ -538,7 +538,7 @@ def main():
         if path.exists(nifti_path):
             nii_params = get_nii_info(nifti_path)
             data_rows.append(nii_params)
-            print 'parameters are: %s ' % data_rows
+            print('parameters are: %s ' % data_rows)
             param_table = path.join(os.path.dirname(nifti_path), 'Params.csv')
             data_rows.append(nii_params)
             write_csv(data_rows, param_table)
