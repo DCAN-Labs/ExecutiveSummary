@@ -757,7 +757,9 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA_task-rest.png', d
     :return: div section string for DVARS
     """
 
-    dvars_panel_html_string = """
+    if os.path.exists(dvars_input_path) or os.path.exists(dvars_concp_input_path):
+
+        dvars_panel_html_string = """
             <div class="grayords">
                 <table class="grayords">
                 <thead>
@@ -783,6 +785,9 @@ def write_dvars_panel(dvars_input_path='img/DVARS_and_FD_CONCA_task-rest.png', d
                     </tbody>
                 </table>
             </div>""" % {'dvars_path' : dvars_input_path, 'dvars_p_path': dvars_concp_input_path}
+
+    else:
+        dvars_panel_html_string = """"""
 
     return dvars_panel_html_string
 

@@ -3,7 +3,7 @@
 # Note: This file was copied from FNL_preproc_wrapper.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o u:d:s:e:o:h:x -l unproc_root:,deriv_root:,subject_id:,,ex_summ_dir:,output_path:,skip_sprite:,help: -n 'executive_summary_prep.sh' -- $@`
+options=`getopt -o u:d:s:e:o:h:a:x -l unproc_root:,deriv_root:,subject_id:,,ex_summ_dir:,output_path:,skip_sprite:,atlas:,help: -n 'executive_summary_prep.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...] "
@@ -19,6 +19,7 @@ function display_help() {
     echo " "
     echo "      Optional:"
     echo "      -o|--output_path        Path to a writable directory where a copy of the output will be placed "
+    echo "      -a|--atlas              atlas file for generation of rest image. Overrides MNI 1mm atlas"
     echo "      -h|--help               Display this message"
     exit $1
 }
@@ -53,6 +54,10 @@ while true ; do
             skip_sprite="skip"
             shift 1
             ;;
+        -a|--atlas)
+            atlas="$1"
+            shift 2
+            ;;
         -h|--help)
             display_help;;
         --) shift ; break ;;
@@ -75,6 +80,9 @@ if [[ ! -z ${skip_sprite} ]] ; then
     echo "Skipping sprite processing."
 else
     echo "End of args"
+fi
+if [[ -z ${atlas} ]]; then
+    atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
 fi
 echo
 
@@ -105,16 +113,20 @@ else
     exit
 fi
 
-# The summary subdirectory must alread exist, since DCANBOLDProc must already have been run.
+# Note: we no longer *insist* that the summary file already exist, because if the subject is 'anatomy-only'
+# there will be no files from DCAN_BOLD_proc. However, if there *are* any task files (including task-rest),
+# this script will look for the .png files in the directory specified. Therefore, this should usually be
+# summary_DCANBOLDProc_v4.0.0. (Checking for existence of the directory specified was silly anyway, because
+# that never did assure that the directory was the right one. Hoping all of this code gets better someday.)
+# For now, if the directory does not exist, create it and hope the caller knows what he is doing.
+
 ExSummPath="${ProcessedFiles}/${ex_summ_dir}/"
 if [ -d ${ExSummPath} ]; then
     echo Path to summary : ${ExSummPath}
 else
-    echo "Summary directory does not exist: ${ExSummPath}" >&2
-    display_help
-    echo "Make sure all required pre-processing has been run." >&2
-    echo "Exiting." >&2
-    exit
+    mkdir -p ${ExSummPath}
+    chown :fnl_lab ${ExSummPath} || true
+    chmod 770 ${ExSummPath} || true
 fi
 
 ############ HELPER FUNCTIONS ##############
@@ -230,7 +242,6 @@ echo
 echo "START: executive summary"
 
 #Should we use $FSLDIR/data/standard instead of ./templates??
-atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
 t1_mask="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
@@ -257,14 +268,6 @@ lp="${ProcessedFiles}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_L
 t1_brain="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.nii.gz"
 t1_2_brain="${ProcessedFiles}/MNINonLinear/T1w_restore_brain.2.nii.gz"
 
-#make t1 2mm isovoxel brain
-flirt -in ${t1_brain} -ref ${FSL_DIR}/data/standard/MNI152_T1_2mm_brain -applyisoxfm 2 -out ${t1_2_brain}
-if [[ -e ${t1_2_brain} ]] ; then
-   echo result of flirt is in ${t1_2_brain}
-else
-   echo failed: ${t1_2_brain} does not exist
-fi
-
 #create summary images
 build_scene_from_template $t2 $t1 $rp $lp $rw $lw
 declare -a image_names=('T1-Axial-InferiorTemporal-Cerebellum' 'T2-Axial-InferiorTemporal-Cerebellum' 'T1-Axial-BasalGangila-Putamen' 'T2-Axial-BasalGangila-Putamen' 'T1-Axial-SuperiorFrontal' 'T2-Axial-SuperiorFrontal' 'T1-Coronal-PosteriorParietal-Lingual' 'T2-Coronal-PosteriorParietal-Lingual' 'T1-Coronal-Caudate-Amygdala' 'T2-Coronal-Caudate-Amygdala' 'T1-Coronal-OrbitoFrontal' 'T2-Coronal-OrbitoFrontal' 'T1-Sagittal-Insula-FrontoTemporal' 'T2-Sagittal-Insula-FrontoTemporal' 'T1-Sagittal-CorpusCallosum' 'T2-Sagittal-CorpusCallosum' 'T1-Sagittal-Insula-Temporal-HippocampalSulcus' 'T2-Sagittal-Insula-Temporal-HippocampalSulcus')
@@ -277,8 +280,8 @@ do
     if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
         echo "skipping t2 image"
     else
-        create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
         echo create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
+        create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
     fi
 done
 
@@ -294,7 +297,11 @@ elif [[ ! -z ${skip_sprite} ]] ; then
 elif [[ ${has_t2} -eq 1 ]] ; then
     #create brain sprite images for T1 and T2
     mkdir -p ${ExSummPath}/T1_pngs/
+    chown :fnl_lab ${ExSummPath}/T1_pngs/ || true
+    chmod 770 ${ExSummPath}/T1_pngs/ || true
     mkdir -p ${ExSummPath}/T2_pngs/
+    chown :fnl_lab ${ExSummPath}/T2_pngs/ || true
+    chmod 770 ${ExSummPath}/T2_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
     build_txw_scene_from_template_169 $t2 $rp $lp $rw $lw 2
@@ -302,8 +309,15 @@ elif [[ ${has_t2} -eq 1 ]] ; then
 else
     #create brain sprite images for T1 only
     mkdir -p ${ExSummPath}/T1_pngs/
+    chown :fnl_lab ${ExSummPath}/T1_pngs/ || true
+    chmod 770 ${ExSummPath}/T1_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
+fi
+
+if [[ -e ${t1_2_brain} ]] ; then
+    echo "removing old resampled t1 brain"
+    rm ${t1_2_brain}
 fi
 
 #make figures
@@ -311,6 +325,13 @@ for TASK in `ls -d ${ProcessedFiles}/*task-*` ; do
     fMRIName=`basename ${TASK}`
     echo "Making figures for TASK: ${TASK}"
     rest_img="${ProcessedFiles}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
+    #make t1 isovoxel brain with rest dim
+    if [[ ! -e ${t1_2_brain} ]] ; then
+        flirt -in ${t1_brain} -ref ${rest_img} -applyxfm -out ${t1_2_brain}
+        echo result of flirt is in ${t1_2_brain}
+    else
+        echo failed: ${t1_2_brain} does not exist
+    fi
     slices ${t1_2_brain} ${rest_img} -s 2 -o "${ExSummPath}/${subject_id}_${fMRIName}_in_t1.gif"
     slices ${rest_img} ${t1_2_brain} -s 2 -o "${ExSummPath}/${subject_id}_t1_in_${fMRIName}.gif"
 done
