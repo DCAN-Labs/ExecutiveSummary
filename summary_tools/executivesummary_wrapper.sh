@@ -113,16 +113,20 @@ else
     exit
 fi
 
-# The summary subdirectory must alread exist, since DCANBOLDProc must already have been run.
+# Note: we no longer *insist* that the summary file already exist, because if the subject is 'anatomy-only'
+# there will be no files from DCAN_BOLD_proc. However, if there *are* any task files (including task-rest),
+# this script will look for the .png files in the directory specified. Therefore, this should usually be
+# summary_DCANBOLDProc_v4.0.0. (Checking for existence of the directory specified was silly anyway, because
+# that never did assure that the directory was the right one. Hoping all of this code gets better someday.)
+# For now, if the directory does not exist, create it and hope the caller knows what he is doing.
+
 ExSummPath="${ProcessedFiles}/${ex_summ_dir}/"
 if [ -d ${ExSummPath} ]; then
     echo Path to summary : ${ExSummPath}
 else
-    echo "Summary directory does not exist: ${ExSummPath}" >&2
-    display_help
-    echo "Make sure all required pre-processing has been run." >&2
-    echo "Exiting." >&2
-    exit
+    mkdir -p ${ExSummPath}
+    chown :fnl_lab ${ExSummPath} || true
+    chmod 770 ${ExSummPath} || true
 fi
 
 ############ HELPER FUNCTIONS ##############
@@ -276,8 +280,8 @@ do
     if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
         echo "skipping t2 image"
     else
-        create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
         echo create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
+        create_image_from_template "${ExSummPath}/${image_names[$i]}.png" $scenenum
     fi
 done
 
@@ -293,7 +297,11 @@ elif [[ ! -z ${skip_sprite} ]] ; then
 elif [[ ${has_t2} -eq 1 ]] ; then
     #create brain sprite images for T1 and T2
     mkdir -p ${ExSummPath}/T1_pngs/
+    chown :fnl_lab ${ExSummPath}/T1_pngs/ || true
+    chmod 770 ${ExSummPath}/T1_pngs/ || true
     mkdir -p ${ExSummPath}/T2_pngs/
+    chown :fnl_lab ${ExSummPath}/T2_pngs/ || true
+    chmod 770 ${ExSummPath}/T2_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
     build_txw_scene_from_template_169 $t2 $rp $lp $rw $lw 2
@@ -301,6 +309,8 @@ elif [[ ${has_t2} -eq 1 ]] ; then
 else
     #create brain sprite images for T1 only
     mkdir -p ${ExSummPath}/T1_pngs/
+    chown :fnl_lab ${ExSummPath}/T1_pngs/ || true
+    chmod 770 ${ExSummPath}/T1_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
 fi
