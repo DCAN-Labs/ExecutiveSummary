@@ -95,41 +95,33 @@ def get_paths(subject_code_path, use_ica=False):
 
 def get_subject_info(path_to_nii_file):
 
-    filename = path.basename(path_to_nii_file)
+    mode = None
+    suffix = None
 
-    if filename.endswith('.nii.gz'):
-        filename = filename.strip('.nii.gz')
-    elif filename.endswith('.nii'):
-        filename = filename.strip('.nii')
-    else:
-        print('%s is neither .nii nor nii.gz' % filename)
-        return
+    name = path.basename(path_to_nii_file)
 
-    # TODO: Make more specific (whatever immediately precedes modality)?
-    subject_code_re = re.compile('^\w+_')
-    # TODO: Come up with more flexible matching for task?
-    modality_re = re.compile('(task-\D+\d+)|(T1w)|(T2w)|(FieldMap_Magnitude)|(FieldMap_Phase)|(SpinEchoPhaseEncodePositive)|(SpinEchoPhaseEncodeNegative)|(ReversePhaseEncodeEPI)|(Scout)')
-    series_num_re = re.compile('\d+$')
+    # Special handling for sbrefs.
+    if 'Scout' in filename:
+        suffix = '_sbref'
+        dirname = path.dirname(path_to_nii_file)
+        name = path.basename(dirname)
 
-    re_list = [subject_code_re, modality_re, series_num_re]
-
-    series_info = []
-
-    for regex in re_list:
-        match = regex.search(filename)
-        if match:
-            match = match.group()
-            if '_' in match:
-                match = re.sub('_', '', match)
-            if match == 'Scout':  # Special case for sbref files
-                dirname = path.dirname(path_to_nii_file)
-                epi_type = path.basename(dirname).split('/')[-1]
-                match = epi_type + '_sbref'
-            series_info.append(match)
+    mode_re = re.compile('(task-[^0-9_]+)[0-9_]')
+    match = modality_re.search(name)
+    if match is not None:
+        mode = match.group()
+        series_num_re = re.compile('(\d+)')
+        match = series_num_re.search(name)
+        if match is not None:
+            mode += match.group()
         else:
-            series_info.append('Unknown')
+            mode += '_run-01'
+        if suffix is not None:
+            mode += suffix
+    else:
+        mode = 'Unknown'
 
-    return series_info
+    return mode
 
 def write_csv(data, filepath):
     """
@@ -240,6 +232,36 @@ def submit_command(cmd):
     return output
 
 
+def get_list_of_tasks(path_to_tasks):
+    """
+    Walks through the given directory to find all the directories whose names contain 'task-'
+
+    :param path_to_tasks: directory (the MNINonlinear/Results folder)
+    :return: list of tasks
+    """
+    tasklist=[]
+    for entry in sorted(os.listdir(path_to_tasks)):
+
+        # Only worry about directories.
+        if os.path.isdir(os.path.join(path_to_tasks, entry)):
+
+            # The name may contain other information  and it may or may not
+            # have '_run-' in it. For example:
+            #      ses-TWO_task-rest_run-01
+            #      task-rest01
+            # We want to capture the name of the task (word after 'task-'),
+            # lose anything between that name and the digits, and capture
+            # the digits:
+            task_re = re.compile('task-([^_\d]+)\D*(\d+).*')
+            match = task_re.search(entry)
+
+            if match is not None:
+                # Add this tuple to the list of tasks.
+                tasklist.append(match.group(1,2))
+
+    return tasklist
+
+
 def get_list_of_data(src_folder):
     """
     Walks through the given directory to find all the nifti data, crudely, to fill lists of t1, t2 and epi-data.
@@ -277,17 +299,17 @@ def get_list_of_data(src_folder):
                 modality = data_info[0]
                 print('modality = %s' % modality)
 
-                if 'T1w' in modality or 'T1' == modality:
+                if b'T1w' in modality or b'T1' == modality:
 
                     full_path = path.join(dir_name[0], file)
                     t1_data.append(full_path)
 
-                elif 'T2w' in modality or 'T2' == modality:
+                elif b'T2w' in modality or b'T2' == modality:
 
                     full_path = path.join(dir_name[0], file)
                     t2_data.append(full_path)
 
-                elif 'sbref' or 'rest' or 'MID' or 'nback' or 'SST' in modality:
+                elif b'sbref' or b'task-' in modality:
 
                     full_path = path.join(dir_name[0], file)
                     epi_data.append(full_path)
@@ -394,7 +416,7 @@ def choose_slices_dict(nifti_file_path, subj_code=None, nii_info=None):
     print(nifti_info)
     if b'sbref' in nifti_info[0]:  # grab these first since they may also contain 'rest' in their strings
         slices_dict = sb_ref_slices
-    elif b'rest' or b'MID' or b'SST' or b'nback' in nifti_info[0]:  # then grab all the remaining 'rest' data that do not have 'sbref' in string
+    elif b'task-' in nifti_info[0]:  # then grab all the remaining 'task' data that do not have 'sbref' in string
         slices_dict = raw_rest_slices
     elif b'T2' in nifti_info[0]:
         slices_dict = T2_slices
