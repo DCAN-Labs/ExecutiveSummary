@@ -55,7 +55,7 @@ while true ; do
             shift 1
             ;;
         -a|--atlas)
-            atlas="$1"
+            atlas="$2"
             shift 2
             ;;
         -h|--help)
@@ -82,7 +82,10 @@ else
     echo "End of args"
 fi
 if [[ -z ${atlas} ]]; then
+    echo Using default atlas.
     atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
+else
+    echo Using atlas: $atlas
 fi
 echo
 
