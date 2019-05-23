@@ -1,62 +1,69 @@
 
+SQUARE = './img/square_placeholder_text.png'
+RECTANGLE = './img/rectangular_placeholder_text.png'
+
 IMAGE_INFO = {
     'concat_pre_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCA*.png',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     'concat_post_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCP*.png',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     'atlas_in_t1': {
         'pattern': '*atlas_in_t1*.gif',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     't1_in_atlas': {
         'pattern': '*t1_in_atlas*.gif',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     'task_pre_reg_gray': {
         'pattern': 'DVARS_and_FD*%s*.png',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     'task_post_reg_gray': {
         'pattern': 'postreg_DVARS_and_FD*%s*.png',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     'task_in_t1': {
         'pattern': '*%s*_in_t1*.gif',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
         },
     't1_in_task': {
         'pattern': '*t1_in_*%s*.gif',
         'paths_key': 'summary',
-        'placeholders_key': 'square'
+        'placeholder': SQUARE
+        },
+    'ref': {
+        'pattern': '*%s*_ref.png',
+        'paths_key': 'func',
+        'placeholder': RECTANGLE
         },
     'sbref': {
         'pattern': '*%s*_sbref.nii*',
         'paths_key': 'func',
-        'placeholders_key': 'rectangle'
+        'placeholder': RECTANGLE
         },
     'scout': {
         'pattern': '*%s*/Scout_orig.nii*',
         'paths_key': 'proc',
-        'placeholders_key': 'rectangle'
+        'placeholder': RECTANGLE
         },
     'bold': {
-        'pattern': '*%s*_bold.nii*',
+        'pattern': '*%s*_bold.png',
         'paths_key': 'func',
-        'placeholders_key': 'rectangle'
+        'placeholder': RECTANGLE
         }
     }
-
 
 # HTML constants:
 HTML_START = """
@@ -76,14 +83,15 @@ HTML_START = """
     p{ font-size: 1.0em; }
     body{ font-size: 1.0em; }
     .grid-container { grid-gap: 2px; padding: 2px; }
-    .T1pngs, .T2pngs { display: none; }
+    .T1pngs, .T2pngs, .Registrations { display: none; }
 </style>
 <body>
 """
 
 # Make the html 'title' (what will be seen on the tab, etc.),
 # as well as the page header.
-# Needs the following values: subject, session.
+# Needs the following values:
+#    subject, session.
 TITLE="""
 <title>Executive Summary: %(subject)s %(session)s</title>
 <header> <h2>%(subject)s: %(session)s</h2> </header>
@@ -94,36 +102,159 @@ HTML_END = """
 </html>
 """
 
-# The brainsprite canvas. Put this in the layout where you want the
-# brainsprite to be seen.
-# Needs the following values: width, viewer, spriteImg, mosaic_path.
-SPRITE_VIEWER_HTML = """
-            <div style="max-width: %(width)s; height: auto;">
-               <canvas id="%(viewer)s" style="max-width: %(width)s">
-               <img id="%(spriteImg)s" class="hidden" src="%(mosaic_path)s">
-            </div>
+# Make a section for T1 or T2. This will show the brainsprite
+# viewer, with a label above it to identify T1 v T2, and a
+# button that will open a modal window with a slider for the
+# T1 or T2 pngs.
+# Needs the following values:
+#    tx, brainsprite_label, modal_button, brainsprite_viewer.
+TX_SECTION = """
+<section id="%(tx)s">
+    <div class="w3-container">
+        <div class="w3-cell w3-left">%(brainsprite_label)s</div>
+        <div class="w3-cell w3-right">
+            %(pngs_button)s
+        </div>
+    </div>
+    <div class="w3-container">
+        %(brainsprite_viewer)s
+    </div>
+</section>
+"""
+
+# Make a section for combined gray ordinates and atlas images.
+# Start with the column headings.
+# No values needed.
+ATLAS_SECTION_START = """
+<section id="Atlas">
+    <div class="w3-container">
+        <div class="w3-cell-row">
+            <div class="w3-cell w3-center" style="width:50%"><h6>Resting State Grayordinates Plots</h6></div>
+            <div class="w3-cell w3-center" style="width:50%"><h6></h6></div>
+        </div>
+        <div class="w3-cell-row">
+            <div class="w3-cell w3-center" style="width:25%"><h6>Pre-Regression</h6></div>
+            <div class="w3-cell w3-center" style="width:25%"><h6>Post-Regression</h6></div>
+            <div class="w3-cell w3-center" style="width:25%"><h6>Atlas in T1</h6></div>
+            <div class="w3-cell w3-center" style="width:25%"><h6>T1 in Atlas</h6></div>
+        </div>
+        <div  class="w3-row-padding">
             """
 
-# The loader script to be run when then window loads. Put this
-# with other scripts.
-# Needs the following values: tx, viewer, spriteImg.
-SPRITE_LOAD_SCRIPT = """
-<script>
-   $( window ).load(function() {
-       var brain%(tx)s = brainsprite({
-         canvas: "%(viewer)s",
-         sprite: "%(spriteImg)s",
-         nbSlice: { 'Y':218 , 'Z':218 },
-         flagCoordinates: true,
-       });
-   });
-</script>
+# Add the actual row of images.
+# Needs the following values:
+#    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas, width (usually '100%').
+ATLAS_ROW = """
+            <div class="w3-col s3"><img src="%(pre_reg_gray)s" style="width:%(width)s"></div>
+            <div class="w3-col s3"><img src="%(post_reg_gray)s" style="width:%(width)s"></div>
+            <div class="w3-col s3"><img src="%(atlas_in_t1)s" style="width:%(width)s"></div>
+            <div class="w3-col s3"><img src="%(t1_in_atlas)s" style="width:%(width)s"></div>
+            """
+
+# End the atlas section by closing up the divisions and the section.
+# No values needed.
+ATLAS_SECTION_END = """
+        </div>
+    </div>
+</section>
 """
+
+# Start the tasks section and  put in the column headings for the task-specific data.
+TASKS_SECTION_START = """
+<section id="Tasks">
+    <div class="w3-container">
+        <div  class="w3-row">
+            <div class="w3-col s1 w3-center"><h6>Task</h6></div>
+            <div class="w3-col s2 w3-center"><h6>Pre-Reg Gray Plot</h6></div>
+            <div class="w3-col s2 w3-center"><h6>Post-Reg Gray Plot</h6></div>
+            <div class="w3-col s2 w3-center"><h6>Task in T1</h6></div>
+            <div class="w3-col s2 w3-center"><h6>T1 in Task</h6></div>
+            <div class="w3-col s3 w3-center"><h6>Reference (top) and BOLD (bottom)</h6></div>
+        </div>
+"""
+
+# Lays out a single row of 6 images for a task/run.
+# Needs the following values:
+#    row_label, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold, width (usually '100%').
+TASK_ROW = """
+        <div class="w3-row-padding">
+            <div class="w3-col s1 w3-left">{row_label}</div>
+            <div class="w3-col s2"><img src="{task_pre_reg_gray}" style="width:{width}"></div>
+            <div class="w3-col s2"><img src="{task_post_reg_gray}" style="width:{width}"></div>
+            <div class="w3-col s2"><img src="{task_in_t1}" style="width:{width}"></div>
+            <div class="w3-col s2"><img src="{t1_in_task}" style="width:{width}"></div>
+            <div class="w3-col s3"><img src="{ref}" style="width:{width}; padding: 2px"></div>
+            <br>
+            <div class="w3-col s3"><img src="{bold}" style="width:{width}; padding: 2px"></div>
+        </div>
+        """
+
+# Close up the divisions and section.
+TASKS_SECTION_END = """
+    </div>
+</section>
+"""
+
+
+# MODAL/SLIDER STUFF
+
+# Begin a modal container.
+# Needs the following values:
+#    modal_id
+MODAL_START = """
+    <div id="%(modal_id)s" class="w3-modal">
+        <div class="w3-modal-content">
+            <div class="w3-content w3-display-container">
+            """
+
+# Make a button to display a modal container.
+# Needs the following values:
+#    modal_id, btn_label
+DISPLAY_MODAL_BUTTON = """
+            <button class="w3-btn w3-teal"
+                onclick="document.getElementById('%(modal_id)s').style.display='block'">
+                %(btn_label)s
+            </button>
+            """
+
+# Add the buttons at the end, so that they don't get covered by
+# the images. Every slider needs a left and right button, and
+# the modal window needs a close button.
+# Then, close up the slider elements.
+# Needs the following values:
+#    modal_id, image_class
+MODAL_SLIDER_END = """
+                <button class="w3-button w3-black w3-display-bottomleft w3-xxlarge"
+                    onclick="change_%(image_class)s(-1)"><i class="fas fa-angle-left"></i></button>
+                <button class="w3-button w3-black w3-display-bottomright w3-xxlarge"
+                    onclick="change_%(image_class)s(1)"><i class="fas fa-angle-right"></i></button>
+                <button class="w3-btn w3-red w3-display-topright w3-large"
+                    onclick="document.getElementById('%(modal_id)s').style.display='none'"><i class="fa fa-close"></i></button>
+            </div>
+        </div>
+    </div>
+"""
+
+# Add an image in a container with its filename displayed in
+# the upper left corner. The class for the filename is 'black'
+# so that the text will be white and show up against the
+# fMRI image without being too obtrusive.
+# The HTML assigns the division a class so that scripts (e.g.,
+# SLIDER_SCRIPTS) can find specific images by class.
+# Needs the following values:
+#    image_class, image_file, image_name, width (usually '100%').
+IMAGE_WITH_NAME = """
+                <div class="w3-display-container %(image_class)s">
+                    <img src="%(image_file)s" style="width:%(width)s">
+                    <div class="w3-display-topleft w3-black"><p>%(image_name)s</p></div>
+                </div>
+                """
 
 # The slider script that will show the next or previous image
 # in a given class.
 # TODO: someday, try hiding n and then showing += n!
-# Needs the following values: image_class.
+# Needs the following values:
+#    image_class.
 SLIDER_SCRIPTS = """
 <script>
     var %(image_class)sIdx = 1;
@@ -146,64 +277,41 @@ SLIDER_SCRIPTS = """
 </script>
 """
 
-# Make a section for T1 or T2. This will show the brainsprite
-# viewer, with a label above it to identify T1 v T2, and a
-# button that will open a modal window with a slider for the
-# T1 or T2 pngs.
-# Needs the following values: tx, brainsprite_label, modal_button, brainsprite_viewer.
-TX_SECTION = """
-<section id="%(tx)s">
-    <div class="w3-container">
-        <div class="w3-cell w3-left">%(brainsprite_label)s</div>
-        <div class="w3-cell w3-right">%(modal_button)s</div>
-    </div>
-    <div class="w3-container">
-        %(brainsprite_viewer)s
-    </div>
-</section>
-"""
+# BRAINSPRITE STUFF
 
-# Add the buttons at the end, so that they don't get covered by
-# the images. Every slider needs a left and right button, and
-# the modal window needs a close button.
-# Then, close up the slider elements.
-# Needs the following values: modal_id, image_class
-MODAL_SLIDER_END = """
-                <button class="w3-button w3-black w3-display-bottomleft w3-xxlarge"
-                    onclick="change_%(image_class)s(-1)"><i class="fas fa-angle-left"></i></button>
-                <button class="w3-button w3-black w3-display-bottomright w3-xxlarge"
-                    onclick="change_%(image_class)s(1)"><i class="fas fa-angle-right"></i></button>
-                <button class="w3-btn w3-red w3-display-topright w3-large"
-                    onclick="document.getElementById('%(modal_id)s').style.display='none'"><i class="fa fa-close"></i></button>
-            </div>
+# The brainsprite canvas. Put this in the layout where you want the
+# brainsprite to be seen.
+# Needs the following values:
+#    width, viewer, spriteImg, mosaic_path.
+SPRITE_VIEWER_HTML = """
+        <div style="max-width: %(width)s; height: auto;">
+           <canvas id="%(viewer)s" style="max-width: %(width)s">
+           <img id="%(spriteImg)s" class="hidden" src="%(mosaic_path)s">
         </div>
-    </div>
+        """
+
+# The loader script to be run when then window loads. Put this
+# with other scripts.
+# Needs the following values:
+#    tx, viewer, spriteImg.
+SPRITE_LOAD_SCRIPT = """
+<script>
+   $( window ).load(function() {
+       var brain%(tx)s = brainsprite({
+         canvas: "%(viewer)s",
+         sprite: "%(spriteImg)s",
+         nbSlice: { 'Y':218 , 'Z':218 },
+         flagCoordinates: true,
+       });
+   });
+</script>
 """
 
-# Open a w3 container and put in the column headings for the task-specific data.
-TASKS_HEADER = """
-<section id="Tasks">
-    <div class="w3-container">
-        <div  class="w3-row">
-            <div class="w3-col s1 w3-center"><h6>Task</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Pre-Reg Gray Plot</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Post-Reg Gray Plot</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Task in T1</h6></div>
-            <div class="w3-col s2 w3-center"><h6>T1 in Task</h6></div>
-            <div class="w3-col s3 w3-center"><h6>Reference (top) and BOLD (bottom)</h6></div>
-        </div>
-"""
-
-# Close up the tasks container.
-TASKS_END = """
-    </div>
-</section>"""
-
-
-# The rest of this is for brainsprite. Since brainsprite is not supported,
-# and since this is working, leave as is!
+# The rest of this is scripts for brainsprite. Since brainsprite is no
+# longer supported, and since this is working, leave as is!
 # This contant is only needed once (thank goodness) and does not need
-# any values inserted.
+# any values inserted. Just include it in the HTML whereever you have
+# your scripts.
 BRAINSPRITE_SCRIPTS = """
 <script>
 function brainsprite(params) {

@@ -15,6 +15,10 @@ import shutil
 import subprocess
 from layout_builder import layout_builder
 from datetime import datetime
+from helpers import find_and_copy_file
+from PIL import Image                      # for BrainSprite
+from re import split
+from math import sqrt
 
 
 def generate_parser():
@@ -134,6 +138,7 @@ def init_summary(proc_files, summary_dir):
 
     summary_path = None
     html_path = None
+    images_path = None
 
     summary_path = os.path.join(proc_files, summary_dir)
     if os.path.isdir(summary_path):
@@ -141,22 +146,100 @@ def init_summary(proc_files, summary_dir):
         # This also ensures we can write to the path.
         html_path = os.path.join(summary_path, 'executivesummary')
 
-        if path.exists(html_path):
-            shutil.rmtree(html_path, ignore_errors=True)
+        if not path.exists(html_path):
+            try:
+                os.makedirs(html_path)
 
-        try:
-            os.makedirs(html_path)
-
-        except OSError as err:
-            print('cannot make executivesummary folder within path... permissions? \nPath: %s' % summary_path)
-            print('OSError: %s' % err)
-            summary_path = None
-            html_path = None
+            except OSError as err:
+                print('cannot make executivesummary folder within path... permissions? \nPath: %s' % summary_path)
+                print('OSError: %s' % err)
+                summary_path = None
+                html_path = None
     else:
-        print('Directory does not exist: %s' % summary_dir)
+        print('Directory does not exist: %s' % summary_path)
         summary_path = None
 
-    return summary_path, html_path
+    if html_path is not None:
+
+        images_path = os.path.join(html_path, 'img')
+
+        if not path.exists(images_path):
+            try:
+                os.makedirs(images_path)
+            except OSError as err:
+                print('cannot make img folder within path... permissions? \nPath: %s' % html_path)
+                print('OSError: %s' % err)
+                summary_path = None
+                html_path = None
+                images_path = None
+
+        # TODO: do this in the script!
+        # Copy the placeholders to be used if we cannot find a file.
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+        placeholder_dir = os.path.join(program_dir, 'placeholder_pictures')
+        square = find_and_copy_file(placeholder_dir, 'square_placeholder_text.png', images_path)
+        rectangle = find_and_copy_file(placeholder_dir, 'rectangular_placeholder_text.png', images_path)
+
+    return summary_path, html_path, images_path
+
+
+def make_mosaic(png_path, mosaic_path):
+    # Takes path to .png anatomical slices, creates a mosaic that can be
+    # used in a BrainSprite viewer, and saves to a specified filename.
+
+    # Get the cwd so we can get back; then change directory.
+    cwd = os.getcwd()
+    os.chdir(png_path)
+
+    # Need this function so frames sort in correct order.
+    def natural_sort(l):
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [ convert(c) for c in split('([0-9]+)', key) ]
+        return sorted(l, key = alphanum_key)
+
+    files = os.listdir(png_path)
+    files = natural_sort(files)
+    files = files[::-1]
+
+    image_dim = 218
+    images_per_side = int(sqrt(len(files)))
+    square_dim = image_dim * images_per_side
+    result = Image.new("RGB", (square_dim, square_dim))
+
+    for index, file in enumerate(files):
+        path = os.path.expanduser(file)
+        img = Image.open(path)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
+        x = index % images_per_side * image_dim
+        y = index // images_per_side * image_dim
+        w, h = img.size
+        result.paste(img, (x, y, x + w, y + h))
+
+    # Back to original working dir.
+    os.chdir(cwd)
+
+    quality_val = 95
+    dest = os.path.join(mosaic_path)
+    result.save(dest, 'JPEG', quality=quality_val)
+
+    print('KJS: Finished make_mosaic')
+
+
+def preprocess_tx (tx, files_path, images_path):
+    # If there are pngs for tx, make the mosaic file for the brainsprite.
+    # If not, no problem. Layout will use the mosaic if it is there.
+    pngs = tx + '_pngs'
+    pngs_dir = os.path.join(files_path, pngs)
+
+    if os.path.isdir(pngs_dir):
+        # Call the program to make the mosaic from the pngs. and write
+        mosaic = tx + '_mosaic.jpg'
+        mosaic_path = os.path.join(images_path, mosaic)
+        make_mosaic(pngs_dir, mosaic_path)
+    else:
+        print('There is no path: %s.' % pngs_dir)
 
 
 def _cli():
@@ -221,6 +304,10 @@ def _cli():
             session_id = 'ses-' + session_label
             proc_files, func_files = init_session(sub_out, sub_in, session_id)
 
+            print('KJS: proc and func files for this sub/ses:')
+            print('KJS: \t%s' % proc_files)
+            print('KJS: \t%s' % func_files)
+
             # We must have a valid output directory in order to
             # process the subject/session.
             if proc_files is None:
@@ -232,41 +319,59 @@ def _cli():
 
             # Most of the data is in the summary directory. Also, it is
             # where the layout_builder will write the html.
-            summary_path, html_path = init_summary(proc_files, args.summary_dir)
+            summary_path, html_path, images_path = init_summary(proc_files, args.summary_dir)
             if summary_path is None:
                 print('Skipping %s, %s' % (subject_id, session_id))
                 continue
+
 
             # All of the args for this subject/session pass muster. Call the interface.
             kwargs = {
                 'files_path'   : proc_files,
                 'summary_path' : summary_path,
                 'html_path'    : html_path,
-                'subject_id'   : subject_id,
-                'session_id'   : session_id,
+                'images_path'  : images_path,
+                'subject_label': subject_label,
+                'session_label': session_label,
                 'bids_path'    : func_files,
                 'layout_only'  : args.layout_only
                 }
 
     return interface(**kwargs)
 
-def interface(files_path, summary_path, html_path, subject_id, session_id, bids_path=None, layout_only=False):
+def interface(files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None, layout_only=False):
 
     if not layout_only:
-        # TODO: will eventually call the preprocessing step from inside the interface so there is only ONE ExecSumm app.
-        wrapper_cmd = 'executivesummary_wrapper.sh files_path=%s summary_path=%s subject_id=%s session_id=%s bids_path=%s'
-        print ('KJS: would now call wrapper with cmd:\n\t%s' % wrapper_cmd)
+        print ('KJS: Skipping 169 stuff!')
+        preproc_cmd = './executivesummary_preproc.sh -x '
+        preproc_cmd += '--bids-input %s ' % bids_path
+        preproc_cmd += '--output-dir %s ' % files_path
+        preproc_cmd += '--dcan-summary %s ' % summary_path
+        preproc_cmd += '--subject-id %s ' % subject_label
+
+        # TODO: test this when on Exacloud (with or without -x).
+        print ('KJS: WOULD call preproc with command:\n\t%s' % preproc_cmd)
+        #subprocess.call(preproc_cmd, shell=True)
+
+        # Theoretically, *all* of the files for the layout should be ready to go. So....
+        # TODO: Eventually, copy all of the ES files to one place and send THAT directory in?
+
+        # Make mosaic(s) for brainsprite(s).
+        preprocess_tx('T1', summary_path, images_path)
+        preprocess_tx('T2', summary_path, images_path)
+
+    # Done with preproc. Call the page layout to make the page.
 
     kwargs = {
-        'files_path'   : files_path,
-        'summary_path' : summary_path,
-        'html_path'    : html_path,
-        'subject_id'   : subject_id,
-        'session_id'   : session_id,
-        'bids_path'    : bids_path
+        'files_path'    : files_path,
+        'summary_path'  : summary_path,
+        'html_path'     : html_path,
+        'images_path'   : images_path,
+        'subject_label' : subject_label,
+        'session_label' : session_label,
+        'bids_path'     : bids_path
         }
 
-    #layout_builder.interface(**kwargs)
     layout_builder(**kwargs)
 
 if __name__ == '__main__':
