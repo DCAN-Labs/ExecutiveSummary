@@ -64,6 +64,12 @@ def generate_parser():
             'Default: summary_DCANBOLDProc_v4.0.0'
             )
     parser.add_argument(
+            '--atlas', '-a', dest='atlas',
+            metavar='ATLAS_PATH',
+            help='Optional. Expects the path to the atlas to register to the images. '
+            'Default: templates/MNI_T1_1mm_brain.nii.gz. '
+            )
+    parser.add_argument(
             '--layout-only', dest='layout_only', action='store_true',
             help='Can be specified for subjects that have been run through the '
             'executivesummary preprocessor, so the image data is ready. This '
@@ -87,18 +93,20 @@ def get_id_list(root_dir, prefix):
     return idlist
 
 def init_subject(output_dir, bids_dir, subject_id):
+
+    sub_in = None
+
     # Get the path to the subject's output.
     sub_out = os.path.join(output_dir, subject_id)
     if not os.path.isdir(sub_out):
         print('Directory does not exist: %s' % sub_out)
         return None, None
 
-    # Get the path to the subject's input.
-    if bids_dir is None:
-        sub_in = None
-    else:
+    # Possibly, get a path to the subject's input.
+    if bids_dir is not None:
         sub_in = os.path.join(bids_dir, subject_id)
         if not os.path.isdir(sub_in):
+            print('Directory does not exist: %s' % sub_in)
             sub_in = None
 
     return sub_out, sub_in
@@ -116,7 +124,7 @@ def init_session(sub_out, sub_in, session_id):
         print('Directory does not exist: %s' % proc_files)
         return None, None
 
-    # Get the path to the session's input.
+    # Possibly, get a path to the session's input.
     if sub_in is not None:
         # Some subjects have their bids input directly under
         # the subject's dir.
@@ -125,12 +133,11 @@ def init_session(sub_out, sub_in, session_id):
             ses_in = os.path.join(sub_in, session_id)
             func_files = os.path.join(ses_in, 'func')
             if not os.path.isdir(func_files):
+                print('Directory does not exist: %s' % func_files)
                 func_files = None
+            else:
+                print('Raw BIDS task data will be found in path:\n\t %s' % func_files)
 
-    if func_files is None:
-        print('\nPath to raw BIDS task data does not exist.\n\tPath: %s\nExiting....\n' % func_files)
-    else:
-        print('\nRaw BIDS task data will be found in path:\n\t%s' % func_files)
 
     return proc_files, func_files
 
@@ -224,9 +231,6 @@ def make_mosaic(png_path, mosaic_path):
     dest = os.path.join(mosaic_path)
     result.save(dest, 'JPEG', quality=quality_val)
 
-    print('KJS: Finished make_mosaic')
-
-
 def preprocess_tx (tx, files_path, images_path):
     # If there are pngs for tx, make the mosaic file for the brainsprite.
     # If not, no problem. Layout will use the mosaic if it is there.
@@ -260,6 +264,7 @@ def _cli():
     print('\tSubject list:          %s' % args.subject_list)
     print('\tSession list:          %s' % args.session_list)
     print('\tSummary directory:     %s' % args.summary_dir)
+    print('\tAtlas:                 %s' % args.atlas)
 
     # output_dir is required, and the parser would have squawked if there was
     # not a value for output_dir. Just make sure it's a real directory.
@@ -270,6 +275,10 @@ def _cli():
     # just make sure it's a real directory.
     if args.bids_dir is not None:
         assert os.path.isdir(args.bids_dir), args.bids_dir + ' is not a directory!'
+
+    # If the user specified an atlas, make sure it exists.
+    if args.atlas is not None:
+        assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
 
     # Find all entries under args.output_dir.
     subjects = get_id_list(args.output_dir, 'sub-')
@@ -290,7 +299,9 @@ def _cli():
         if sub_out is None:
             print('Skipping %s.' % (subject_id))
             continue
-
+        if args.bids_dir is not None and sub_in is None:
+            print('Skipping %s.' % (subject_id))
+            continue
 
         # Find all sessions under subdir.
         sessions = get_id_list(sub_out, 'ses-')
@@ -304,17 +315,13 @@ def _cli():
             session_id = 'ses-' + session_label
             proc_files, func_files = init_session(sub_out, sub_in, session_id)
 
-            print('KJS: proc and func files for this sub/ses:')
-            print('KJS: \t%s' % proc_files)
-            print('KJS: \t%s' % func_files)
-
             # We must have a valid output directory in order to
             # process the subject/session.
             if proc_files is None:
                 print('Skipping %s, %s' % (subject_id, session_id))
                 continue
 
-            if func_files is None:
+            if args.bids_dir is not None and func_files is None:
                 print('No raw data will be shown for %s, %s' % (subject_id, session_id))
 
             # Most of the data is in the summary directory. Also, it is
@@ -334,27 +341,25 @@ def _cli():
                 'subject_label': subject_label,
                 'session_label': session_label,
                 'bids_path'    : func_files,
+                'atlas'        : args.atlas,
                 'layout_only'  : args.layout_only
                 }
 
             return interface(**kwargs)
 
-def interface(files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None, layout_only=False):
+def interface(files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None, atlas=None, layout_only=False):
 
     if not layout_only:
-        print ('KJS: Skipping 169 stuff!')
-        preproc_cmd = './executivesummary_preproc.sh -x '
-        preproc_cmd += '--bids-input %s ' % bids_path
+        preproc_cmd = './executivesummary_preproc.sh '
         preproc_cmd += '--output-dir %s ' % files_path
         preproc_cmd += '--dcan-summary %s ' % summary_path
         preproc_cmd += '--subject-id %s ' % subject_label
+        if bids_path is not None:
+            preproc_cmd += '--bids-input %s ' % bids_path
+        if atlas is not None:
+            preproc_cmd += '--atlas %s ' % atlas
 
-        # TODO: test this when on Exacloud (with or without -x).
-        print ('KJS: WOULD call preproc with command:\n\t%s' % preproc_cmd)
-        #subprocess.call(preproc_cmd, shell=True)
-
-        # Theoretically, *all* of the files for the layout should be ready to go. So....
-        # TODO: Eventually, copy all of the ES files to one place and send THAT directory in?
+        subprocess.call(preproc_cmd, shell=True)
 
         # Make mosaic(s) for brainsprite(s).
         preprocess_tx('T1', summary_path, images_path)

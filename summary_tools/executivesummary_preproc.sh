@@ -82,17 +82,11 @@ else
 fi
 echo
 
+source ./SetupEnv.sh
+
 ### SET UP ENVIRONMENT VARIABLES ###
 # . `dirname $0`"/setup_env.sh"
-if [ ! -z "${CARET7DIR}" ] ; then
-    export wb_command=${CARET7DIR}/wb_command
-fi
-
-# TODO: lose this?
-#if [ -z "${FSLDIR}" ] ; then
-    FSLDIR='/usr/lib/fsl/5.0'
-    FSL_DIR=${FSLDIR}
-#fi
+export wb_command=${CARET7DIR}/wb_command
 
 #matlab_template=`dirname $0`"/template_FNL_preproc_Matlab.m"
 
@@ -132,6 +126,14 @@ mkdir -p ${images_path}
 
 chown -R :fnl_lab ${exsum_path} || true
 chmod -R 770 ${exsum_path} || true
+
+
+if ! [ -d ${images_path} ] ; then
+    echo Unable to write ${images_path}. Permissions?
+    echo Exiting.
+    exit 1
+fi
+
 
 ############ HELPER FUNCTIONS ##############
 
@@ -205,8 +207,8 @@ chmod -R 770 ${exsum_path} || true
         scenenum=$2
         temp_scene=${processed_files}/image_template_temp.scene
         echo "Calling wb_command as follows:"
-        echo "      ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800 > /dev/null 2>&1"
-        ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800 > /dev/null 2>&1
+        echo "      ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800"
+        ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800
 
     }
 
@@ -230,6 +232,129 @@ chmod -R 770 ${exsum_path} || true
 
 
 ################## BEGIN #########################
+
+segBrain="wmparc.2.nii.gz"
+segBrainDir="${processed_files}/MNINonLinear/ROIs"
+wm_mask_L="L_wm_2mm_${subject_id}_mask.nii.gz"
+wm_mask_R="R_wm_2mm_${subject_id}_mask.nii.gz"
+wm_mask="wm_2mm_${subject_id}_mask.nii.gz"
+wm_mask_eroded="wm_2mm_${subject_id}_mask_erode.nii.gz"
+vent_mask_L="L_vent_2mm_${subject_id}_mask.nii.gz"
+vent_mask_R="R_vent_2mm_${subject_id}_mask.nii.gz"
+vent_mask="vent_2mm_${subject_id}_mask.nii.gz"
+vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
+
+echo
+echo "START: executive summary image preprocessing"
+
+#Should we use $FSLDIR/data/standard instead of ./templates??
+t1_mask="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
+if [[ ! -e ${atlas} ]] ; then
+    echo "Missing ${atlas}"
+    echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
+else
+    slices ${t1_mask} ${atlas} -o "${images_path}/${subject_id}_atlas_in_t1.gif"
+    slices ${atlas} ${t1_mask} -o "${images_path}/${subject_id}_t1_in_atlas.gif"
+fi
+
+# From here on, use the whole T1 file rather than the mask (used above).
+t1="${processed_files}/MNINonLinear/T1w_restore.nii.gz"
+t2="${processed_files}/MNINonLinear/T2w_restore.nii.gz"
+has_t2=1
+if [[ ! -e ${t2} ]] ; then
+    echo "t2 not found; using t1"
+    has_t2=0
+    t2="${t1}"
+fi
+
+rw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.white.32k_fs_LR.surf.gii"
+rp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.pial.32k_fs_LR.surf.gii"
+lw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
+lp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
+t1_brain="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
+t2_brain="${processed_files}/MNINonLinear/T2w_restore_brain.nii.gz"
+t1_2_brain="${processed_files}/MNINonLinear/T1w_restore_brain.2.nii.gz"
+t2_2_brain="${processed_files}/MNINonLinear/T2w_restore_brain.2.nii.gz"
+
+#create summary images
+build_scene_from_template $t2 $t1 $rp $lp $rw $lw
+declare -a image_names=('T1-Axial-InferiorTemporal-Cerebellum' 'T2-Axial-InferiorTemporal-Cerebellum' 'T1-Axial-BasalGangila-Putamen' 'T2-Axial-BasalGangila-Putamen' 'T1-Axial-SuperiorFrontal' 'T2-Axial-SuperiorFrontal' 'T1-Coronal-PosteriorParietal-Lingual' 'T2-Coronal-PosteriorParietal-Lingual' 'T1-Coronal-Caudate-Amygdala' 'T2-Coronal-Caudate-Amygdala' 'T1-Coronal-OrbitoFrontal' 'T2-Coronal-OrbitoFrontal' 'T1-Sagittal-Insula-FrontoTemporal' 'T2-Sagittal-Insula-FrontoTemporal' 'T1-Sagittal-CorpusCallosum' 'T2-Sagittal-CorpusCallosum' 'T1-Sagittal-Insula-Temporal-HippocampalSulcus' 'T2-Sagittal-Insula-Temporal-HippocampalSulcus')
+((num_wb_scenes=${#image_names[@]}-1))
+
+for i in `seq 0 ${num_wb_scenes}`;
+do
+    ((scenenum=(i+1)))
+
+    if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
+        echo "skipping t2 image"
+    else
+        echo create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
+        create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
+    fi
+done
+
+rm -rf ${processed_files}/image_template_temp.scene
+
+# Cannot do brain sprite processing if there is no template
+if [[ ! -z ${skip_sprite} ]] ; then
+    #skip brain sprite processing.
+    echo Skipping brain sprite processing per user request.
+elif [[ ! -e `dirname $0`/templates/parasagittal_Tx_169_template.scene ]] ; then
+    echo Missing `dirname $0`/templates/parasagittal_Tx_169_template.scene
+    echo Cannot perform processing needed for brainsprite.
+elif [[ ${has_t2} -eq 1 ]] ; then
+    #create brain sprite images for T1 and T2
+    mkdir -p ${dcan_summary}/T1_pngs/
+    chown :fnl_lab ${dcan_summary}/T1_pngs/ || true
+    chmod 770 ${dcan_summary}/T1_pngs/ || true
+    mkdir -p ${dcan_summary}/T2_pngs/
+    chown :fnl_lab ${dcan_summary}/T2_pngs/ || true
+    chmod 770 ${dcan_summary}/T2_pngs/ || true
+    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
+    create_image_from_template_169 1
+    build_txw_scene_from_template_169 $t2 $rp $lp $rw $lw 2
+    create_image_from_template_169 2
+else
+    #create brain sprite images for T1 only
+    mkdir -p ${dcan_summary}/T1_pngs/
+    chown :fnl_lab ${dcan_summary}/T1_pngs/ || true
+    chmod 770 ${dcan_summary}/T1_pngs/ || true
+    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
+    create_image_from_template_169 1
+fi
+
+if [[ -e ${t1_2_brain} ]] ; then
+    echo "removing old resampled t1 brain"
+    rm ${t1_2_brain}
+fi
+if [[ -e ${t2_2_brain} ]] ; then
+    echo "removing old resampled t2 brain"
+    rm ${t2_2_brain}
+fi
+
+# Make T1w and T2w task images.
+for TASK in `ls -d ${processed_files}/*task-*` ; do
+    fMRIName=`basename ${TASK}`
+    echo "Making figures for TASK: ${TASK}"
+    task_img="${processed_files}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
+    # Use the first task image to make the resampled brain.
+    if [[ ! -e ${t1_2_brain} ]] ; then
+        flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
+        echo result of flirt is in ${t1_2_brain}
+    else
+        echo ${t1_2_brain} exists
+    fi
+    if [[ ! -e ${t2_2_brain} ]] ; then
+        flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
+        echo result of flirt is in ${t2_2_brain}
+    else
+        echo ${t2_2_brain} exists
+    fi
+    slices ${t1_2_brain} ${task_img} -s 2 -o "${dcan_summary}/${subject_id}_${fMRIName}_in_t1.gif"
+    slices ${task_img} ${t1_2_brain} -s 2 -o "${dcan_summary}/${subject_id}_t1_in_${fMRIName}.gif"
+    slices ${t2_2_brain} ${task_img} -s 2 -o "${dcan_summary}/${subject_id}_${fMRIName}_in_t2.gif"
+    slices ${task_img} ${t2_2_brain} -s 2 -o "${dcan_summary}/${subject_id}_t2_in_${fMRIName}.gif"
+done
 
 # If the bids-input was supplied and there are func files, slice
 # the bold and sbrefs into pngs so we can display them.
@@ -268,115 +393,6 @@ if [ ! -z "${bids_input}" ] && [ -d ${bids_input} ] ; then
 
 fi
 shopt -u nullglob
-
-segBrain="wmparc.2.nii.gz"
-segBrainDir="${processed_files}/MNINonLinear/ROIs"
-wm_mask_L="L_wm_2mm_${subject_id}_mask.nii.gz"
-wm_mask_R="R_wm_2mm_${subject_id}_mask.nii.gz"
-wm_mask="wm_2mm_${subject_id}_mask.nii.gz"
-wm_mask_eroded="wm_2mm_${subject_id}_mask_erode.nii.gz"
-vent_mask_L="L_vent_2mm_${subject_id}_mask.nii.gz"
-vent_mask_R="R_vent_2mm_${subject_id}_mask.nii.gz"
-vent_mask="vent_2mm_${subject_id}_mask.nii.gz"
-vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
-
-echo
-echo "START: executive summary"
-
-#Should we use $FSLDIR/data/standard instead of ./templates??
-t1_mask="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
-if [[ ! -e ${atlas} ]] ; then
-    echo "Missing ${atlas}"
-    echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
-else
-    slices ${t1_mask} ${atlas} -o "${images_path}/${subject_id}_atlas_in_t1.gif"
-    slices ${atlas} ${t1_mask} -o "${images_path}/${subject_id}_t1_in_atlas.gif"
-fi
-
-# From here on, use the whole T1 file rather than the mask (used above).
-t1="${processed_files}/MNINonLinear/T1w_restore.nii.gz"
-t2="${processed_files}/MNINonLinear/T2w_restore.nii.gz"
-has_t2=1
-if [[ ! -e ${t2} ]] ; then
-    echo "t2 not found; using t1"
-    has_t2=0
-    t2="${t1}"
-fi
-
-rw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.white.32k_fs_LR.surf.gii"
-rp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.pial.32k_fs_LR.surf.gii"
-lw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
-lp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
-t1_brain="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
-t1_2_brain="${processed_files}/MNINonLinear/T1w_restore_brain.2.nii.gz"
-
-#create summary images
-build_scene_from_template $t2 $t1 $rp $lp $rw $lw
-declare -a image_names=('T1-Axial-InferiorTemporal-Cerebellum' 'T2-Axial-InferiorTemporal-Cerebellum' 'T1-Axial-BasalGangila-Putamen' 'T2-Axial-BasalGangila-Putamen' 'T1-Axial-SuperiorFrontal' 'T2-Axial-SuperiorFrontal' 'T1-Coronal-PosteriorParietal-Lingual' 'T2-Coronal-PosteriorParietal-Lingual' 'T1-Coronal-Caudate-Amygdala' 'T2-Coronal-Caudate-Amygdala' 'T1-Coronal-OrbitoFrontal' 'T2-Coronal-OrbitoFrontal' 'T1-Sagittal-Insula-FrontoTemporal' 'T2-Sagittal-Insula-FrontoTemporal' 'T1-Sagittal-CorpusCallosum' 'T2-Sagittal-CorpusCallosum' 'T1-Sagittal-Insula-Temporal-HippocampalSulcus' 'T2-Sagittal-Insula-Temporal-HippocampalSulcus')
-((num_wb_scenes=${#image_names[@]}-1))
-
-for i in `seq 0 ${num_wb_scenes}`;
-do
-    ((scenenum=(i+1)))
-
-    if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
-        echo "skipping t2 image"
-    else
-        echo create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
-        create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
-    fi
-done
-
-rm -rf ${processed_files}/image_template_temp.scene
-
-# Cannot do brain sprite processing if there is no template
-if [[ ! -z ${skip_sprite} ]] ; then
-    #skip brain sprite processing.
-    echo Skipping brain sprite processing per user request.
-elif [[ ! -e `dirname $0`/templates/parasagittal_Tx_169_template.scene ]] ; then
-    echo Missing `dirname $0`/templates/parasagittal_Tx_169_template.scene
-    echo Cannot perform processing needed for brainsprite.
-elif [[ ${has_t2} -eq 1 ]] ; then
-    #create brain sprite images for T1 and T2
-    mkdir -p ${decan_summary}/T1_pngs/
-    chown :fnl_lab ${decan_summary}/T1_pngs/ || true
-    chmod 770 ${decan_summary}/T1_pngs/ || true
-    mkdir -p ${decan_summary}/T2_pngs/
-    chown :fnl_lab ${decan_summary}/T2_pngs/ || true
-    chmod 770 ${decan_summary}/T2_pngs/ || true
-    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
-    create_image_from_template_169 1
-    build_txw_scene_from_template_169 $t2 $rp $lp $rw $lw 2
-    create_image_from_template_169 2
-else
-    #create brain sprite images for T1 only
-    mkdir -p ${decan_summary}/T1_pngs/
-    chown :fnl_lab ${decan_summary}/T1_pngs/ || true
-    chmod 770 ${decan_summary}/T1_pngs/ || true
-    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
-    create_image_from_template_169 1
-fi
-
-if [[ -e ${t1_2_brain} ]] ; then
-    echo "removing old resampled t1 brain"
-    rm ${t1_2_brain}
-fi
-
-#make figures
-for TASK in `ls -d ${processed_files}/*task-*` ; do
-    fMRIName=`basename ${TASK}`
-    echo "Making figures for TASK: ${TASK}"
-    rest_img="${processed_files}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
-    #make t1 isovoxel brain with rest dim
-    if [[ ! -e ${t1_2_brain} ]] ; then
-        flirt -in ${t1_brain} -ref ${rest_img} -applyxfm -out ${t1_2_brain}
-        echo result of flirt is in ${t1_2_brain}
-    else
-        echo failed: ${t1_2_brain} does not exist
-    fi
-    slices ${t1_2_brain} ${rest_img} -s 2 -o "${decan_summary}/${subject_id}_${fMRIName}_in_t1.gif"
-    slices ${rest_img} ${t1_2_brain} -s 2 -o "${decan_summary}/${subject_id}_t1_in_${fMRIName}.gif"
-done
 
 
 echo "DONE: executive summary prep"
