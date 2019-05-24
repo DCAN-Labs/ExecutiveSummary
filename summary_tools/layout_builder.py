@@ -40,6 +40,12 @@ class ModalSlider(object):
         self.slider_scripts = ''
         self.modal_container = ''
 
+    def get_id(self):
+        return self.modal_id
+
+    def get_image_class(self):
+        return self.image_class
+
     def get_button(self):
         # Return the HTML that creates the button.
         return self.button
@@ -203,7 +209,7 @@ class AtlasSection(Section):
 
         # Super simple section: just one row of images.
         atlas_data = {}
-        atlas_data['width'] = '100%'
+        atlas_data['modal_id'] = regs_slider.get_id()
 
         for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
             values = IMAGE_INFO[key]
@@ -238,7 +244,7 @@ class TasksSection(Section):
 
         task_data = {}
         task_data['row_label'] = 'task-%s run-%s' % (task_name, task_num)
-        task_data['width'] = '100%'
+        task_data['modal_id'] = self.regs_slider.get_id()
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.

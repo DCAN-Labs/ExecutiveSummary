@@ -5,52 +5,42 @@ RECTANGLE = './img/rectangular_placeholder_text.png'
 IMAGE_INFO = {
     'concat_pre_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCA*.png',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'concat_post_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCP*.png',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'atlas_in_t1': {
         'pattern': '*atlas_in_t1*.gif',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     't1_in_atlas': {
         'pattern': '*t1_in_atlas*.gif',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'task_pre_reg_gray': {
         'pattern': 'DVARS_and_FD*%s*.png',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'task_post_reg_gray': {
         'pattern': 'postreg_DVARS_and_FD*%s*.png',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'task_in_t1': {
         'pattern': '*%s*_in_t1*.gif',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     't1_in_task': {
         'pattern': '*t1_in_*%s*.gif',
-        'paths_key': 'summary',
         'placeholder': SQUARE
         },
     'ref': {
         'pattern': '*%s*_ref.png',
-        'paths_key': 'func',
         'placeholder': RECTANGLE
         },
     'bold': {
         'pattern': '*%s*_bold.png',
-        'paths_key': 'func',
         'placeholder': RECTANGLE
         }
     }
@@ -65,13 +55,19 @@ HTML_START = """
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
 <style type="text/css">
     header, footer, section, article, nav, aside { display: block; }
-    h1, h2, h3, h4, body, button, p { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif; }
+    h1, h2, h3, h4, body, button, p, w3-btn { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif; }
     h1 { text-align: center; font-size: 2.5em; }
     h2{ text-align: center; font-size: 2.00em; }
     h3{ text-align: left; font-size: 1.75em; }
     h4{ text-align: left; font-size: 1.25em; }
     p{ font-size: 1.0em; }
     body{ font-size: 1.0em; }
+    img{ width: 100%; padding: 2px; }
+    .label1, .label2, .label3 { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif }
+    .label1 { font-size: 1.25em; text-align: center; }
+    .label2 { font-size: 1.00em; text-align: center; }
+    .label3 { font-size: 1.25em; text-align: left; }
+    .label4 { font-size: 1.25em; text-align: right; }
     .grid-container { grid-gap: 2px; padding: 2px; }
     .T1pngs, .T2pngs, .Registrations { display: none; }
 </style>
@@ -101,7 +97,7 @@ HTML_END = """
 TX_SECTION = """
 <section id="%(tx)s">
     <div class="w3-container">
-        <div class="w3-cell w3-left">%(brainsprite_label)s</div>
+        <div class="w3-cell w3-left label3">%(brainsprite_label)s</div>
         <div class="w3-cell w3-right">
             %(pngs_button)s
         </div>
@@ -118,27 +114,27 @@ TX_SECTION = """
 ATLAS_SECTION_START = """
 <section id="Atlas">
     <div class="w3-container">
-        <div class="w3-cell-row">
-            <div class="w3-cell w3-center" style="width:50%"><h6>Resting State Grayordinates Plots</h6></div>
-            <div class="w3-cell w3-center" style="width:50%"><h6></h6></div>
+        <div class="w3-row">
+            <div class="w3-half w3-center label1">Resting State Grayordinates Plots</div>
+            <div class="w3-half w3-center label1"></div>
         </div>
         <div class="w3-cell-row">
-            <div class="w3-cell w3-center" style="width:25%"><h6>Pre-Regression</h6></div>
-            <div class="w3-cell w3-center" style="width:25%"><h6>Post-Regression</h6></div>
-            <div class="w3-cell w3-center" style="width:25%"><h6>Atlas in T1</h6></div>
-            <div class="w3-cell w3-center" style="width:25%"><h6>T1 in Atlas</h6></div>
+            <div class="w3-quarter w3-center label1">Pre-Regression</div>
+            <div class="w3-quarter w3-center label1">Post-Regression</div>
+            <div class="w3-quarter w3-center label1">Atlas in T1</div>
+            <div class="w3-quarter w3-center label1">T1 in Atlas</div>
         </div>
-        <div  class="w3-row-padding">
+        <div  class="w3-row">
             """
 
 # Add the actual row of images.
 # Needs the following values:
 #    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas, width (usually '100%').
 ATLAS_ROW = """
-            <div class="w3-col s3"><img src="{concat_pre_reg_gray}" style="width:{width}"></div>
-            <div class="w3-col s3"><img src="{concat_post_reg_gray}" style="width:{width}"></div>
-            <div class="w3-col s3"><img src="{atlas_in_t1}" style="width:{width}"></div>
-            <div class="w3-col s3"><img src="{t1_in_atlas}" style="width:{width}"></div>
+            <div class="w3-quarter"><img src="{concat_pre_reg_gray}"></div>
+            <div class="w3-quarter"><img src="{concat_post_reg_gray}"></div>
+            <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
+            <div class="w3-quarter"><img src="{t1_in_atlas}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
             """
 
 # End the atlas section by closing up the divisions and the section.
@@ -154,12 +150,12 @@ TASKS_SECTION_START = """
 <section id="Tasks">
     <div class="w3-container">
         <div  class="w3-row">
-            <div class="w3-col s1 w3-center"><h6>Task</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Pre-Reg Gray Plot</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Post-Reg Gray Plot</h6></div>
-            <div class="w3-col s2 w3-center"><h6>Task in T1</h6></div>
-            <div class="w3-col s2 w3-center"><h6>T1 in Task</h6></div>
-            <div class="w3-col s3 w3-center"><h6>Reference (top) and BOLD (bottom)</h6></div>
+            <div class="w3-col s1 label1">Task</div>
+            <div class="w3-col s2 label1">Pre-Reg Gray Plot</div>
+            <div class="w3-col s2 label1">Post-Reg Gray Plot</div>
+            <div class="w3-col s2 label1">Task in T1</div>
+            <div class="w3-col s2 label1">T1 in Task</div>
+            <div class="w3-col s3 label2">Reference (top) and BOLD (bottom)</div>
         </div>
 """
 
@@ -168,14 +164,14 @@ TASKS_SECTION_START = """
 #    row_label, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold, width (usually '100%').
 TASK_ROW = """
         <div class="w3-row-padding">
-            <div class="w3-col s1 w3-left">{row_label}</div>
-            <div class="w3-col s2"><img src="{task_pre_reg_gray}" style="width:{width}"></div>
-            <div class="w3-col s2"><img src="{task_post_reg_gray}" style="width:{width}"></div>
-            <div class="w3-col s2"><img src="{task_in_t1}" style="width:{width}"></div>
-            <div class="w3-col s2"><img src="{t1_in_task}" style="width:{width}"></div>
-            <div class="w3-col s3"><img src="{ref}" style="width:{width}; padding: 2px"></div>
+            <div class="w3-col s1 label4">{row_label}</div>
+            <div class="w3-col s2"><img src="{task_pre_reg_gray}"></div>
+            <div class="w3-col s2"><img src="{task_post_reg_gray}"></div>
+            <div class="w3-col s2"><img src="{task_in_t1}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
+            <div class="w3-col s2"><img src="{t1_in_task}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
+            <div class="w3-col s3"><img src="{ref}"></div>
             <br>
-            <div class="w3-col s3"><img src="{bold}" style="width:{width}; padding: 2px"></div>
+            <div class="w3-col s3 w3-btn"><img src="{bold}"></div>
         </div>
         """
 
@@ -274,7 +270,7 @@ SLIDER_SCRIPTS = """
 # Needs the following values:
 #    width, viewer, spriteImg, mosaic_path.
 SPRITE_VIEWER_HTML = """
-        <div style="max-width: %(width)s; height: auto;">
+        <div w3-row w3-hide-small>
            <canvas id="%(viewer)s" style="max-width: %(width)s">
            <img id="%(spriteImg)s" class="hidden" src="%(mosaic_path)s">
         </div>
