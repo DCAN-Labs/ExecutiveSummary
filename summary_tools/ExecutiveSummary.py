@@ -368,8 +368,7 @@ def interface(files_path, summary_path, html_path, images_path, subject_label, s
         'html_path'     : html_path,
         'images_path'   : images_path,
         'subject_label' : subject_label,
-        'session_label' : session_label,
-        'bids_path'     : bids_path
+        'session_label' : session_label
         }
 
     layout_builder(**kwargs)

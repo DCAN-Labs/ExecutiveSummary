@@ -48,16 +48,6 @@ IMAGE_INFO = {
         'paths_key': 'func',
         'placeholder': RECTANGLE
         },
-    'sbref': {
-        'pattern': '*%s*_sbref.nii*',
-        'paths_key': 'func',
-        'placeholder': RECTANGLE
-        },
-    'scout': {
-        'pattern': '*%s*/Scout_orig.nii*',
-        'paths_key': 'proc',
-        'placeholder': RECTANGLE
-        },
     'bold': {
         'pattern': '*%s*_bold.png',
         'paths_key': 'func',
@@ -145,10 +135,10 @@ ATLAS_SECTION_START = """
 # Needs the following values:
 #    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas, width (usually '100%').
 ATLAS_ROW = """
-            <div class="w3-col s3"><img src="%(pre_reg_gray)s" style="width:%(width)s"></div>
-            <div class="w3-col s3"><img src="%(post_reg_gray)s" style="width:%(width)s"></div>
-            <div class="w3-col s3"><img src="%(atlas_in_t1)s" style="width:%(width)s"></div>
-            <div class="w3-col s3"><img src="%(t1_in_atlas)s" style="width:%(width)s"></div>
+            <div class="w3-col s3"><img src="{concat_pre_reg_gray}" style="width:{width}"></div>
+            <div class="w3-col s3"><img src="{concat_post_reg_gray}" style="width:{width}"></div>
+            <div class="w3-col s3"><img src="{atlas_in_t1}" style="width:{width}"></div>
+            <div class="w3-col s3"><img src="{t1_in_atlas}" style="width:{width}"></div>
             """
 
 # End the atlas section by closing up the divisions and the section.
@@ -235,12 +225,12 @@ MODAL_SLIDER_END = """
     </div>
 """
 
-# Add an image in a container with its filename displayed in
-# the upper left corner. The class for the filename is 'black'
-# so that the text will be white and show up against the
-# fMRI image without being too obtrusive.
-# The HTML assigns the division a class so that scripts (e.g.,
-# SLIDER_SCRIPTS) can find specific images by class.
+# Add an image in a container with its filename displayed in the
+# upper left corner. The filename is 'w3-black' so that the text
+# will be white and show up against the fMRI image without being
+# too obtrusive.
+# We assign a specific class so that scripts can find the images
+# by calling getElementsByClassName().
 # Needs the following values:
 #    image_class, image_file, image_name, width (usually '100%').
 IMAGE_WITH_NAME = """

@@ -198,62 +198,37 @@ class TxSection(Section):
 
 class AtlasSection(Section):
 
-    def __init__ (self, paths, img_out_path, regs_slider):
+    def __init__ (self, img_in_path, img_out_path, regs_slider):
         super(__class__, self).__init__()
 
-        self.paths = paths
-        self.img_out_path = img_out_path
-        self.regs_slider = regs_slider
-
         # Super simple section: just one row of images.
+        atlas_data = {}
+        atlas_data['width'] = '100%'
 
-        # Find and copy concatenated gray plots.
-        values = IMAGE_INFO['concat_pre_reg_gray']
-        source_path = self.paths[values['paths_key']]
-        pre_reg_gray = find_and_copy_file(source_path, values['pattern'], self.img_out_path)
-        if pre_reg_gray is None:
-            pre_reg_gray = values['placeholder']
+        for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
+            values = IMAGE_INFO[key]
+            pattern = values['pattern']
+            img_file = find_and_copy_file(img_in_path, values['pattern'], img_out_path)
+            if img_file is not None:
+                atlas_data[key] = img_file
+            else:
+                atlas_data[key] = values['placeholder']
 
-        values = IMAGE_INFO['concat_post_reg_gray']
-        source_path = self.paths[values['paths_key']]
-        post_reg_gray = find_and_copy_file(source_path, values['pattern'], self.img_out_path)
-        if post_reg_gray is None:
-            post_reg_gray =  values['placeholder']
-
-        # Get T1 in atlas and atlas in T1.
-        # Add these to the registrations slider.
-        values = IMAGE_INFO['atlas_in_t1']
-        source_path = self.paths[values['paths_key']]
-        atlas_in_t1 = find_and_copy_file(source_path, values['pattern'], self.img_out_path)
-        if atlas_in_t1 is None:
-            atlas_in_t1 =  values['placeholder']
-        else:
-            self.regs_slider.add_image(atlas_in_t1)
-
-        values = IMAGE_INFO['t1_in_atlas']
-        source_path = self.paths[values['paths_key']]
-        t1_in_atlas = find_and_copy_file(source_path, values['pattern'], self.img_out_path)
-        if t1_in_atlas is None:
-            t1_in_atlas =  values['placeholder']
-        else:
-            self.regs_slider.add_image(t1_in_atlas)
+        # Add registration images to slider.
+        regs_slider.add_image(atlas_data['atlas_in_t1'])
+        regs_slider.add_image(atlas_data['t1_in_atlas'])
 
         # Write the HTML for the section.
         self.section += ATLAS_SECTION_START
-        self.section += ATLAS_ROW % {
-                'pre_reg_gray'      : pre_reg_gray,
-                'post_reg_gray'     : post_reg_gray,
-                'atlas_in_t1'       : atlas_in_t1,
-                't1_in_atlas'       : t1_in_atlas,
-                'width'             : '100%' }
+        self.section += ATLAS_ROW.format(**atlas_data)
         self.section += ATLAS_SECTION_END
 
 class TasksSection(Section):
 
-    def __init__ (self, tasks, paths, img_out_path, regs_slider):
+    def __init__ (self, tasks, img_in_path, img_out_path, regs_slider):
         super(__class__, self).__init__()
 
-        self.paths = paths
+        self.img_in_path = img_in_path
         self.img_out_path = img_out_path
         self.regs_slider = regs_slider
 
@@ -275,34 +250,24 @@ class TasksSection(Section):
         for key in [ 'task_pre_reg_gray', 'task_post_reg_gray', 'task_in_t1', 't1_in_task' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
-            source_path = self.paths[values['paths_key']]
-            task_file = find_and_copy_file(source_path, pattern, self.img_out_path)
+            task_file = find_and_copy_file(self.img_in_path, pattern, self.img_out_path)
             if task_file:
                 task_data[key] = task_file
-                # If this is a registration image, add to the slider.
-                if (key == 'task_in_t1' or key == 't1_in_task'):
-                    self.regs_slider.add_image(task_file)
             else:
-                print ('KJS: did not find file using:')
-                print ('KJS: \tsource_path: %s' % source_path)
-                print ('KJS: \tpattern:     %s' % pattern)
                 task_data[key] = values['placeholder']
+
+        # Add registration images to slider.
+        self.regs_slider.add_image(task_data['task_in_t1'])
+        self.regs_slider.add_image(task_data['t1_in_task'])
 
         # These files should already be in the directory of images.
         for key in [ 'ref', 'bold' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
-            source_path = self.paths[values['paths_key']]
-            task_file = find_one_file(source_path, pattern)
+            task_file = find_one_file(self.img_out_path, pattern)
             if task_file:
                 task_data[key] = task_file
-                # If this is a registration image, add to the slider.
-                if (key == 'task_in_t1' or key == 't1_in_task'):
-                    self.regs_slider.add_image(task_file)
             else:
-                print ('KJS: did not find file using:')
-                print ('KJS: \tsource_path: %s' % source_path)
-                print ('KJS: \tpattern:     %s' % pattern)
                 task_data[key] = values['placeholder']
 
         return task_data
@@ -329,7 +294,7 @@ class TasksSection(Section):
 
 class layout_builder(object):
 
-    def __init__ (self, files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None):
+    def __init__ (self, files_path, summary_path, html_path, images_path, subject_label, session_label):
 
         self.working_dir = os.getcwd()
 
@@ -339,34 +304,26 @@ class layout_builder(object):
         self.subject_id = 'sub-' + subject_label
         self.session_id = 'ses-' + session_label
 
-        # For images, use the relative path only, as the html will
-        # need to access it's images using the relative path.
+        # For the directory where the images used by the HTML are stored,  use
+        # the relative path only, as the html will need to access it's images
+        # using the relative path.
         self.images_path = os.path.relpath(images_path, html_path)
-
-        # TODO: when the outer caller makes/moves files, will only
-        # have ONE path to images. For now...
-        # Set up the paths at which to find image files.
-        self.paths={}
-        self.paths['proc'] = files_path
-        self.paths['func'] = images_path
-        self.paths['summary'] = summary_path
 
         self.setup()
         self.run()
         self.teardown()
 
+
     def setup(self):
-        # As we write the html, we need to use the relative paths to the image
-        # files that the html will reference. Therefore, best to be in the directory
-        # to which the html will be written.
+        # As we write the HTML, we use the relative paths to the image files that
+        # the HTML will reference. Therefore, best to be in the directory to which
+        # the HTML will be written.
         os.chdir(self.html_path)
-        print(os.getcwd())
 
 
     def teardown(self):
         # Go back to the path where we started.
         os.chdir(self.working_dir)
-        print(os.getcwd())
 
 
     def get_list_of_tasks(self):
@@ -452,13 +409,13 @@ class layout_builder(object):
 
         # Data for this subject/session: i.e., concatenated grayords and atlas images.
         # (The atlas images will be added to the Registrations slider.)
-        body += AtlasSection(self.paths, self.images_path, regs_slider).get_section()
+        body += AtlasSection(self.summary_path, self.images_path, regs_slider).get_section()
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to
         # the Registrations slider.)
         task_list = self.get_list_of_tasks()
-        body += TasksSection(task_list, self.paths, self.images_path, regs_slider).get_section()
+        body += TasksSection(task_list, self.summary_path, self.images_path, regs_slider).get_section()
 
         # Close up the Registrations elements; get the HTML.
         regs_slider.close()
