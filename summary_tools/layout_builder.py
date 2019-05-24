@@ -35,6 +35,7 @@ class ModalSlider(object):
     def __init__ (self, modal_id, image_class):
         self.modal_id = modal_id
         self.image_class = image_class
+        self.image_class_idx = 0
 
         self.button = ''
         self.slider_scripts = ''
@@ -65,9 +66,7 @@ class ModalSlider(object):
         self.modal_container += MODAL_START % { 'modal_id' : self.modal_id }
 
         # Make a button to display the modal container.
-        self.button += DISPLAY_MODAL_BUTTON % {
-                'modal_id' : self. modal_id,
-                'btn_label': btn_label }
+        self.button += DISPLAY_MODAL_BUTTON.format( modal_id=self.modal_id, btn_label=btn_label )
 
 
     def add_images(self, image_list):
@@ -86,8 +85,9 @@ class ModalSlider(object):
         self.modal_container += IMAGE_WITH_NAME % {
                 'image_class': self.image_class,
                 'image_file' : image_file,
-                'image_name' : image_name,
-                'width'      : '100%' }
+                'image_name' : image_name }
+        self.image_class_idx += 1
+        return self.image_class_idx
 
 
     def close(self):
@@ -221,8 +221,10 @@ class AtlasSection(Section):
                 atlas_data[key] = values['placeholder']
 
         # Add registration images to slider.
-        regs_slider.add_image(atlas_data['atlas_in_t1'])
-        regs_slider.add_image(atlas_data['t1_in_atlas'])
+        idx = regs_slider.add_image(atlas_data['atlas_in_t1'])
+        atlas_data['atlas_in_t1_idx'] = idx
+        idx = regs_slider.add_image(atlas_data['t1_in_atlas'])
+        atlas_data['t1_in_atlas_idx'] = idx
 
         # Write the HTML for the section.
         self.section += ATLAS_SECTION_START
@@ -263,8 +265,10 @@ class TasksSection(Section):
                 task_data[key] = values['placeholder']
 
         # Add registration images to slider.
-        self.regs_slider.add_image(task_data['task_in_t1'])
-        self.regs_slider.add_image(task_data['t1_in_task'])
+        idx = self.regs_slider.add_image(task_data['task_in_t1'])
+        task_data['task_in_t1_idx'] =idx
+        idx = self.regs_slider.add_image(task_data['t1_in_task'])
+        task_data['t1_in_task_idx'] =idx
 
         # These files should already be in the directory of images.
         for key in [ 'ref', 'bold' ]:
@@ -410,7 +414,7 @@ class layout_builder(object):
         # Images included in the Registrations slider are found in both
         # of the next 2 sections, so just create the ModalSlider now, and
         # add the files as we get them so they are in the proper order.
-        regs_slider = ModalSlider('regs-modal', 'Registrations')
+        regs_slider = ModalSlider('regsmodal', 'Registrations')
         regs_slider.open('View Registrations')
 
         # Data for this subject/session: i.e., concatenated grayords and atlas images.

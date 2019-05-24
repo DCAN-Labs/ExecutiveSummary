@@ -129,12 +129,12 @@ ATLAS_SECTION_START = """
 
 # Add the actual row of images.
 # Needs the following values:
-#    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas, width (usually '100%').
+#    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas.
 ATLAS_ROW = """
             <div class="w3-quarter"><img src="{concat_pre_reg_gray}"></div>
             <div class="w3-quarter"><img src="{concat_post_reg_gray}"></div>
-            <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
-            <div class="w3-quarter"><img src="{t1_in_atlas}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
+            <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="open_modal_to_index('{modal_id}', {atlas_in_t1_idx})"></div>
+            <div class="w3-quarter"><img src="{t1_in_atlas}" onclick="open_modal_to_index('{modal_id}', {t1_in_atlas_idx})"></div>
             """
 
 # End the atlas section by closing up the divisions and the section.
@@ -161,17 +161,17 @@ TASKS_SECTION_START = """
 
 # Lays out a single row of 6 images for a task/run.
 # Needs the following values:
-#    row_label, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold, width (usually '100%').
+#    row_label, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold.
 TASK_ROW = """
-        <div class="w3-row-padding">
+        <div class="w3-cell-row">
             <div class="w3-col s1 label4">{row_label}</div>
             <div class="w3-col s2"><img src="{task_pre_reg_gray}"></div>
             <div class="w3-col s2"><img src="{task_post_reg_gray}"></div>
-            <div class="w3-col s2"><img src="{task_in_t1}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
-            <div class="w3-col s2"><img src="{t1_in_task}" onclick="document.getElementById('{modal_id}').style.display='block'"></div>
+            <div class="w3-col s2"><img src="{task_in_t1}" onclick="open_modal_to_index('{modal_id}', {task_in_t1_idx})"></div>
+            <div class="w3-col s2"><img src="{t1_in_task}" onclick="open_modal_to_index('{modal_id}', {t1_in_task_idx})"></div>
             <div class="w3-col s3"><img src="{ref}"></div>
             <br>
-            <div class="w3-col s3 w3-btn"><img src="{bold}"></div>
+            <div class="w3-col s3"><img src="{bold}"></div>
         </div>
         """
 
@@ -197,10 +197,7 @@ MODAL_START = """
 # Needs the following values:
 #    modal_id, btn_label
 DISPLAY_MODAL_BUTTON = """
-            <button class="w3-btn w3-teal"
-                onclick="document.getElementById('%(modal_id)s').style.display='block'">
-                %(btn_label)s
-            </button>
+            <button class="w3-btn w3-teal" onclick="open_modal_to_index('{modal_id}', 1)">{btn_label}</button>
             """
 
 # Add the buttons at the end, so that they don't get covered by
@@ -228,17 +225,17 @@ MODAL_SLIDER_END = """
 # We assign a specific class so that scripts can find the images
 # by calling getElementsByClassName().
 # Needs the following values:
-#    image_class, image_file, image_name, width (usually '100%').
+#    image_class, image_file, image_name.
 IMAGE_WITH_NAME = """
                 <div class="w3-display-container %(image_class)s">
-                    <img src="%(image_file)s" style="width:%(width)s">
+                    <img src="%(image_file)s">
                     <div class="w3-display-topleft w3-black"><p>%(image_name)s</p></div>
                 </div>
                 """
 
-# The slider script that will show the next or previous image
+# The slider scripts that will show the next or previous image
 # in a given class.
-# TODO: someday, try hiding n and then showing += n!
+# TODO: someday, try hiding JUST n, and then showing += n!
 # Needs the following values:
 #    image_class.
 SLIDER_SCRIPTS = """
@@ -259,6 +256,11 @@ SLIDER_SCRIPTS = """
             x[i].style.display = "none";
         }
         x[%(image_class)sIdx-1].style.display = "block";
+    }
+
+    function open_modal_to_index(modal_id, idx) {
+        show_%(image_class)s(%(image_class)sIdx = idx)
+        document.getElementById(modal_id).style.display='block'
     }
 </script>
 """
