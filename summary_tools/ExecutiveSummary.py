@@ -337,7 +337,7 @@ def _cli():
                 'layout_only'  : args.layout_only
                 }
 
-    return interface(**kwargs)
+            return interface(**kwargs)
 
 def interface(files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None, layout_only=False):
 
