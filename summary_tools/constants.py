@@ -70,7 +70,8 @@ HTML_START = """
     .label3 { font-size: 1.25em; text-align: left; }
     .label4 { font-size: 1.25em; text-align: right; }
     .grid-container { grid-gap: 2px; padding: 2px; }
-    .T1pngs, .T2pngs, .Registrations { display: none; }
+    .T1pngs, .T2pngs, .Registrations, .Images { display: none; }
+    .modal { vertical-align: top; margin-top:0; border-top-style:none; padding-top:0; top:0; height: 100%; width: auto; }
 </style>
 <body>
 """
@@ -80,8 +81,8 @@ HTML_START = """
 # Needs the following values:
 #    subject, session.
 TITLE="""
-<title>Executive Summary: %(subject)s %(session)s</title>
-<header> <h2>%(subject)s: %(session)s</h2> </header>
+<title>Executive Summary: {subject} {session}</title>
+<header> <h2>{subject}: {session}</h2> </header>
 """
 
 HTML_END = """
@@ -96,15 +97,15 @@ HTML_END = """
 # Needs the following values:
 #    tx, brainsprite_label, modal_button, brainsprite_viewer.
 TX_SECTION = """
-<section id="%(tx)s">
+<section id="{tx}">
     <div class="w3-container">
-        <div class="w3-cell w3-left label3">%(brainsprite_label)s</div>
+        <div class="w3-cell w3-left label3">{brainsprite_label}</div>
         <div class="w3-cell w3-right">
-            %(pngs_button)s
+            {pngs_button}
         </div>
     </div>
     <div class="w3-container">
-        %(brainsprite_viewer)s
+        {brainsprite_viewer}
     </div>
 </section>
 """
@@ -130,12 +131,12 @@ ATLAS_SECTION_START = """
 
 # Add the actual row of images.
 # Needs the following values:
-#    pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas.
+#    gray_id, regs_id, pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas.
 ATLAS_ROW = """
-            <div class="w3-quarter"><img src="{concat_pre_reg_gray}"></div>
-            <div class="w3-quarter"><img src="{concat_post_reg_gray}"></div>
-            <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="open_modal_to_index('{modal_id}', {atlas_in_t1_idx})"></div>
-            <div class="w3-quarter"><img src="{t1_in_atlas}" onclick="open_modal_to_index('{modal_id}', {t1_in_atlas_idx})"></div>
+            <div class="w3-quarter"><img src="{concat_pre_reg_gray}" onclick="open_{gray_id}_to_index({concat_pre_reg_gray_idx})"></div>
+            <div class="w3-quarter"><img src="{concat_post_reg_gray}" onclick="open_{gray_id}_to_index({concat_post_reg_gray_idx})"></div>
+            <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="open_{regs_id}_to_index({atlas_in_t1_idx})"></div>
+            <div class="w3-quarter"><img src="{t1_in_atlas}" onclick="open_{regs_id}_to_index({t1_in_atlas_idx})"></div>
             """
 
 # End the atlas section by closing up the divisions and the section.
@@ -162,17 +163,17 @@ TASKS_SECTION_START = """
 
 # Lays out a single row of 6 images for a task/run.
 # Needs the following values:
-#    row_label, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold.
+#    row_label, image_class, misc_id, regs_id, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold.
 TASK_ROW = """
         <div class="w3-cell-row">
             <div class="w3-col s1 label4">{row_label}</div>
-            <div class="w3-col s2"><img src="{task_pre_reg_gray}"></div>
-            <div class="w3-col s2"><img src="{task_post_reg_gray}"></div>
-            <div class="w3-col s2"><img src="{task_in_t1}" onclick="open_modal_to_index('{modal_id}', {task_in_t1_idx})"></div>
-            <div class="w3-col s2"><img src="{t1_in_task}" onclick="open_modal_to_index('{modal_id}', {t1_in_task_idx})"></div>
-            <div class="w3-col s3"><img src="{ref}"></div>
+            <div class="w3-col s2"><img src="{task_pre_reg_gray}" onclick="open_{misc_id}_to_index({task_pre_reg_gray_idx})"></div>
+            <div class="w3-col s2"><img src="{task_post_reg_gray}" onclick="open_{misc_id}_to_index({task_post_reg_gray_idx})"></div>
+            <div class="w3-col s2"><img src="{task_in_t1}" onclick="open_{regs_id}_to_index({task_in_t1_idx})"></div>
+            <div class="w3-col s2"><img src="{t1_in_task}" onclick="open_{regs_id}_to_index({t1_in_task_idx})"></div>
+            <div class="w3-col s3"><img src="{ref}" onclick="open_{misc_id}_to_index({ref_idx})"></div>
             <br>
-            <div class="w3-col s3"><img src="{bold}"></div>
+            <div class="w3-col s3"><img src="{bold}" onclick="open_{misc_id}_to_index({bold_idx})"></div>
         </div>
         """
 
@@ -189,7 +190,7 @@ TASKS_SECTION_END = """
 # Needs the following values:
 #    modal_id
 MODAL_START = """
-    <div id="%(modal_id)s" class="w3-modal">
+    <div id="{modal_id}" class="w3-modal">
         <div class="w3-modal-content">
             <div class="w3-content w3-display-container">
             """
@@ -198,26 +199,32 @@ MODAL_START = """
 # Needs the following values:
 #    modal_id, btn_label
 DISPLAY_MODAL_BUTTON = """
-            <button class="w3-btn w3-teal" onclick="open_modal_to_index('{modal_id}', 1)">{btn_label}</button>
+            <button class="w3-btn w3-teal" onclick="open_{modal_id}_to_index(1)">{btn_label}</button>
             """
 
-# Add the buttons at the end, so that they don't get covered by
-# the images. Every slider needs a left and right button, and
-# the modal window needs a close button.
-# Then, close up the slider elements.
+# Add the containers' buttons at the end, so that they don't
+# get covered by the images. Every slider needs a left and
+# right button.
 # Needs the following values:
-#    modal_id, image_class
-MODAL_SLIDER_END = """
+#    image_class
+SLIDER_END = """
                 <button class="w3-button w3-black w3-display-bottomleft w3-xxlarge"
-                    onclick="change_%(image_class)s(-1)"><i class="fas fa-angle-left"></i></button>
+                    onclick="change_{image_class}(-1)"><i class="fas fa-angle-left"></i></button>
                 <button class="w3-button w3-black w3-display-bottomright w3-xxlarge"
-                    onclick="change_%(image_class)s(1)"><i class="fas fa-angle-right"></i></button>
+                    onclick="change_{image_class}(1)"><i class="fas fa-angle-right"></i></button>
+                    """
+# The modal window needs a close button; then, close up the
+# elements.
+# Needs the following values:
+#    modal_id
+MODAL_END = """
                 <button class="w3-btn w3-red w3-display-topright w3-large"
-                    onclick="document.getElementById('%(modal_id)s').style.display='none'"><i class="fa fa-close"></i></button>
+                    onclick="document.getElementById('{modal_id}').style.display='none'"><i class="fa fa-close"></i></button>
             </div>
         </div>
     </div>
 """
+
 
 # Add an image in a container with its filename displayed in the
 # upper left corner. The filename is 'w3-black' so that the text
@@ -226,19 +233,44 @@ MODAL_SLIDER_END = """
 # We assign a specific class so that scripts can find the images
 # by calling getElementsByClassName().
 # Needs the following values:
-#    image_class, image_file, image_name.
-IMAGE_WITH_NAME = """
-                <div class="w3-display-container %(image_class)s">
-                    <img src="%(image_file)s">
-                    <div class="w3-display-topleft w3-black"><p>%(image_name)s</p></div>
+#    image_class, image_file, display_name.
+IMAGE_WITH_CLASS = """
+                <div class="w3-display-container {image_class}">
+                    <img src="{image_file}">
+                    <div class="w3-display-topleft w3-black"><p>{display_name}</p></div>
                 </div>
                 """
 
+# The modal scripts that will show the chosen image.
+# Needs the following values:
+#    modal_id, image_class.
+MODAL_SCRIPTS = """
+<script>
+    var %(image_class)sIdx = 1;
+    show_%(image_class)s(%(image_class)sIdx)
+
+    function show_%(image_class)s(n) {
+        var i;
+        var x = document.getElementsByClassName("%(image_class)s");
+        if (n > x.length) { %(image_class)sIdx = 1 }
+        if (n < 1) { %(image_class)sIdx = x.length }
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        x[%(image_class)sIdx-1].style.display = "block";
+    }
+
+    function open_%(modal_id)s_to_index(idx) {
+        show_%(image_class)s(%(image_class)sIdx = idx)
+        document.getElementById("%(modal_id)s").style.display='block'
+    }
+</script>
+"""
+
 # The slider scripts that will show the next or previous image
 # in a given class.
-# TODO: someday, try hiding JUST n, and then showing += n!
 # Needs the following values:
-#    image_class.
+#    modal_id, image_class.
 SLIDER_SCRIPTS = """
 <script>
     var %(image_class)sIdx = 1;
@@ -259,9 +291,9 @@ SLIDER_SCRIPTS = """
         x[%(image_class)sIdx-1].style.display = "block";
     }
 
-    function open_modal_to_index(modal_id, idx) {
+    function open_%(modal_id)s_to_index(idx) {
         show_%(image_class)s(%(image_class)sIdx = idx)
-        document.getElementById(modal_id).style.display='block'
+        document.getElementById("%(modal_id)s").style.display='block'
     }
 </script>
 """
@@ -274,8 +306,8 @@ SLIDER_SCRIPTS = """
 #    width, viewer, spriteImg, mosaic_path.
 SPRITE_VIEWER_HTML = """
         <div w3-row w3-hide-small>
-           <canvas id="%(viewer)s" style="max-width: %(width)s">
-           <img id="%(spriteImg)s" class="hidden" src="%(mosaic_path)s">
+           <canvas id="{viewer}" style="max-width: {width}">
+           <img id="{spriteImg}" class="hidden" src="{mosaic_path}">
         </div>
         """
 

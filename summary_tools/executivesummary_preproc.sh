@@ -82,6 +82,8 @@ else
 fi
 echo
 
+# KJS: Use temporary copy of SetupEnv.sh from bids app. Normally,
+# will have whatever the app has.
 source ./SetupEnv.sh
 
 ### SET UP ENVIRONMENT VARIABLES ###

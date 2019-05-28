@@ -15,7 +15,105 @@ from constants import *
 from helpers import (find_one_file, find_and_copy_file, find_files, find_and_copy_files)
 
 
-class ModalSlider(object):
+class ModalContainer(object):
+    # Creates a modal container (with a close button), and
+    # creates a button to display the container.
+    #
+    # A ModalContainer object must be created with these steps:
+    #     1) Instantiate the object with an id and image class.
+    #     2) Add the images to be shown in the container.
+    #     3) Get the HTML for the container at the point in the
+    #        document at which you want to insert the HTML.
+    #
+    # The steps are necessary so that buttons can be created
+    # after all of the images have been added. Else, the images
+    # hide the button.
+    #
+    # The modal id must be unique to this container, so that
+    # buttons or clickable images or whatever, can display the
+    # correct container.
+    #
+    def __init__ (self, modal_id, image_class):
+
+        self.modal_id = modal_id
+        self.modal_container = MODAL_START.format( modal_id=self.modal_id )
+        self.button = ''
+
+        self.image_class = image_class
+        self.image_class_idx = 0
+
+        self.scripts = ''
+
+        self.state = 'open'
+
+
+    def get_modal_id(self):
+        return self.modal_id
+
+
+    def get_image_class(self):
+        return self.image_class
+
+
+    def get_button(self, btn_label):
+        # Return HTML to creates a button that displays the modal container.
+        self.button += DISPLAY_MODAL_BUTTON.format( modal_id=self.modal_id, btn_label=btn_label )
+        return self.button
+
+
+    def get_container(self):
+        # Add the close button after all images have been added (so
+        # the button does not get covered by the image).
+        self.state = 'closed'
+
+        # Close up the elements.
+        self.modal_container += MODAL_END.format( modal_id=self.modal_id )
+
+        # Return the HTML.
+        return self.modal_container
+
+
+    def get_scripts(self):
+        # The containter needs the scripts to show the correct
+        # image when the container is opened.
+        self.scripts += MODAL_SCRIPTS % {
+                'modal_id'   : self.modal_id,
+                'image_class': self.image_class }
+
+        return self.scripts
+
+
+    def add_images(self, image_list):
+        # Add each image in the list to the slider.
+        for image_file in image_list:
+            self.add_image(image_file)
+
+        # Return the final index.
+        return self.image_class_idx
+
+
+    def add_image(self, image_file):
+
+        if self.state is not 'open':
+            print('ERROR: Cannot add images after the HTML has been written.')
+            return 0
+
+        # Will display the name of the file on the image,
+        # so get the filename by itself.
+        display_name = os.path.basename(image_file)
+
+        # Add the image to container, and assign the class.
+        self.modal_container += IMAGE_WITH_CLASS.format(
+                modal_id      = self.modal_id,
+                image_class   = self.image_class,
+                image_file    = image_file,
+                display_name  = display_name )
+
+        self.image_class_idx += 1
+        return self.image_class_idx
+
+
+class ModalSlider(ModalContainer):
 
     # Creates a modal container that contains a carousel
     # (aka slider), and a button to display the container.
@@ -28,79 +126,28 @@ class ModalSlider(object):
     # The image class must be unique to this slider so that
     # the scripts can find the images used by the slider.
     #
-    # The modal id must be unique to this container, so that
-    # buttons or clickable images or whatever, can display the
-    # container.
-
     def __init__ (self, modal_id, image_class):
-        self.modal_id = modal_id
-        self.image_class = image_class
-        self.image_class_idx = 0
-
-        self.button = ''
-        self.slider_scripts = ''
-        self.modal_container = ''
-
-    def get_id(self):
-        return self.modal_id
-
-    def get_image_class(self):
-        return self.image_class
-
-    def get_button(self):
-        # Return the HTML that creates the button.
-        return self.button
+        super(__class__, self).__init__(modal_id, image_class)
 
 
     def get_container(self):
-        # Return the HTML that creates the container.
+        # Must add buttons after all images have been added.
+        self.state = 'closed'
+
+        # Add the buttons and close up the elements.
+        self.modal_container += SLIDER_END.format( image_class=self.image_class )
+        self.modal_container += MODAL_END.format( modal_id=self.modal_id )
+        # Return the HTML.
         return self.modal_container
 
 
     def get_scripts(self):
-        return self.slider_scripts
-
-
-    def open(self, btn_label):
-        # Create the modal container.
-        self.modal_container += MODAL_START % { 'modal_id' : self.modal_id }
-
-        # Make a button to display the modal container.
-        self.button += DISPLAY_MODAL_BUTTON.format( modal_id=self.modal_id, btn_label=btn_label )
-
-
-    def add_images(self, image_list):
-        # Add each image in the list to the slider.
-        for image_file in image_list:
-            self.add_image(image_file)
-
-
-    def add_image(self, image_file):
-
-        # Will display the name of the file on the image,
-        # so get the filename by itself.
-        image_name = os.path.basename(image_file)
-
-        # Add the image to container, and assign the class.
-        self.modal_container += IMAGE_WITH_NAME % {
-                'image_class': self.image_class,
-                'image_file' : image_file,
-                'image_name' : image_name }
-        self.image_class_idx += 1
-        return self.image_class_idx
-
-
-    def close(self):
-
-        # Add the buttons at the end, so they don't
-        # get hidden by the images.
-        self.modal_container += MODAL_SLIDER_END % {
+        # The slider needs the scripts to go along with the
+        # right and left buttons.
+        self.scripts += SLIDER_SCRIPTS % {
                 'modal_id'   : self.modal_id,
                 'image_class': self.image_class }
-
-        # Close up all of the elements.
-        self.slider_scripts += SLIDER_SCRIPTS % {
-                'image_class': self.image_class }
+        return self.scripts
 
 
 
@@ -132,16 +179,14 @@ class TxSection(Section):
 
         # The modal container must be identified uniquely so that the correct
         # container is displayed with the correct button. Use this id throughout.
-        self.modal_id = tx + '-modal'
+        self.modal_id = tx + '_modal'
 
         # Build everything.
         self.run()
 
 
     def make_brainsprite_viewer(self):
-        """
-        Builds HTML for BrainSprite viewer so users can click through 3d anatomical images.
-        """
+        # Builds HTML for BrainSprite viewer so users can click through 3d anatomical images.
         spritelabel = ''
         spriteviewer = ''
         spriteloader = ''
@@ -150,21 +195,18 @@ class TxSection(Section):
         mosaic_name = '%s_mosaic.jpg' % self.tx
         mosaic_path = os.path.join(self.images_path, mosaic_name)
         if os.path.isfile(mosaic_path):
+            # Insert the appropriate tx value in the ids, etc.
             spritelabel += '<h6>BrainSprite Viewer: %s</h6>' % self.tx
             viewer = self.tx + '-viewer'
             spriteImg = self.tx + '-spriteImg'
 
-            spriteviewer += SPRITE_VIEWER_HTML % {
-                    'tx'         : self.tx,
-                    'viewer'     : viewer,
-                    'spriteImg'  : spriteImg,
-                    'mosaic_path': mosaic_path,
-                    'width'      : '100%' }
+            spriteviewer += SPRITE_VIEWER_HTML.format( viewer=viewer, spriteImg=spriteImg,
+                    mosaic_path=mosaic_path, width='100%' )
 
             spriteloader += SPRITE_LOAD_SCRIPT % {
-                    'tx'        : self.tx,
-                    'viewer'    : viewer,
-                    'spriteImg' : spriteImg }
+                    'tx'       : self.tx,
+                    'viewer'   : viewer,
+                    'spriteImg': spriteImg }
 
         return spritelabel, spriteviewer, spriteloader
 
@@ -184,17 +226,13 @@ class TxSection(Section):
 
         # Make a modal container with a slider and add the pngs.
         pngs_slider = ModalSlider(self.modal_id, self.image_class)
-        pngs_slider.open('View %s pngs' % self.tx)
         pngs_slider.add_images(pngs_list)
-        pngs_slider.close()
 
         # Add HTML for the bar with the brainsprite label and pngs button,
         # and for the brainsprite viewer.
-        self.section += TX_SECTION % {
-                'tx'                : self.tx,
-                'brainsprite_label' : brainsprite_label,
-                'pngs_button'       : pngs_slider.get_button(),
-                'brainsprite_viewer': brainsprite_viewer }
+        btn_label = 'View %s pngs' % self.tx
+        self.section += TX_SECTION.format( tx=self.tx, brainsprite_label=brainsprite_label,
+                pngs_button=pngs_slider.get_button(btn_label), brainsprite_viewer=brainsprite_viewer )
 
         # HTML for the modal container should be tacked on the end.
         self.section += pngs_slider.get_container()
@@ -204,16 +242,16 @@ class TxSection(Section):
 
 class AtlasSection(Section):
 
-    def __init__ (self, img_in_path, img_out_path, regs_slider):
+    def __init__ (self, img_in_path, img_out_path, regs_slider, img_modal):
         super(__class__, self).__init__()
 
         # Super simple section: just one row of images.
         atlas_data = {}
-        atlas_data['modal_id'] = regs_slider.get_id()
+        atlas_data['regs_id'] = regs_slider.get_modal_id()
+        atlas_data['gray_id'] = img_modal.get_modal_id()
 
         for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
             values = IMAGE_INFO[key]
-            pattern = values['pattern']
             img_file = find_and_copy_file(img_in_path, values['pattern'], img_out_path)
             if img_file is not None:
                 atlas_data[key] = img_file
@@ -221,10 +259,12 @@ class AtlasSection(Section):
                 atlas_data[key] = values['placeholder']
 
         # Add registration images to slider.
-        idx = regs_slider.add_image(atlas_data['atlas_in_t1'])
-        atlas_data['atlas_in_t1_idx'] = idx
-        idx = regs_slider.add_image(atlas_data['t1_in_atlas'])
-        atlas_data['t1_in_atlas_idx'] = idx
+        atlas_data['atlas_in_t1_idx'] = regs_slider.add_image(atlas_data['atlas_in_t1'])
+        atlas_data['t1_in_atlas_idx'] = regs_slider.add_image(atlas_data['t1_in_atlas'])
+
+        # Add the gray ords to the 'generic' images container.
+        atlas_data['concat_pre_reg_gray_idx'] = img_modal.add_image(atlas_data['concat_pre_reg_gray'])
+        atlas_data['concat_post_reg_gray_idx'] = img_modal.add_image(atlas_data['concat_post_reg_gray'])
 
         # Write the HTML for the section.
         self.section += ATLAS_SECTION_START
@@ -233,12 +273,13 @@ class AtlasSection(Section):
 
 class TasksSection(Section):
 
-    def __init__ (self, tasks, img_in_path, img_out_path, regs_slider):
+    def __init__ (self, tasks, img_in_path, img_out_path, regs_slider, img_modal):
         super(__class__, self).__init__()
 
         self.img_in_path = img_in_path
         self.img_out_path = img_out_path
         self.regs_slider = regs_slider
+        self.img_modal = img_modal
 
         self.run(tasks)
 
@@ -246,7 +287,8 @@ class TasksSection(Section):
 
         task_data = {}
         task_data['row_label'] = 'task-%s run-%s' % (task_name, task_num)
-        task_data['modal_id'] = self.regs_slider.get_id()
+        task_data['regs_id'] = self.regs_slider.get_modal_id()
+        task_data['misc_id'] = self.img_modal.get_modal_id()
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
@@ -264,11 +306,13 @@ class TasksSection(Section):
             else:
                 task_data[key] = values['placeholder']
 
+        # Add the gray ords to the 'generic' images container.
+        task_data['task_pre_reg_gray_idx'] = self.img_modal.add_image(task_data['task_pre_reg_gray'])
+        task_data['task_post_reg_gray_idx'] = self.img_modal.add_image(task_data['task_post_reg_gray'])
+
         # Add registration images to slider.
-        idx = self.regs_slider.add_image(task_data['task_in_t1'])
-        task_data['task_in_t1_idx'] =idx
-        idx = self.regs_slider.add_image(task_data['t1_in_task'])
-        task_data['t1_in_task_idx'] =idx
+        task_data['task_in_t1_idx'] = self.regs_slider.add_image(task_data['task_in_t1'])
+        task_data['t1_in_task_idx'] = self.regs_slider.add_image(task_data['t1_in_task'])
 
         # These files should already be in the directory of images.
         for key in [ 'ref', 'bold' ]:
@@ -277,6 +321,8 @@ class TasksSection(Section):
             task_file = find_one_file(self.img_out_path, pattern)
             if task_file:
                 task_data[key] = task_file
+                # Add to 'generic' images.
+                task_data[key + '_idx'] = self.img_modal.add_image(task_file)
             else:
                 task_data[key] = values['placeholder']
 
@@ -386,14 +432,14 @@ class layout_builder(object):
         """
         filepath = os.path.join(os.getcwd(), filename)
         try:
-            f = open(filepath, 'w')
+            fd = open(filepath, 'w')
         except OSError as err:
             print('Unable to open %s for write.\n' % filepath)
             print('Error: {0}'.format(err))
 
-        f.writelines(document)
+        fd.writelines(document)
         print('\nExecutive summary can be found in path:\n\t%s/%s' % (os.getcwd(), filename))
-        f.close()
+        fd.close()
 
 
 
@@ -402,38 +448,42 @@ class layout_builder(object):
         # Start building the html document, and put the subject and session
         # into the title and page header.
         head = HTML_START
-        head += TITLE % { 'subject': self.subject_id,
-                          'session': self.session_id }
+        head += TITLE.format( subject=self.subject_id, session=self.session_id )
         body = ''
+
+        # Any image that is not shown in the sliders will be shown in a modal
+        # container when clicked. Create that container now.
+        img_modal = ModalContainer('img_modal', 'Images')
+
         # Make sections for 'T1' and 'T2' images. Include pngs slider and
         # BrainSprite for each.
         t1_section = TxSection('T1', self.images_path)
         t2_section = TxSection('T2', self.images_path)
         body += t1_section.get_section() + t2_section.get_section()
 
-        # Images included in the Registrations slider are found in both
-        # of the next 2 sections, so just create the ModalSlider now, and
-        # add the files as we get them so they are in the proper order.
-        regs_slider = ModalSlider('regsmodal', 'Registrations')
-        regs_slider.open('View Registrations')
+        # Images included in the Registrations slider and the Images container
+        # are found in both of the next 2 sections, so just create the objects
+        # now and add the files as we get them.
+        regs_slider = ModalSlider('regs_modal', 'Registrations')
 
         # Data for this subject/session: i.e., concatenated grayords and atlas images.
         # (The atlas images will be added to the Registrations slider.)
-        body += AtlasSection(self.summary_path, self.images_path, regs_slider).get_section()
+        atlas_section = AtlasSection(self.summary_path, self.images_path, regs_slider, img_modal)
+        body += atlas_section.get_section()
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to
         # the Registrations slider.)
-        task_list = self.get_list_of_tasks()
-        body += TasksSection(task_list, self.summary_path, self.images_path, regs_slider).get_section()
+        tasks_list = self.get_list_of_tasks()
+        tasks_section = TasksSection(tasks_list, self.summary_path, self.images_path, regs_slider, img_modal)
+        body += tasks_section.get_section()
 
-        # Close up the Registrations elements; get the HTML.
-        regs_slider.close()
-        body += regs_slider.get_button()
-        body += regs_slider.get_container()
+        # Close up the Registrations elements and get the HTML.
+        body += img_modal.get_container() + regs_slider.get_container()
 
-        # There are a bunch of scripts used in this page. Keep them all together.
-        scripts = BRAINSPRITE_SCRIPTS + t1_section.get_scripts() + t2_section.get_scripts() + regs_slider.get_scripts()
+        # There are a bunch of scripts used in this page. Keep their HTML together.
+        scripts = BRAINSPRITE_SCRIPTS + t1_section.get_scripts() + t2_section.get_scripts()
+        scripts += img_modal.get_scripts() + regs_slider.get_scripts()
 
         # Assemble and write the document.
         html_doc = head + body + scripts + HTML_END
