@@ -29,30 +29,25 @@ def generate_parser():
             formatter_class=argparse.RawDescriptionHelpFormatter
             )
     parser.add_argument(
-            'output_dir',
-            help='path to the output directory for all intermediate and output '
-            'files from the pipeline, also path in which logs are stored. Path '
-            'should end at parent of sub- folder(s).'
-            )
-    parser.add_argument(
-            '--version', '-v', action='version', version='%(prog)s ' + __version__
+            '--output-dir', '-o', dest='output_dir', required=True,
+            metavar='FILES_PATH',
+            help='path to the output files directory for all intermediate and '
+            'output files from the pipeline. Path should end with "files".'
             )
     parser.add_argument(
             '--bids-input', '-i', dest='bids_dir',
-            metavar='BIDS_INPUT',
-            help='path to the bids dataset root directory that was used as '
-             'input to the pipeline.'
+            metavar='FUNC_PATH',
+            help='path to the bids dataset that was used as task input to the '
+            'pipeline. Path should end with "func"'
             )
     parser.add_argument(
-            '--participant-label', '-p', dest='subject_list',
-            metavar='PARTICIPANT_LABEL', nargs='+',
-            help='optional list of participant ids to run. Default is '
-            'all ids found under the bids output directory. A participant '
-            'label does not include "sub-"'
+            '--participant-label', '-p', dest='subject_id', required=True,
+            metavar='PARTICIPANT_LABEL',
+            help='participant label, not including "sub-".'
     )
     parser.add_argument(
-            '--session-id', '-s', dest='session_list',
-            metavar='SESSION_ID', nargs='+',
+            '--session-id', '-s', dest='session_id',
+            metavar='SESSION_ID',
             help='filter input dataset by session id. Default is all ids '
             'found under each subject output directory(s). A session id '
             'does not include "ses-"'
@@ -70,6 +65,9 @@ def generate_parser():
             'Default: templates/MNI_T1_1mm_brain.nii.gz. '
             )
     parser.add_argument(
+            '--version', '-v', action='version', version='%(prog)s ' + __version__
+            )
+    parser.add_argument(
             '--layout-only', dest='layout_only', action='store_true',
             help='Can be specified for subjects that have been run through the '
             'executivesummary preprocessor, so the image data is ready. This '
@@ -78,68 +76,6 @@ def generate_parser():
 
     return parser
 
-def get_id_list(root_dir, prefix):
-    """
-    scan the root_dir for entries that are directories and
-    that have the prefix indicated. Remove the prefix and
-    return the entries.
-    """
-    idlist = []
-    with os.scandir(root_dir) as entries:
-        for entry in entries:
-            if entry.name.startswith(prefix) and entry.is_dir():
-                idlist.append(entry.name.replace(prefix, '', 1))
-
-    return idlist
-
-def init_subject(output_dir, bids_dir, subject_id):
-
-    sub_in = None
-
-    # Get the path to the subject's output.
-    sub_out = os.path.join(output_dir, subject_id)
-    if not os.path.isdir(sub_out):
-        print('Directory does not exist: %s' % sub_out)
-        return None, None
-
-    # Possibly, get a path to the subject's input.
-    if bids_dir is not None:
-        sub_in = os.path.join(bids_dir, subject_id)
-        if not os.path.isdir(sub_in):
-            print('Directory does not exist: %s' % sub_in)
-            sub_in = None
-
-    return sub_out, sub_in
-
-
-def init_session(sub_out, sub_in, session_id):
-
-    proc_files = None
-    func_files = None
-
-    # Get the path to the session's output.
-    ses_out = os.path.join(sub_out, session_id)
-    proc_files = os.path.join(ses_out, 'files')
-    if not os.path.isdir(proc_files):
-        print('Directory does not exist: %s' % proc_files)
-        return None, None
-
-    # Possibly, get a path to the session's input.
-    if sub_in is not None:
-        # Some subjects have their bids input directly under
-        # the subject's dir.
-        func_files = os.path.join(sub_in, 'func')
-        if not os.path.isdir(func_files):
-            ses_in = os.path.join(sub_in, session_id)
-            func_files = os.path.join(ses_in, 'func')
-            if not os.path.isdir(func_files):
-                print('Directory does not exist: %s' % func_files)
-                func_files = None
-            else:
-                print('Raw BIDS task data will be found in path:\n\t %s' % func_files)
-
-
-    return proc_files, func_files
 
 def init_summary(proc_files, summary_dir):
 
@@ -249,22 +185,17 @@ def preprocess_tx (tx, files_path, images_path):
 
 
 def _cli():
-    """
-    command line interface
-    Parse all of the arguments and check for validity. Call the interface
-    for one subject/session at a time (the way the pipeline would call it).
-    :return:
-    """
+    # Command line interface
     parser = generate_parser()
     args = parser.parse_args()
 
     date_stamp = "{:%Y%m%d %H:%M}".format(datetime.now())
 
     print('Executive Summary was called at %s with:' % date_stamp)
-    print('\tOutput directory:      %s' % args.output_dir)
     print('\tBIDS input files:      %s' % args.bids_dir)
-    print('\tSubject list:          %s' % args.subject_list)
-    print('\tSession list:          %s' % args.session_list)
+    print('\tOutput directory:      %s' % args.output_dir)
+    print('\tSubject:               %s' % args.subject_id)
+    print('\tSession:               %s' % args.session_id)
     print('\tSummary directory:     %s' % args.summary_dir)
     print('\tAtlas:                 %s' % args.atlas)
 
@@ -282,100 +213,59 @@ def _cli():
     if args.atlas is not None:
         assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
 
-    # Find all entries under args.output_dir.
-    subjects = get_id_list(args.output_dir, 'sub-')
+    # Args check out. Call the interface.
+    kwargs = {
+        'files_path'   : args.output_dir,
+        'summary_dir'  : args.summary_dir,
+        'subject_id'   : args.subject_id,
+        'func_path'    : args.bids_dir,
+        'session_id'   : args.session_id,
+        'atlas'        : args.atlas,
+        'layout_only'  : args.layout_only
+        }
 
-    # Filter by subject_list.
-    if isinstance(args.subject_list, list):
-        subjects = [s for s in subjects if s in args.subject_list]
+    interface(**kwargs)
 
+def interface(files_path, summary_dir, subject_id, func_path=None, session_id=None, atlas=None, layout_only=False):
 
-    # Put together the arguments for one subject at a time.
-    for subject_label in subjects:
-        subject_id = 'sub-' + subject_label
-        sub_out, sub_in = init_subject(args.output_dir, args.bids_dir, subject_id)
-
-        # Each subject must have already been through the DCAN
-        # pipeline, and we must have a valid output directory
-        # in order to process the subject.
-        if sub_out is None:
-            print('Skipping %s.' % (subject_id))
-            continue
-        if args.bids_dir is not None and sub_in is None:
-            print('Skipping %s.' % (subject_id))
-            continue
-
-        # Find all sessions under subdir.
-        sessions = get_id_list(sub_out, 'ses-')
-
-        # Filter by session_list.
-        if isinstance(args.session_list, list):
-            sessions = [s for s in sessions if s in args.session_list]
-
-        # Loop throught the sessions.
-        for session_label in sessions:
-            session_id = 'ses-' + session_label
-            proc_files, func_files = init_session(sub_out, sub_in, session_id)
-
-            # We must have a valid output directory in order to
-            # process the subject/session.
-            if proc_files is None:
-                print('Skipping %s, %s' % (subject_id, session_id))
-                continue
-
-            if args.bids_dir is not None and func_files is None:
-                print('No raw data will be shown for %s, %s' % (subject_id, session_id))
-
-            # Most of the data is in the summary directory. Also, it is
-            # where the layout_builder will write the html.
-            summary_path, html_path, images_path = init_summary(proc_files, args.summary_dir)
-            if summary_path is None:
-                print('Skipping %s, %s' % (subject_id, session_id))
-                continue
-
-
-            # All of the args for this subject/session pass muster. Call the interface.
-            kwargs = {
-                'files_path'   : proc_files,
-                'summary_path' : summary_path,
-                'html_path'    : html_path,
-                'images_path'  : images_path,
-                'subject_label': subject_label,
-                'session_label': session_label,
-                'bids_path'    : func_files,
-                'atlas'        : args.atlas,
-                'layout_only'  : args.layout_only
-                }
-
-            return interface(**kwargs)
-
-def interface(files_path, summary_path, html_path, images_path, subject_label, session_label, bids_path=None, atlas=None, layout_only=False):
+    # Most of the data needed is in the summary directory. Also, it is where the
+    # preprocessor will make the images and where the layout_builder will write
+    # the HTML. We must be able to read and write to the path.
+    summary_path, html_path, images_path = init_summary(files_path, summary_dir)
+    if summary_path is None:
+        # We were not able to find and/or write to the path.
+        print('Exiting.')
+        return
 
     if not layout_only:
         preproc_cmd = './executivesummary_preproc.sh '
         preproc_cmd += '--output-dir %s ' % files_path
         preproc_cmd += '--dcan-summary %s ' % summary_path
-        preproc_cmd += '--subject-id %s ' % subject_label
-        if bids_path is not None:
-            preproc_cmd += '--bids-input %s ' % bids_path
+        preproc_cmd += '--subject-id %s ' % subject_id
+        if func_path is not None:
+            preproc_cmd += '--bids-input %s ' % func_path
         if atlas is not None:
             preproc_cmd += '--atlas %s ' % atlas
 
         subprocess.call(preproc_cmd, shell=True)
 
         # Make mosaic(s) for brainsprite(s).
+        print('Making mosaic for T1 BrainSprite.')
         preprocess_tx('T1', summary_path, images_path)
+        print('Making mosaic for T2 BrainSprite.')
         preprocess_tx('T2', summary_path, images_path)
+        print('Finished with preprocessing.')
 
-    # Done with preproc. Call the page layout to make the page.
+    # Done with preproc (or skipped it). Call the page layout to make the page.
 
+    print('Begin page layout.')
     kwargs = {
         'files_path'    : files_path,
         'summary_path'  : summary_path,
         'html_path'     : html_path,
         'images_path'   : images_path,
-        'subject_label' : subject_label,
-        'session_label' : session_label
+        'subject_id'    : subject_id,
+        'session_id'    : session_id
         }
 
     layout_builder(**kwargs)

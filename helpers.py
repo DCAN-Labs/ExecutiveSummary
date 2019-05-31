@@ -82,9 +82,9 @@ def find_one_file(seek_dir, pattern):
     numfiles=len(filelist)
     if numfiles is 1:
         one_file = filelist[0]
-    elif numfiles is not 0:
+    else:
         # TODO: Log info in errorfile.
-        print('\nFound %s files with pattern: %s' % (numfiles, glob_pattern))
+        print('info: Found %s files with pattern: %s' % (numfiles, glob_pattern))
 
     return one_file
 

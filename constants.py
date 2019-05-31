@@ -40,7 +40,7 @@ IMAGE_INFO = {
         'placeholder': RECTANGLE
         },
     'bold': {
-        'pattern': '*%s*_bold.png',
+        'pattern': '*%s*bold.png',
         'placeholder': RECTANGLE
         }
     }
@@ -72,6 +72,7 @@ HTML_START = """
     .grid-container { grid-gap: 2px; padding: 2px; }
     .T1pngs, .T2pngs, .Registrations, .Images { display: none; }
     .modal { vertical-align: top; margin-top:0; border-top-style:none; padding-top:0; top:0; height: 100%; width: auto; }
+    .Images{ height: 100%; width: auto; }
 </style>
 <body>
 """
@@ -82,7 +83,7 @@ HTML_START = """
 #    subject, session.
 TITLE="""
 <title>Executive Summary: {subject} {session}</title>
-<header> <h2>{subject}: {session}</h2> </header>
+<header> <h2>{subject}{sep}{session}</h2> </header>
 """
 
 HTML_END = """
