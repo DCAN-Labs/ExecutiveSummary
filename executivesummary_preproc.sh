@@ -82,9 +82,7 @@ else
 fi
 echo
 
-# KJS: Use temporary copy of SetupEnv.sh from bids app. Normally,
-# will have whatever the app has.
-source ./SetupEnv.sh
+source ./setup_env.sh
 
 ### SET UP ENVIRONMENT VARIABLES ###
 # . `dirname $0`"/setup_env.sh"
@@ -119,11 +117,12 @@ fi
 # Make the directory where we will store the HTML, and
 # the directory to store its images.
 exsum_path=${dcan_summary}/executivesummary
-images_path=${exsum_path}/img
 
-if ! [ -d ${images_path} ] ; then
-    rm -rf ${images_path}
+if ! [ -d ${exsum_path} ] ; then
+    rm -rf ${exsum_path}
 fi
+
+images_path=${exsum_path}/img
 mkdir -p ${images_path}
 
 chown -R :fnl_lab ${exsum_path} || true
@@ -208,8 +207,6 @@ fi
         out=$1
         scenenum=$2
         temp_scene=${processed_files}/image_template_temp.scene
-        echo "Calling wb_command as follows:"
-        echo "      ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800"
         ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800
 
     }
@@ -343,14 +340,10 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
     if [[ ! -e ${t1_2_brain} ]] ; then
         flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
         echo result of flirt is in ${t1_2_brain}
-    else
-        echo ${t1_2_brain} exists
     fi
     if [[ ! -e ${t2_2_brain} ]] ; then
         flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
         echo result of flirt is in ${t2_2_brain}
-    else
-        echo ${t2_2_brain} exists
     fi
     slices ${t1_2_brain} ${task_img} -s 2 -o "${dcan_summary}/${subject_id}_${fMRIName}_in_t1.gif"
     slices ${task_img} ${t1_2_brain} -s 2 -o "${dcan_summary}/${subject_id}_t1_in_${fMRIName}.gif"
