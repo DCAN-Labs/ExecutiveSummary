@@ -12,7 +12,7 @@ from os import path
 import re
 import glob
 from constants import *
-from helpers import (find_one_file, find_and_copy_file, find_files, find_and_copy_files)
+from helpers import (find_one_file, find_and_copy_file, find_files)
 
 
 class ModalContainer(object):
@@ -315,16 +315,23 @@ class TasksSection(Section):
         task_data['t1_in_task_idx'] = self.regs_slider.add_image(task_data['t1_in_task'])
 
         # These files should already be in the directory of images.
+        # Also, there may or may not be a run number in the file's name.
         for key in [ 'ref', 'bold' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
             task_file = find_one_file(self.img_out_path, pattern)
+            if task_file is None:
+                # Try again, with no run number.
+                pattern = values['pattern'] % task_name
+                task_file = find_one_file(self.img_out_path, pattern)
+
             if task_file:
                 task_data[key] = task_file
                 # Add to 'generic' images.
                 task_data[key + '_idx'] = self.img_modal.add_image(task_file)
             else:
                 task_data[key] = values['placeholder']
+                task_data[key + '_idx'] = -1
 
         return task_data
 
@@ -350,15 +357,18 @@ class TasksSection(Section):
 
 class layout_builder(object):
 
-    def __init__ (self, files_path, summary_path, html_path, images_path, subject_label, session_label):
+    def __init__ (self, files_path, summary_path, html_path, images_path, subject_id, session_id=None):
 
         self.working_dir = os.getcwd()
 
         self.files_path = files_path
         self.summary_path = summary_path
         self.html_path = html_path
-        self.subject_id = 'sub-' + subject_label
-        self.session_id = 'ses-' + session_label
+        self.subject_id = 'sub-' + subject_id
+        if session_id:
+            self.session_id = 'ses-' + session_id
+        else:
+            self.session_id = None
 
         # For the directory where the images used by the HTML are stored,  use
         # the relative path only, as the html will need to access it's images
@@ -448,7 +458,10 @@ class layout_builder(object):
         # Start building the html document, and put the subject and session
         # into the title and page header.
         head = HTML_START
-        head += TITLE.format( subject=self.subject_id, session=self.session_id )
+        if self.session_id is None:
+            head += TITLE.format( subject=self.subject_id, sep='' , session='')
+        else:
+            head += TITLE.format( subject=self.subject_id, sep=': ', session=self.session_id )
         body = ''
 
         # Any image that is not shown in the sliders will be shown in a modal
@@ -487,7 +500,10 @@ class layout_builder(object):
 
         # Assemble and write the document.
         html_doc = head + body + scripts + HTML_END
-        self.write_html(html_doc, 'executive_summary_%s_%s.html' % (self.subject_id, self.session_id))
+        if self.session_id is None:
+            self.write_html(html_doc, 'executive_summary_%s.html' % (self.subject_id))
+        else:
+            self.write_html(html_doc, 'executive_summary_%s_%s.html' % (self.subject_id, self.session_id))
 
 
 
