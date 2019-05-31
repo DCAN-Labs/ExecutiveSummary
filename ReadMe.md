@@ -22,11 +22,11 @@ the ```img``` directory so it can find its images.
 
 ### Requirements:
 - Imaging Software Packages Required:
-- fsl v4.1.9 or later
-- workbench v1.3.2 or later
+  - fsl v4.1.9 or later
+  - workbench v1.3.2 or later
 - Environment: python 3.7.x
-- argparse
-- PIL (Python Image Library)
+  - argparse
+  - PIL (Python Image Library)
 
 
 
@@ -36,7 +36,7 @@ the ```img``` directory so it can find its images.
  ExecutiveSummary``` to ```run.py```.
 * ```ExecutiveSummary.py``` can be run from the command line as below:
 
- ```python
+ ```
  usage: ExecutiveSummary.py [-h] --output-dir FILES_PATH [--bids-input FUNC_PATH]
                         --participant-label PARTICIPANT_LABEL
                         [--session-id SESSION_ID]
