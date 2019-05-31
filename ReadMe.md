@@ -1,4 +1,4 @@
-#Executive Summary
+# Executive Summary
 
 Executive Summary is intended as the last stage in any DCAN fMRI pipeline. It
 is intended to show some key files to allow a quick QC of the image processing
@@ -20,7 +20,7 @@ You can move the Executive Summary output, to another directory (or device), but
 it must be moved as a package. That is, the HTML must be in the same location as
 the ```img``` directory so it can find its images.
 
-###Requirements:
+### Requirements:
 - Imaging Software Packages Required:
 - fsl v4.1.9 or later
 - workbench v1.3.2 or later
@@ -30,7 +30,7 @@ the ```img``` directory so it can find its images.
 
 
 
-###Usage:
+### Usage:
 * Executive Summary is run as a stage of the DCAN fMRI pipelines.
 * Executive Summary can be run by passing the option ```--stage
  ExecutiveSummary``` to ```run.py```.
