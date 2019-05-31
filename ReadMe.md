@@ -74,4 +74,4 @@ optional arguments:
                         through the executivesummary preprocessor, so the
                         image data is ready. This calls only the
                         layout_builder to get the latest layout.
-                        ```
+```
