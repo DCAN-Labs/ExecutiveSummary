@@ -1,85 +1,77 @@
-# Executive Summary
+#Executive Summary
 
-## System Requirements
+Executive Summary is intended as the last stage in any DCAN fMRI pipeline. It
+is intended to show some key files to allow a quick QC of the image processing
+results of a single session of a single subject. This program was designed along
+with the DCAN fMRI pipelines, and depends upon their output. This is *not* a
+stand-alone BIDS App.
+
+The ```ExecutiveSummary.py``` script runs in 2 steps: preprocessing and layout
+of the HTML page. The preprocessing step makes an ```executivesummary```
+directory where the HTML file will eventually be written. It also makes an
+```img``` subdirectory. The output from the preprocssing step is put into the
+```img``` directory. For example, the preprocessor slices some of the BIDS input
+(```nii.gz```) files into ```.png``` files; the ```.png``` output are stored in
+```img```.
+As of this writing, the files produced by the preprocessing step and stored in
+```img``` do not have BIDS names.
+
+You can move the Executive Summary output, to another directory (or device), but
+it must be moved as a package. That is, the HTML must be in the same location as
+the ```img``` directory so it can find its images.
+
+###Requirements:
 - Imaging Software Packages Required:
-  - fsl v4.1.9 or later
-  - freesurfer v5.3
-- Environment: python 2.7.x
-  - argparse
-  - PIL (Python Image Library)
+- fsl v4.1.9 or later
+- workbench v1.3.2 or later
+- Environment: python 3.7.x
+- argparse
+- PIL (Python Image Library)
 
-## Intended Usage
-- run `layout_bulder.py` after FNL\_PreProc, but before any cleanup scripts have been run
-- _Note: you can move the HTML to any other directory, but it needs its 'img' folder along with it to view the images!_
 
-## Requirements for Processed and Raw Data Structures
-- __FNL_PreProc MUST be completed!__
-- Folder Structures:
-  - /path/to/processed/pipeline/subjectID/summary/
-     - .gif and .png images produced via FNL_PreProc (_T1/T2 segmentations or PNGs for BrainSprite, epi coregistrations with functional_)
-  - /path/to/processed/pipeline/subjectID/unprocessed/NIFTI/
-     - all __raw__ T1, T2, resting-state functional, and single-band reference data (nii or nii.gz) used in processing
-  - /path/to/processed/pipeline/subjectID/MNINonLinear/Results/
 
-### Expected naming convention for imaging data
-  - Structural: `StudyName_SubjectID_T1w_MPR<series_num>.nii.gz`, `StudyName_SubjectID_T2w_SPC<series_num>.nii.gz`
-  - for resting-state and SBRef: `StudyName_SubjectID_REST<series_num>_[SBRef].nii.gz`
-  - e.g. _ABCDPILOT_MSC02_T1w_MPR1.nii.gz,  ABCDPILOT_MSC02_REST2\_SBRef.nii.gz,  ADHD-Youth\_1234-1\_REST3.nii.gz_
+###Usage:
+* Executive Summary is run as a stage of the DCAN fMRI pipelines.
+* Executive Summary can be run by passing the option ```--stage
+ ExecutiveSummary``` to ```run.py```.
+* ```ExecutiveSummary.py``` can be run from the command line as below:
 
-## Program Launch
-- run `layout_builder.py` from appropriate local path
-  - flags to add:
-    - `-s /share/path/study/processed/subjID/visitID/pipeline/subjID/`
-    - `[-s /another/subject ... -s /another...] `
-    - `[-o /path/for/outputs/for_review]`
-    - `[-v or -vv]`
-    - `[--version]`
-    - `[-h for help]`
-    - `[--ica]`
+ ```python
+ usage: ExecutiveSummary.py [-h] --output-dir FILES_PATH [--bids-input FUNC_PATH]
+                        --participant-label PARTICIPANT_LABEL
+                        [--session-id SESSION_ID]
+                        [--dcan-summary DCAN_SUMMARY] [--atlas ATLAS_PATH]
+                        [--version] [--layout-only]
 
-## Outputs
-- __executive\_summary\_(code).html__: a dashboard for cursory quality assurance
-    -  BrainSprite viewer with clickable 3D images
-    -  Parameter Table _(voxel dimensions, TR, TE, Number of Frames, Inversion Time)_
-    -  Functional Data Panel _(raw and structurally registered image slices)_
-    -  Concatenated Grayordinates Plots, pre-regression and post-regression, for entire run and for individual series
-- a sub-directory 'img' (__/summary/img__), containing:
-    - new _.pngs_ of orthogonally sliced image rows for each raw and single-band reference, resting-state acquisition series
-    - copies of all _.gifs_ from /summary placed in inside the new /summary/img directory
-    - new _.png_ images of each resting-state volume with othogonal slice-positions
-- an output folder with copies of each summary requested for convenience
-(__/summary/subjID_visitID__)
-- some __\_log__ files for debugging
+Builds the layout for the Executive Summary of the bids-formatted output from
+the DCAN-Labs fMRI pipelines.
 
-## Architecture
-### /summary_tools
-#### layout_builder.py
-   - use -l and a path to a .txt file containing your subject-paths (single column)
-   - use -s and paths to subject folders, separated by spaces
-   - add -o </output/path> to control where the final product is copied
-   - add --verbose for verbose output to _log file
-   - add -vv for extra debugging output to _log file
-   - use -h to print usage
-
-#### image_summary.py
-   - use -n to print parameters for any single nifti
-   - use -d to print parameters for any single dicom
-   - use --verbose for extra logging
-   - use -vv to do even more logging
-   - use -h to print usage
-
-### /helpers
-#### shenanigans.py
-   - various helper functions
-
-## Recent Updates
-  - v1.5.0: Support for ABCD, monkey, and infant images, ica flag, pulling TE and TI from DICOMs
-  - v1.3.0: add list-mode support! (supply a list of processed paths)
-  - v1.2.3: floating points now have only 2 decimal places
-  - v1.2.2: SBRef data can be found elsewhere when we do not have Raw
-
-## Feature Requests
- - https://trello.com/b/R9xPDQNi/executive-summary-project
-
-## Additional Documentation (under construction)
- - https://fair_lab.gitlab.io/executivesummary/index.html
+optional arguments:
+  -h, --help            show this help message and exit
+  --output-dir FILES_PATH, -o FILES_PATH
+                        path to the output files directory for all
+                        intermediate and output files from the pipeline. Path
+                        should end with "files".
+  --bids-input FUNC_PATH, -i FUNC_PATH
+                        path to the bids dataset that was used as task input
+                        to the pipeline. Path should end with "func"
+  --participant-label PARTICIPANT_LABEL, -p PARTICIPANT_LABEL
+                        participant label, not including "sub-".
+  --session-id SESSION_ID, -s SESSION_ID
+                        filter input dataset by session id. Default is all ids
+                        found under each subject output directory(s). A
+                        session id does not include "ses-"
+  --dcan-summary DCAN_SUMMARY, -d DCAN_SUMMARY
+                        Optional. Expects the name of the subdirectory used
+                        for the summary data. Default:
+                        summary_DCANBOLDProc_v4.0.0
+  --atlas ATLAS_PATH, -a ATLAS_PATH
+                        Optional. Expects the path to the atlas to register to
+                        the images. Default:
+                        templates/MNI_T1_1mm_brain.nii.gz.
+  --version, -v         show version number and exit
+  --layout-only         Can be specified for subjects that have been run
+                        through the executivesummary preprocessor, so the
+                        image data is ready. This calls only the
+                        layout_builder to get the latest layout.
+                        ```
