@@ -12,7 +12,7 @@ directory where the HTML file will eventually be written. It also makes an
 ```img``` subdirectory. The output from the preprocssing step is put into the
 ```img``` directory. For example, the preprocessor slices some of the BIDS input
 (```nii.gz```) files into ```.png``` files; the ```.png``` output are stored in
-```img```.
+```img```. The layout step writes the HTML file.
 As of this writing, the files produced by the preprocessing step and stored in
 ```img``` do not have BIDS names.
 
