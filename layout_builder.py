@@ -8,11 +8,12 @@ the DCAN-Labs fMRI pipelines.
 __version__ = "2.0.0"
 
 import os
-from os import path
+from os import ( path, getcwd, chmod, listdir )
+import stat
 import re
 import glob
 from constants import *
-from helpers import (find_one_file, find_and_copy_file, find_files)
+from helpers import ( find_one_file, find_and_copy_file, find_files )
 
 
 class ModalContainer(object):
@@ -127,7 +128,7 @@ class ModalSlider(ModalContainer):
     # the scripts can find the images used by the slider.
     #
     def __init__ (self, modal_id, image_class):
-        super(__class__, self).__init__(modal_id, image_class)
+        ModalContainer.__init__(self, modal_id, image_class)
 
 
     def get_container(self):
@@ -152,9 +153,12 @@ class ModalSlider(ModalContainer):
 
 
 class Section(object):
-    def __init__ (self):
+    def __init__ (self, img_out_path='./img', regs_slider=None, img_modal=None, **kwargs):
         self.section = ''
         self.scripts = ''
+        self.img_out_path = img_out_path
+        self.regs_slider = regs_slider
+        self.img_modal = img_modal
 
     def get_section(self):
         return self.section
@@ -165,11 +169,10 @@ class Section(object):
 
 class TxSection(Section):
 
-    def __init__ (self, tx, images_path):
-        super(__class__, self).__init__()
+    def __init__ (self, tx='', **kwargs):
+        Section.__init__(self, **kwargs)
 
         self.tx = tx
-        self.images_path = images_path
 
         # As the images are added to the html, they are given a class. When the
         # script for the slider is called, it will allow the user to browse all
@@ -193,7 +196,7 @@ class TxSection(Section):
 
         # Not all subjects have T1 and/or T2. See if we have data.
         mosaic_name = '%s_mosaic.jpg' % self.tx
-        mosaic_path = os.path.join(self.images_path, mosaic_name)
+        mosaic_path = os.path.join(self.img_out_path, mosaic_name)
         if os.path.isfile(mosaic_path):
             # Insert the appropriate tx value in the ids, etc.
             spritelabel += '<h6>BrainSprite Viewer: %s</h6>' % self.tx
@@ -215,10 +218,10 @@ class TxSection(Section):
         # Make the brainsprite.
         brainsprite_label, brainsprite_viewer, brainsprite_loader = self.make_brainsprite_viewer ()
 
-        # The pngs for the slider are already in the images_path. Get the pngs that start
+        # The pngs for the slider are already in the img_out_path. Get the pngs that start
         # with 'tx' so users can view the higher resolution pngs.
         pngs_glob = self.tx + '-*.png'
-        pngs_list = sorted(find_files(self.images_path, pngs_glob))
+        pngs_list = sorted(find_files(self.img_out_path, pngs_glob))
 
         # Just a sanity check, since we happen to know how many to expect.
         if len(pngs_list) is not 9:
@@ -242,29 +245,29 @@ class TxSection(Section):
 
 class AtlasSection(Section):
 
-    def __init__ (self, img_in_path, img_out_path, regs_slider, img_modal):
-        super(__class__, self).__init__()
+    def __init__ (self, img_in_path='./img', **kwargs):
+        Section.__init__(self, **kwargs)
 
         # Super simple section: just one row of images.
         atlas_data = {}
-        atlas_data['regs_id'] = regs_slider.get_modal_id()
-        atlas_data['gray_id'] = img_modal.get_modal_id()
+        atlas_data['regs_id'] = self.regs_slider.get_modal_id()
+        atlas_data['gray_id'] = self.img_modal.get_modal_id()
 
         for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
             values = IMAGE_INFO[key]
-            img_file = find_and_copy_file(img_in_path, values['pattern'], img_out_path)
+            img_file = find_and_copy_file(img_in_path, values['pattern'], self.img_out_path)
             if img_file is not None:
                 atlas_data[key] = img_file
             else:
                 atlas_data[key] = values['placeholder']
 
         # Add registration images to slider.
-        atlas_data['atlas_in_t1_idx'] = regs_slider.add_image(atlas_data['atlas_in_t1'])
-        atlas_data['t1_in_atlas_idx'] = regs_slider.add_image(atlas_data['t1_in_atlas'])
+        atlas_data['atlas_in_t1_idx'] = self.regs_slider.add_image(atlas_data['atlas_in_t1'])
+        atlas_data['t1_in_atlas_idx'] = self.regs_slider.add_image(atlas_data['t1_in_atlas'])
 
         # Add the gray ords to the 'generic' images container.
-        atlas_data['concat_pre_reg_gray_idx'] = img_modal.add_image(atlas_data['concat_pre_reg_gray'])
-        atlas_data['concat_post_reg_gray_idx'] = img_modal.add_image(atlas_data['concat_post_reg_gray'])
+        atlas_data['concat_pre_reg_gray_idx'] = self.img_modal.add_image(atlas_data['concat_pre_reg_gray'])
+        atlas_data['concat_post_reg_gray_idx'] = self.img_modal.add_image(atlas_data['concat_post_reg_gray'])
 
         # Write the HTML for the section.
         self.section += ATLAS_SECTION_START
@@ -273,13 +276,10 @@ class AtlasSection(Section):
 
 class TasksSection(Section):
 
-    def __init__ (self, tasks, img_in_path, img_out_path, regs_slider, img_modal):
-        super(__class__, self).__init__()
+    def __init__ (self, tasks=[], img_in_path='./img', **kwargs):
+        Section.__init__(self, **kwargs)
 
         self.img_in_path = img_in_path
-        self.img_out_path = img_out_path
-        self.regs_slider = regs_slider
-        self.img_modal = img_modal
 
         self.run(tasks)
 
@@ -407,27 +407,27 @@ class layout_builder(object):
             use_path = self.files_path
             print( '\nProcessed tasks will be found in path:\n\t%s' % use_path)
 
-        with os.scandir(use_path) as entries:
-            for entry in entries:
+        for name in os.listdir(use_path):
 
-                # Only worry about directories.
-                if entry.is_dir():
+            # Only deal with subdirectories.
+            pathname = os.path.join(use_path, name)
+            if stat.S_ISDIR(os.stat(pathname).st_mode):
 
-                    # The name must match task- something. Ignore anything else.
-                    # The name may contain other information  and it may or may not
-                    # have '_run-' in it. For example:
-                    #      ses-TWO_task-rest_run-01
-                    #      task-rest01
-                    # We want to capture the name of the task (word after 'task-'),
-                    # lose anything between that name and the digits, and capture
-                    # all of the digits:
+                # The name must match task- something. Ignore anything else.
+                # The name may contain other information  and it may or may not
+                # have '_run-' in it. For example:
+                #      ses-TWO_task-rest_run-01
+                #      task-rest01
+                # We want to capture the name of the task (word after 'task-'),
+                # lose anything between that name and the digits, and capture
+                # all of the digits:
 
-                    task_re = re.compile('task-([^_\d]+)\D*(\d+).*')
-                    match = task_re.search(entry.name)
+                task_re = re.compile('task-([^_\d]+)\D*(\d+).*')
+                match = task_re.search(name)
 
-                    if match is not None:
-                        # Add this tuple to the set of tasks.
-                        taskset.add(match.group(1,2))
+                if match is not None:
+                    # Add this tuple to the set of tasks.
+                    taskset.add(match.group(1,2))
 
         return sorted(taskset)
 
@@ -464,31 +464,39 @@ class layout_builder(object):
             head += TITLE.format( subject=self.subject_id, sep=': ', session=self.session_id )
         body = ''
 
+        # Images included in the Registrations slider and the Images container
+        # are found in multiple sections. Create the objects now and add the files
+        # as we get them.
+        regs_slider = ModalSlider('regs_modal', 'Registrations')
+
         # Any image that is not shown in the sliders will be shown in a modal
         # container when clicked. Create that container now.
         img_modal = ModalContainer('img_modal', 'Images')
 
+        # Some sections require more args, but most will need these:
+        kwargs = {
+                'img_in_path'  : self.summary_path,
+                'img_out_path' : self.images_path,
+                'regs_slider'  : regs_slider,
+                'img_modal'    : img_modal
+                }
+
         # Make sections for 'T1' and 'T2' images. Include pngs slider and
         # BrainSprite for each.
-        t1_section = TxSection('T1', self.images_path)
-        t2_section = TxSection('T2', self.images_path)
+        t1_section = TxSection(tx='T1', **kwargs)
+        t2_section = TxSection(tx='T2', **kwargs)
         body += t1_section.get_section() + t2_section.get_section()
-
-        # Images included in the Registrations slider and the Images container
-        # are found in both of the next 2 sections, so just create the objects
-        # now and add the files as we get them.
-        regs_slider = ModalSlider('regs_modal', 'Registrations')
 
         # Data for this subject/session: i.e., concatenated grayords and atlas images.
         # (The atlas images will be added to the Registrations slider.)
-        atlas_section = AtlasSection(self.summary_path, self.images_path, regs_slider, img_modal)
+        atlas_section = AtlasSection( **kwargs )
         body += atlas_section.get_section()
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to
         # the Registrations slider.)
         tasks_list = self.get_list_of_tasks()
-        tasks_section = TasksSection(tasks_list, self.summary_path, self.images_path, regs_slider, img_modal)
+        tasks_section = TasksSection(tasks=tasks_list, **kwargs)
         body += tasks_section.get_section()
 
         # Close up the Registrations elements and get the HTML.
