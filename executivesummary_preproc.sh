@@ -12,12 +12,12 @@ function display_help() {
     echo "           <output-dir>/sub-<subject_id>/ses-<visit>/files/<dcan-summary>                                   "
     echo "                                                                                                            "
     echo "      Required:                                                                                             "
-    echo "      -i|--bids-input         Path to unprocessed data set, ending at func.                                 "
     echo "      -o|--output-dir         Path to processed files, ending at files.                                     "
     echo "      -d|--dcan-summary       Path to DCAN BOLD proc output, e.g. path to summary_DCANBOLDProc_v4.0.0.      "
     echo "      -s|--subject-id         Subject ID without sub- prefix.                                               "
     echo "                                                                                                            "
     echo "      Optional:                                                                                             "
+    echo "      -i|--bids-input         Path to unprocessed data set, ending at func.                                 "
     echo "      -a|--atlas              Atlas file for generation of rest image. Overrides MNI 1mm atlas.             "
     echo "      -h|--help               Display this message.                                                         "
     exit $1
@@ -60,35 +60,34 @@ while true ; do
     esac
 done
 
-# Check that each of the required args is there (?)
+# Check for required args.
+if [ -z "${output_dir}" ] || [ -z "${dcan_summary}" ] || [ -z "${subject_id}" ] ; then
+    echo output-dir, dcan-summary, and subject-id are required.
+    display_help
+fi
+
+# Log the args.
 echo
-echo "COMMAND LINE ARGUMENTS:"
-echo bids-input=${bids_input}
+echo COMMAND LINE ARGUMENTS to $0:
 echo output-dir=${output_dir}
-echo dcan_summary=${dcan_summary}
-echo subject_id=${subject_id}
-
-if [[ ! -z ${skip_sprite} ]] ; then
-    echo "Skipping sprite processing."
-else
-    echo "End of args"
+echo dcan-summary=${dcan_summary}
+echo subject-id=${subject_id}
+if [ -n "${bids_input}" ] ; then
+    echo bids-input=${bids_input}
 fi
-
-if [[ -z ${atlas} ]]; then
-    echo Using default atlas.
-    atlas=`dirname $0`/templates/MNI152_T1_1mm_brain.nii.gz
-else
-    echo Using atlas: $atlas
+if [ -n "${atlas}" ] ; then
+    echo atlas=${atlas}
 fi
-echo
+if [ -n "${skip_sprite}" ] ; then
+    echo Skipping sprite processing.
+fi
+echo End of args.
 
-source ./setup_env.sh
 
 ### SET UP ENVIRONMENT VARIABLES ###
-# . `dirname $0`"/setup_env.sh"
-export wb_command=${CARET7DIR}/wb_command
-
-#matlab_template=`dirname $0`"/template_FNL_preproc_Matlab.m"
+scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${scriptdir}/setup_env.sh
+templatedir=${scriptdir}/templates
 
 # Use the command line args to setup the requied paths
 processed_files=${output_dir}
@@ -100,6 +99,15 @@ else
     echo "Exiting." >&2
     exit
 fi
+
+if [ -z "${atlas}" ] ; then
+    echo Using default atlas.
+    atlas=${templatedir}/MNI152_T1_1mm_brain.nii.gz # Note: there is one of these in $FSLDIR/data/standard, but if differs. Why?
+else
+    echo Using atlas: $atlas
+fi
+echo
+
 
 # Note: we no longer *insist* that the summary file already exist, because if the subject is 'anatomy-only'
 # there will be no files from DCAN_BOLD_proc. However, if there *are* any task files (including task-rest),
@@ -155,7 +163,7 @@ fi
     #takes the following arguments: t2_path t1_path rp_path lp_path rw_path lw_path
     build_scene_from_template(){
         temp_scene=${processed_files}/image_template_temp.scene
-        cp `dirname $0`/templates/image_template_temp.scene $temp_scene
+        cp ${templatedir}/image_template_temp.scene $temp_scene
 
         declare -a templates=('T2_IMG' 'T1_IMG' 'RPIAL' 'LPIAL' 'RWHITE' 'LWHITE')
         declare -a paths=($1 $2 $3 $4 $5 $6)
@@ -172,7 +180,7 @@ fi
     build_txw_scene_from_template_169(){
         if [ "$6" -eq 1 ] ; then
         	temp_scene=${processed_files}/t1_169_scene.scene
-            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene
+            cp ${templatedir}/parasagittal_Tx_169_template.scene $temp_scene
 
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
@@ -188,7 +196,7 @@ fi
 
         elif [ "$6" -eq 2 ] ; then
 			temp_scene=${processed_files}/t2_169_scene.scene
-            cp `dirname $0`/templates/parasagittal_Tx_169_template.scene $temp_scene
+            cp ${templatedir}/parasagittal_Tx_169_template.scene $temp_scene
 
             declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
             declare -a paths=($1 $2 $3 $4 $5)
@@ -246,7 +254,6 @@ vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
 echo
 echo "START: executive summary image preprocessing"
 
-#Should we use $FSLDIR/data/standard instead of ./templates??
 t1_mask="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
@@ -295,11 +302,11 @@ done
 rm -rf ${processed_files}/image_template_temp.scene
 
 # Cannot do brain sprite processing if there is no template
-if [[ ! -z ${skip_sprite} ]] ; then
+if [ -n "${skip_sprite}" ] ; then
     #skip brain sprite processing.
     echo Skipping brain sprite processing per user request.
-elif [[ ! -e `dirname $0`/templates/parasagittal_Tx_169_template.scene ]] ; then
-    echo Missing `dirname $0`/templates/parasagittal_Tx_169_template.scene
+elif [[ ! -e ${templatedir}/parasagittal_Tx_169_template.scene ]] ; then
+    echo Missing ${templatedir}/parasagittal_Tx_169_template.scene
     echo Cannot perform processing needed for brainsprite.
 elif [[ ${has_t2} -eq 1 ]] ; then
     #create brain sprite images for T1 and T2
@@ -333,8 +340,8 @@ fi
 
 # Make T1w and T2w task images.
 for TASK in `ls -d ${processed_files}/*task-*` ; do
-    fMRIName=`basename ${TASK}`
-    echo "Making figures for TASK: ${TASK}"
+    fMRIName=$( basename ${TASK} )
+    echo Making figures for ${fMRIName}.
     task_img="${processed_files}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
     # Use the first task image to make the resampled brain.
     if [[ ! -e ${t1_2_brain} ]] ; then
@@ -345,16 +352,16 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
         flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
         echo result of flirt is in ${t2_2_brain}
     fi
-    slices ${t1_2_brain} ${task_img} -s 2 -o "${dcan_summary}/${subject_id}_${fMRIName}_in_t1.gif"
-    slices ${task_img} ${t1_2_brain} -s 2 -o "${dcan_summary}/${subject_id}_t1_in_${fMRIName}.gif"
-    slices ${t2_2_brain} ${task_img} -s 2 -o "${dcan_summary}/${subject_id}_${fMRIName}_in_t2.gif"
-    slices ${task_img} ${t2_2_brain} -s 2 -o "${dcan_summary}/${subject_id}_t2_in_${fMRIName}.gif"
+    slices ${t1_2_brain} ${task_img} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-TaskInT1.gif"
+    slices ${task_img} ${t1_2_brain} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-T1InTask.gif"
+    slices ${t2_2_brain} ${task_img} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-TaskInT2.gif"
+    slices ${task_img} ${t2_2_brain} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-T2InTask.gif"
 done
 
 # If the bids-input was supplied and there are func files, slice
 # the bold and sbrefs into pngs so we can display them.
 shopt -s nullglob
-if [ ! -z "${bids_input}" ] && [ -d ${bids_input} ] ; then
+if [ -n "${bids_input}" ] && [ -d ${bids_input} ] ; then
 
     # Slice bold.nii.gz files for tasks into pngs.
     bolds=( ${bids_input}/*task-*_bold*.nii* )
@@ -372,8 +379,9 @@ if [ ! -z "${bids_input}" ] && [ -d ${bids_input} ] ; then
         # There are no SBRefs; use scout files for references.
         scouts=( ${processed_files}/*task-*/Scout_orig.nii.gz )
         for SCOUT in ${scouts[@]} ; do
-            task_name=$(basename  $(dirname $SCOUT))
-            png_name=${task_name}_ref.png
+            # Get the task name and number from the parent.
+            task_name=$( basename  $( dirname ${SCOUT} ) )
+            png_name=sub-${subject_id}_${task_name}_ref.png
             slicer ${SCOUT} -u -a ${images_path}/${png_name}
         done
     else
