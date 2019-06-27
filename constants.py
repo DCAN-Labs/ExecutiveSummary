@@ -28,11 +28,11 @@ IMAGE_INFO = {
         'placeholder': SQUARE
         },
     'task_in_t1': {
-        'pattern': '*%s*_in_t1*.gif',
+        'pattern': '*%s*_desc-TaskInT1.gif',
         'placeholder': SQUARE
         },
     't1_in_task': {
-        'pattern': '*t1_in_*%s*.gif',
+        'pattern': '*%s*_desc-T1InTask.gif',
         'placeholder': SQUARE
         },
     'ref': {
