@@ -130,18 +130,25 @@ if ! [ -d ${exsum_path} ] ; then
     rm -rf ${exsum_path}
 fi
 
+# Lose old images.
 images_path=${exsum_path}/img
+if [ -d ${images_path} ] ; then
+    echo Removing images from prior runs.
+    for FILE in $( ls ${images_path}/* ) ; do
+        echo rm -f ${FILE}
+        rm -f ${FILE}
+    done
+fi
 mkdir -p ${images_path}
-
-chown -R :fnl_lab ${exsum_path} || true
-chmod -R 770 ${exsum_path} || true
-
-
 if ! [ -d ${images_path} ] ; then
     echo Unable to write ${images_path}. Permissions?
     echo Exiting.
     exit 1
 fi
+
+chown -R :fnl_lab ${exsum_path} || true
+chmod -R 770 ${exsum_path} || true
+
 
 
 ############ HELPER FUNCTIONS ##############
