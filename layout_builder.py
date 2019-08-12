@@ -8,12 +8,12 @@ the DCAN-Labs fMRI pipelines.
 __version__ = "2.0.0"
 
 import os
-from os import ( path, getcwd, chmod, listdir )
+from os import (path, getcwd, chmod, listdir)
 import stat
 import re
 import glob
 from constants import *
-from helpers import ( find_one_file, find_and_copy_file, find_files )
+from helpers import (find_one_file, find_files, find_and_copy_files)
 
 
 class ModalContainer(object):
@@ -37,7 +37,7 @@ class ModalContainer(object):
     def __init__ (self, modal_id, image_class):
 
         self.modal_id = modal_id
-        self.modal_container = MODAL_START.format( modal_id=self.modal_id )
+        self.modal_container = MODAL_START.format(modal_id=self.modal_id)
         self.button = ''
 
         self.image_class = image_class
@@ -58,7 +58,7 @@ class ModalContainer(object):
 
     def get_button(self, btn_label):
         # Return HTML to creates a button that displays the modal container.
-        self.button += DISPLAY_MODAL_BUTTON.format( modal_id=self.modal_id, btn_label=btn_label )
+        self.button += DISPLAY_MODAL_BUTTON.format(modal_id=self.modal_id, btn_label=btn_label)
         return self.button
 
 
@@ -68,7 +68,7 @@ class ModalContainer(object):
         self.state = 'closed'
 
         # Close up the elements.
-        self.modal_container += MODAL_END.format( modal_id=self.modal_id )
+        self.modal_container += MODAL_END.format(modal_id=self.modal_id)
 
         # Return the HTML.
         return self.modal_container
@@ -108,7 +108,7 @@ class ModalContainer(object):
                 modal_id      = self.modal_id,
                 image_class   = self.image_class,
                 image_file    = image_file,
-                display_name  = display_name )
+                display_name  = display_name)
 
         self.image_class_idx += 1
         return self.image_class_idx
@@ -136,8 +136,8 @@ class ModalSlider(ModalContainer):
         self.state = 'closed'
 
         # Add the buttons and close up the elements.
-        self.modal_container += SLIDER_END.format( image_class=self.image_class )
-        self.modal_container += MODAL_END.format( modal_id=self.modal_id )
+        self.modal_container += SLIDER_END.format(image_class=self.image_class)
+        self.modal_container += MODAL_END.format(modal_id=self.modal_id)
         # Return the HTML.
         return self.modal_container
 
@@ -153,10 +153,10 @@ class ModalSlider(ModalContainer):
 
 
 class Section(object):
-    def __init__ (self, img_out_path='./img', regs_slider=None, img_modal=None, **kwargs):
+    def __init__ (self, img_path='./img', regs_slider=None, img_modal=None, **kwargs):
         self.section = ''
         self.scripts = ''
-        self.img_out_path = img_out_path
+        self.img_path = img_path
         self.regs_slider = regs_slider
         self.img_modal = img_modal
 
@@ -174,7 +174,7 @@ class TxSection(Section):
 
         self.tx = tx
 
-        # As the images are added to the html, they are given a class. When the
+        # As the images are added to the HTML, they are given a class. When the
         # script for the slider is called, it will allow the user to browse all
         # of the images of that class. Therefore, each slider must have its own
         # class. Use the same class throughout this instantiation.
@@ -196,15 +196,15 @@ class TxSection(Section):
 
         # Not all subjects have T1 and/or T2. See if we have data.
         mosaic_name = '%s_mosaic.jpg' % self.tx
-        mosaic_path = os.path.join(self.img_out_path, mosaic_name)
+        mosaic_path = os.path.join(self.img_path, mosaic_name)
         if os.path.isfile(mosaic_path):
             # Insert the appropriate tx value in the ids, etc.
             spritelabel += '<h6>BrainSprite Viewer: %s</h6>' % self.tx
             viewer = self.tx + '-viewer'
             spriteImg = self.tx + '-spriteImg'
 
-            spriteviewer += SPRITE_VIEWER_HTML.format( viewer=viewer, spriteImg=spriteImg,
-                    mosaic_path=mosaic_path, width='100%' )
+            spriteviewer += SPRITE_VIEWER_HTML.format(viewer=viewer, spriteImg=spriteImg,
+                    mosaic_path=mosaic_path, width='100%')
 
             spriteloader += SPRITE_LOAD_SCRIPT % {
                     'tx'       : self.tx,
@@ -218,10 +218,10 @@ class TxSection(Section):
         # Make the brainsprite.
         brainsprite_label, brainsprite_viewer, brainsprite_loader = self.make_brainsprite_viewer ()
 
-        # The pngs for the slider are already in the img_out_path. Get the pngs that start
+        # The pngs for the slider are already in the img_path. Get the pngs that start
         # with 'tx' so users can view the higher resolution pngs.
         pngs_glob = self.tx + '-*.png'
-        pngs_list = sorted(find_files(self.img_out_path, pngs_glob))
+        pngs_list = sorted(find_files(self.img_path, pngs_glob))
 
         # Just a sanity check, since we happen to know how many to expect.
         if len(pngs_list) is not 9:
@@ -234,8 +234,8 @@ class TxSection(Section):
         # Add HTML for the bar with the brainsprite label and pngs button,
         # and for the brainsprite viewer.
         btn_label = 'View %s pngs' % self.tx
-        self.section += TX_SECTION.format( tx=self.tx, brainsprite_label=brainsprite_label,
-                pngs_button=pngs_slider.get_button(btn_label), brainsprite_viewer=brainsprite_viewer )
+        self.section += TX_SECTION.format(tx=self.tx, brainsprite_label=brainsprite_label,
+                pngs_button=pngs_slider.get_button(btn_label), brainsprite_viewer=brainsprite_viewer)
 
         # HTML for the modal container should be tacked on the end.
         self.section += pngs_slider.get_container()
@@ -245,7 +245,7 @@ class TxSection(Section):
 
 class AtlasSection(Section):
 
-    def __init__ (self, img_in_path='./img', **kwargs):
+    def __init__ (self, img_path='./img', **kwargs):
         Section.__init__(self, **kwargs)
 
         # Super simple section: just one row of images.
@@ -255,7 +255,7 @@ class AtlasSection(Section):
 
         for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
             values = IMAGE_INFO[key]
-            img_file = find_and_copy_file(img_in_path, values['pattern'], self.img_out_path)
+            img_file = find_one_file(img_path, values['pattern'])
             if img_file is not None:
                 atlas_data[key] = img_file
             else:
@@ -276,10 +276,10 @@ class AtlasSection(Section):
 
 class TasksSection(Section):
 
-    def __init__ (self, tasks=[], img_in_path='./img', **kwargs):
+    def __init__ (self, tasks=[], img_path='./img', **kwargs):
         Section.__init__(self, **kwargs)
 
-        self.img_in_path = img_in_path
+        self.img_path = img_path
 
         self.run(tasks)
 
@@ -300,7 +300,7 @@ class TasksSection(Section):
         for key in [ 'task_pre_reg_gray', 'task_post_reg_gray', 'task_in_t1', 't1_in_task' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
-            task_file = find_and_copy_file(self.img_in_path, pattern, self.img_out_path)
+            task_file = find_one_file(self.img_path, pattern)
             if task_file:
                 task_data[key] = task_file
             else:
@@ -319,11 +319,11 @@ class TasksSection(Section):
         for key in [ 'ref', 'bold' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
-            task_file = find_one_file(self.img_out_path, pattern)
+            task_file = find_one_file(self.img_path, pattern)
             if task_file is None:
                 # Try again, with no run number.
                 pattern = values['pattern'] % task_name
-                task_file = find_one_file(self.img_out_path, pattern)
+                task_file = find_one_file(self.img_path, pattern)
 
             if task_file:
                 task_data[key] = task_file
@@ -371,7 +371,7 @@ class layout_builder(object):
             self.session_id = None
 
         # For the directory where the images used by the HTML are stored,  use
-        # the relative path only, as the html will need to access it's images
+        # the relative path only, as the HTML will need to access it's images
         # using the relative path.
         self.images_path = os.path.relpath(images_path, html_path)
 
@@ -402,10 +402,10 @@ class layout_builder(object):
 
         use_path = os.path.join(self.files_path, 'MNINonLinear/Results')
         if os.path.isdir(use_path):
-            print( '\nProcessed tasks will be found in path:\n\t%s' % use_path)
+            print('\nProcessed tasks will be found in path:\n\t%s' % use_path)
         else:
             use_path = self.files_path
-            print( '\nProcessed tasks will be found in path:\n\t%s' % use_path)
+            print('\nProcessed tasks will be found in path:\n\t%s' % use_path)
 
         for name in os.listdir(use_path):
 
@@ -455,13 +455,17 @@ class layout_builder(object):
 
     def run(self):
 
-        # Start building the html document, and put the subject and session
+        # Copy gray plot pngs, generated by DCAN-BOLD processing, to the
+        # directory of images used by the HTML.
+        find_and_copy_files(self.summary_path, '*DVARS_and_FD*.png', self.images_path)
+
+        # Start building the HTML document, and put the subject and session
         # into the title and page header.
         head = HTML_START
         if self.session_id is None:
-            head += TITLE.format( subject=self.subject_id, sep='' , session='')
+            head += TITLE.format(subject=self.subject_id, sep='' , session='')
         else:
-            head += TITLE.format( subject=self.subject_id, sep=': ', session=self.session_id )
+            head += TITLE.format(subject=self.subject_id, sep=': ', session=self.session_id)
         body = ''
 
         # Images included in the Registrations slider and the Images container
@@ -474,12 +478,9 @@ class layout_builder(object):
         img_modal = ModalContainer('img_modal', 'Images')
 
         # Some sections require more args, but most will need these:
-        kwargs = {
-                'img_in_path'  : self.summary_path,
-                'img_out_path' : self.images_path,
-                'regs_slider'  : regs_slider,
-                'img_modal'    : img_modal
-                }
+        kwargs = { 'img_path'     : self.images_path,
+                   'regs_slider'  : regs_slider,
+                   'img_modal'    : img_modal }
 
         # Make sections for 'T1' and 'T2' images. Include pngs slider and
         # BrainSprite for each.
@@ -487,9 +488,9 @@ class layout_builder(object):
         t2_section = TxSection(tx='T2', **kwargs)
         body += t1_section.get_section() + t2_section.get_section()
 
-        # Data for this subject/session: i.e., concatenated grayords and atlas images.
-        # (The atlas images will be added to the Registrations slider.)
-        atlas_section = AtlasSection( **kwargs )
+        # Data for this subject/session: i.e., concatenated gray plots and atlas
+        # images. (The atlas images will be added to the Registrations slider.)
+        atlas_section = AtlasSection(**kwargs)
         body += atlas_section.get_section()
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
