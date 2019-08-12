@@ -37,7 +37,7 @@ the ```img``` directory so it can find its images.
 * ```ExecutiveSummary.py``` can be run from the command line as below:
 
  ```
- usage: ExecutiveSummary.py [-h] --output-dir FILES_PATH [--bids-input FUNC_PATH]
+usage: ExecutiveSummary [-h] --output-dir FILES_PATH [--bids-input FUNC_PATH]
                         --participant-label PARTICIPANT_LABEL
                         [--session-id SESSION_ID]
                         [--dcan-summary DCAN_SUMMARY] [--atlas ATLAS_PATH]
@@ -69,7 +69,7 @@ optional arguments:
                         Optional. Expects the path to the atlas to register to
                         the images. Default:
                         templates/MNI_T1_1mm_brain.nii.gz.
-  --version, -v         show version number and exit
+  --version, -v         show program's version number and exit
   --layout-only         Can be specified for subjects that have been run
                         through the executivesummary preprocessor, so the
                         image data is ready. This calls only the
