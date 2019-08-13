@@ -4,11 +4,11 @@ RECTANGLE = './img/rectangular_placeholder_text.png'
 
 IMAGE_INFO = {
     'concat_pre_reg_gray': {
-        'pattern': 'DVARS_and_FD_CONCA*.png',
+        'pattern': 'DVARS_and_FD_CONCA_task-rest*.png',
         'placeholder': SQUARE
         },
     'concat_post_reg_gray': {
-        'pattern': 'DVARS_and_FD_CONCP*.png',
+        'pattern': 'DVARS_and_FD_CONCP_task-rest*.png',
         'placeholder': SQUARE
         },
     'atlas_in_t1': {
