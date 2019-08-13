@@ -77,7 +77,7 @@ def generate_parser():
     return parser
 
 
-def init_summary(proc_files, summary_dir):
+def init_summary(proc_files, summary_dir, layout_only):
 
     summary_path = None
     html_path = None
@@ -88,6 +88,10 @@ def init_summary(proc_files, summary_dir):
         # Build the directory tree for the output.
         # This also ensures we can write to the path.
         html_path = os.path.join(summary_path, 'executivesummary')
+
+        # If we are going to create the files, need to clean up old files.
+        if path.exists(html_path) and not layout_only:
+                shutil.rmtree(html_path)
 
         if not path.exists(html_path):
             try:
@@ -231,7 +235,7 @@ def interface(files_path, summary_dir, subject_id, func_path=None, session_id=No
     # Most of the data needed is in the summary directory. Also, it is where the
     # preprocessor will make the images and where the layout_builder will write
     # the HTML. We must be able to read and write to the path.
-    summary_path, html_path, images_path = init_summary(files_path, summary_dir)
+    summary_path, html_path, images_path = init_summary(files_path, summary_dir, layout_only)
     if summary_path is None:
         # We were not able to find and/or write to the path.
         print('Exiting.')
