@@ -6,25 +6,26 @@ results of a single session of a single subject. This program was designed along
 with the DCAN fMRI pipelines, and depends upon their output. This is *not* a
 stand-alone BIDS App.
 
-The ```ExecutiveSummary.py``` script runs in 2 steps: preprocessing and layout
-of the HTML page. The preprocessing step makes an ```executivesummary```
+The `ExecutiveSummary.py` script runs in 2 steps: preprocessing and layout
+of the HTML page. The preprocessing step makes an `executivesummary`
 directory where the HTML file will eventually be written. It also makes an
-```img``` subdirectory. The output from the preprocssing step is put into the
-```img``` directory. For example, the preprocessor slices some of the BIDS input
-(```nii.gz```) files into ```.png``` files; the ```.png``` output are stored in
-```img```. The layout step writes the HTML file.
-As of this writing, the files produced by the preprocessing step and stored in
-```img``` do not have BIDS names.
+`img` subdirectory. The output from the preprocssing step is put into the
+`img` directory. For example, the preprocessor slices some of the BIDS input
+(`nii.gz`) files into `.png` files in `img`. The layout step writes the HTML
+file. The `ExecutiveSummary.py` script also uses some files produced by the
+DCANBoldProcessing stage. As of this writing, some files stored in
+`img` do not have BIDS names.
 
 You can move the Executive Summary output, to another directory (or device), but
 it must be moved as a package. That is, the HTML must be in the same location as
-the ```img``` directory so it can find its images.
+the `img` directory so it can find its images.
 
 ### Requirements:
 - Imaging Software Packages Required:
   - fsl v4.1.9 or later
   - workbench v1.3.2 or later
-- Environment: python 3.7.x
+- Environment:
+  - python 3.7.x
   - argparse
   - PIL (Python Image Library)
 
@@ -32,9 +33,13 @@ the ```img``` directory so it can find its images.
 
 ### Usage:
 * Executive Summary is run as a stage of the DCAN fMRI pipelines.
-* Executive Summary can be run by passing the option ```--stage
- ExecutiveSummary``` to ```run.py```.
-* ```ExecutiveSummary.py``` can be run from the command line as below:
+
+If all of the stages of the pipeline, through DCAN BOLD processing have been
+run:
+
+* Executive Summary can be run by passing the option `--stage
+ ExecutiveSummary` as an option to `run.py`.
+* `ExecutiveSummary.py` can be run from the command line as below:
 
  ```
 usage: ExecutiveSummary [-h] --output-dir FILES_PATH [--bids-input FUNC_PATH]
