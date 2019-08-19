@@ -85,13 +85,13 @@ optional arguments:
 
 ## Outputs
 
-- 'executivesummary/img' subdirectory containing:
+- `executivesummary/img` subdirectory containing:
   - Structurally registered image slices for each task acquisition.
   - Concatenated grayordinates plots, pre-regression and post-regression, for
     entire run and for individual series.
   - T1 and T2 _.png_ files: images of each resting-state volume with orthogonal
     slice-positions.
-- 'executivesummary/executive_summary_sub-<label>.html': a dashboard for cursory quality
+- `executivesummary/executive_summary_sub-<label>.html`: a dashboard for cursory quality
   assurance.
   - BrainSprite viewer with navigable 3-D images.
   - Carousels (aka sliders) to view T1 pngs, T2 pngs, and registered images.
