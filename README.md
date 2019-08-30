@@ -99,6 +99,7 @@ optional arguments:
 ## Recent Updates
 - v2.0.0: Complete rewrite and new API. Handles task- data with different naming
   conventions. New features include carousels.
+  NOTE: API has changed. This version is NOT backward compatible.
 - v1.5.0: Support for ABCD, monkey, and infant images, ica flag, pulling TE and TI from DICOMs
 - v1.3.0: add list-mode support! (supply a list of processed paths)
 - v1.2.3: floating points now have only 2 decimal places
