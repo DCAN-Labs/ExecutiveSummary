@@ -1,13 +1,2 @@
-*.name
-.idea/
-out/Image_And_Text_Test.pdf
-out/
-*.orig
-summary_tools/_log
 *.pyc
-*/*.pyc
-*~
-logs/
-_log
-TestCode/img/
-Summary_Report.txt
+templates/parasagittal_Tx_169_template.scene
