@@ -55,7 +55,7 @@ while true ; do
             shift 1
             ;;
         -a|--atlas)
-            atlas="$1"
+            atlas="$2"
             shift 2
             ;;
         -h|--help)
