@@ -3,7 +3,7 @@
 # Note: This file was copied from FNL_preproc_preproc.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o i:o:d:s:a:hx -l bids-input:,output-dir:,dcan-summary:,subject-id:,atlas:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
+options=`getopt -o i:o:d:s:v:a:hx -l bids-input:,output-dir:,dcan-summary:,subject-id:,session-id:,atlas:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...]                                                                           "
@@ -18,7 +18,8 @@ function display_help() {
     echo "                                                                                                            "
     echo "      Optional:                                                                                             "
     echo "      -i|--bids-input         Path to unprocessed data set, ending at func.                                 "
-    echo "      -a|--atlas              Atlas file for generation of rest image. Overrides MNI 1mm atlas.             "
+    echo "      -v|--session-id         Session (visit) ID without ses- prefix.                                       "
+    echo "      -a|--atlas              Atlas file for generation of rest image. Overrides adult MNI 1mm atlas.       "
     echo "      -h|--help               Display this message.                                                         "
     exit $1
 }
@@ -43,6 +44,10 @@ while true ; do
             ;;
         -s|--subject-id)
             subject_id="$2"
+            shift 2
+            ;;
+        -v|--session-id)
+            session_id="$2"
             shift 2
             ;;
         -a|--atlas)
@@ -75,11 +80,14 @@ echo subject-id=${subject_id}
 if [ -n "${bids_input}" ] ; then
     echo bids-input=${bids_input}
 fi
+if [ -n "${session_id}" ] ; then
+    echo session-id=${session_id}
+fi
 if [ -n "${atlas}" ] ; then
     echo atlas=${atlas}
 fi
 if [ -n "${skip_sprite}" ] ; then
-    echo Skipping sprite processing.
+    echo Skip sprite processing.
 fi
 echo End of args.
 
@@ -100,11 +108,15 @@ else
     exit
 fi
 
+AtlasSpacePath=${processed_files}/${AtlasSpaceFolder}
+Results=${AtlasSpacePath}/Results
+ROIs=${AtlasSpacePath}/ROIs
+
 if [ -z "${atlas}" ] ; then
-    echo Using default atlas.
+    echo Use default atlas.
     atlas=${templatedir}/MNI152_T1_1mm_brain.nii.gz # Note: there is one of these in $FSLDIR/data/standard, but if differs. Why?
 else
-    echo Using atlas: $atlas
+    echo Use atlas: $atlas
 fi
 echo
 
@@ -133,7 +145,7 @@ fi
 # Lose old images.
 images_path=${exsum_path}/img
 if [ -d ${images_path} ] ; then
-    echo Removing images from prior runs.
+    echo Remove images from prior runs.
     for FILE in $( ls ${images_path}/* ) ; do
         echo rm -f ${FILE}
         rm -f ${FILE}
@@ -247,8 +259,6 @@ chmod -R 770 ${exsum_path} || true
 
 ################## BEGIN #########################
 
-segBrain="wmparc.2.nii.gz"
-segBrainDir="${processed_files}/MNINonLinear/ROIs"
 wm_mask_L="L_wm_2mm_${subject_id}_mask.nii.gz"
 wm_mask_R="R_wm_2mm_${subject_id}_mask.nii.gz"
 wm_mask="wm_2mm_${subject_id}_mask.nii.gz"
@@ -261,18 +271,26 @@ vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
 echo
 echo "START: executive summary image preprocessing"
 
-t1_mask="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
+############
+### Anat
+############
+output_pre=${images_path}/sub-${subject_id}
+if [ -n "${session_id}" ] ; then
+    output_pre=${output_pre}_ses-${session_id}
+fi
+t1_mask="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
+
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
-    echo "Cannot create ${subject_id}_atlas_in_t1.gif or ${subject_id}_t1_in_atlas.gif."
+    echo "Cannot create atlas-in-t1 or t1-in-atlas"
 else
-    slices ${t1_mask} ${atlas} -o "${images_path}/${subject_id}_atlas_in_t1.gif"
-    slices ${atlas} ${t1_mask} -o "${images_path}/${subject_id}_t1_in_atlas.gif"
+    slices ${t1_mask} ${atlas} -o "${output_pre}_desc-AtlasInT1w.gif"
+    slices ${atlas} ${t1_mask} -o "${output_pre}_desc-T1wInAtlas.gif"
 fi
 
 # From here on, use the whole T1 file rather than the mask (used above).
-t1="${processed_files}/MNINonLinear/T1w_restore.nii.gz"
-t2="${processed_files}/MNINonLinear/T2w_restore.nii.gz"
+t1="${AtlasSpacePath}/T1w_restore.nii.gz"
+t2="${AtlasSpacePath}/T2w_restore.nii.gz"
 has_t2=1
 if [[ ! -e ${t2} ]] ; then
     echo "t2 not found; using t1"
@@ -280,14 +298,14 @@ if [[ ! -e ${t2} ]] ; then
     t2="${t1}"
 fi
 
-rw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.white.32k_fs_LR.surf.gii"
-rp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.R.pial.32k_fs_LR.surf.gii"
-lw="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
-lp="${processed_files}/MNINonLinear/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
-t1_brain="${processed_files}/MNINonLinear/T1w_restore_brain.nii.gz"
-t2_brain="${processed_files}/MNINonLinear/T2w_restore_brain.nii.gz"
-t1_2_brain="${processed_files}/MNINonLinear/T1w_restore_brain.2.nii.gz"
-t2_2_brain="${processed_files}/MNINonLinear/T2w_restore_brain.2.nii.gz"
+rw="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.R.white.32k_fs_LR.surf.gii"
+rp="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.R.pial.32k_fs_LR.surf.gii"
+lw="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
+lp="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
+t1_brain="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
+t2_brain="${AtlasSpacePath}/T2w_restore_brain.nii.gz"
+t1_2_brain="${AtlasSpacePath}/T1w_restore_brain.2.nii.gz"
+t2_2_brain="${AtlasSpacePath}/T2w_restore_brain.2.nii.gz"
 
 #create summary images
 build_scene_from_template $t2 $t1 $rp $lp $rw $lw
@@ -299,10 +317,10 @@ do
     ((scenenum=(i+1)))
 
     if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
-        echo "skipping t2 image"
+        echo "skip t2 image"
     else
-        echo create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
-        create_image_from_template "${images_path}/${image_names[$i]}.png" $scenenum
+        echo create_image_from_template "${output_pre}_${image_names[$i]}.png" $scenenum
+        create_image_from_template "${output_pre}_${image_names[$i]}.png" $scenenum
     fi
 done
 
@@ -311,7 +329,7 @@ rm -rf ${processed_files}/image_template_temp.scene
 # Cannot do brain sprite processing if there is no template
 if [ -n "${skip_sprite}" ] ; then
     #skip brain sprite processing.
-    echo Skipping brain sprite processing per user request.
+    echo Skip brain sprite processing per user request.
 elif [[ ! -e ${templatedir}/parasagittal_Tx_169_template.scene ]] ; then
     echo Missing ${templatedir}/parasagittal_Tx_169_template.scene
     echo Cannot perform processing needed for brainsprite.
@@ -345,11 +363,35 @@ if [[ -e ${t2_2_brain} ]] ; then
     rm ${t2_2_brain}
 fi
 
+# Subcorticals
+# Would be nice if the 3 axial slices were all "lower" so that the 3rd one
+# would include some data, but then we'd have to figure out which slices to use
+# Might do that someday. For now, cheat.
+subcort=${ROIs}/sub2atl_ROI.2.nii.gz
+subcort_atlas=${ROIs}/Atlas_ROIs.2.nii.gz
+if [ -e ${subcort} ] ; then
+    if [ -e ${subcort_atlas} ] ; then
+        echo Create subcorticals images.
+        slices ${subcort} ${subcort_atlas} -o "${output_pre}_desc-AtlasInSubcort.gif"
+        slices ${subcort_atlas} ${subcort} -o "${output_pre}_desc-SubcortInAtlas.gif"
+    else
+        echo Missing ${subcort_atlas}.
+        echo Cannot create atlas_in_subcort or subcort_in_atlas.
+    fi
+else
+    echo Missing ${subcort}.
+    echo No subcorticals will be included.
+fi
+
+
+############
+### Tasks
+############
 # Make T1w and T2w task images.
 for TASK in `ls -d ${processed_files}/*task-*` ; do
     fMRIName=$( basename ${TASK} )
-    echo Making figures for ${fMRIName}.
-    task_img="${processed_files}/MNINonLinear/Results/${fMRIName}/${fMRIName}.nii.gz"
+    echo Make images for ${fMRIName}.
+    task_img="${Results}/${fMRIName}/${fMRIName}.nii.gz"
     # Use the first task image to make the resampled brain.
     if [[ ! -e ${t1_2_brain} ]] ; then
         flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
@@ -359,12 +401,14 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
         flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
         echo result of flirt is in ${t2_2_brain}
     fi
-    slices ${t1_2_brain} ${task_img} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-TaskInT1.gif"
-    slices ${task_img} ${t1_2_brain} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-T1InTask.gif"
-    slices ${t2_2_brain} ${task_img} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-TaskInT2.gif"
-    slices ${task_img} ${t2_2_brain} -s 2 -o "${images_path}/sub-${subject_id}_${fMRIName}_desc-T2InTask.gif"
+    fMRI_pre=${images_path}/sub-${subject_id}_${fMRIName}
+    slices ${t1_2_brain} ${task_img} -s 2 -o "${fMRI_pre}_desc-TaskInT1.gif"
+    slices ${task_img} ${t1_2_brain} -s 2 -o "${fMRI_pre}_desc-T1InTask.gif"
+    slices ${t2_2_brain} ${task_img} -s 2 -o "${fMRI_pre}_desc-TaskInT2.gif"
+    slices ${task_img} ${t2_2_brain} -s 2 -o "${fMRI_pre}_desc-T2InTask.gif"
 done
 
+        set -x
 # If the bids-input was supplied and there are func files, slice
 # the bold and sbrefs into pngs so we can display them.
 shopt -s nullglob
@@ -400,10 +444,12 @@ if [ -n "${bids_input}" ] && [ -d ${bids_input} ] ; then
         done
     fi
 
-
+else
+    echo No func files. Neither BOLD nor SBREF will be shown.
 fi
 shopt -u nullglob
 
+        set +x
 
 echo "DONE: executive summary prep"
 
