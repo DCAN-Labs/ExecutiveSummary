@@ -7,6 +7,8 @@ if [ -z "${CARET7DIR}" ] ; then
 fi
 export wb_command=${CARET7DIR}/wb_command
 
+export AtlasSpaceFolder="MNINonLinear"
+
 motion_filename="motion_numbers.txt"
 skip_seconds=5
 brain_radius_in_mm=50
