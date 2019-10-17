@@ -220,7 +220,7 @@ class TxSection(Section):
 
         # The pngs for the slider are already in the img_path. Get the pngs that start
         # with 'tx' so users can view the higher resolution pngs.
-        pngs_glob = self.tx + '-*.png'
+        pngs_glob = '*_' + self.tx + '-*.png'
         pngs_list = sorted(find_files(self.img_path, pngs_glob))
 
         # Just a sanity check, since we happen to know how many to expect.
@@ -243,7 +243,7 @@ class TxSection(Section):
         self.scripts = brainsprite_loader + pngs_slider.get_scripts()
 
 
-class AtlasSection(Section):
+class AnatSection(Section):
 
     def __init__ (self, img_path='./img', **kwargs):
         Section.__init__(self, **kwargs)
@@ -270,9 +270,9 @@ class AtlasSection(Section):
         atlas_data['concat_post_reg_gray_idx'] = self.img_modal.add_image(atlas_data['concat_post_reg_gray'])
 
         # Write the HTML for the section.
-        self.section += ATLAS_SECTION_START
-        self.section += ATLAS_ROW.format(**atlas_data)
-        self.section += ATLAS_SECTION_END
+        self.section += ANAT_SECTION_START
+        self.section += ANAT_ROW.format(**atlas_data)
+        self.section += ANAT_SECTION_END
 
 class TasksSection(Section):
 
@@ -490,8 +490,8 @@ class layout_builder(object):
 
         # Data for this subject/session: i.e., concatenated gray plots and atlas
         # images. (The atlas images will be added to the Registrations slider.)
-        atlas_section = AtlasSection(**kwargs)
-        body += atlas_section.get_section()
+        anat_section = AnatSection(**kwargs)
+        body += anat_section.get_section()
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to

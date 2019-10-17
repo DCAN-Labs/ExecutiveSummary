@@ -12,11 +12,11 @@ IMAGE_INFO = {
         'placeholder': SQUARE
         },
     'atlas_in_t1': {
-        'pattern': '*atlas_in_t1*.gif',
+        'pattern': '*_desc-AtlasInT1w.gif',
         'placeholder': SQUARE
         },
     't1_in_atlas': {
-        'pattern': '*t1_in_atlas*.gif',
+        'pattern': '*_desc-T1wInAtlas.gif',
         'placeholder': SQUARE
         },
     'task_pre_reg_gray': {
@@ -111,12 +111,16 @@ TX_SECTION = """
 </section>
 """
 
-# Make a section for combined gray ordinates and atlas images.
+# Make a section for anatomical data (combined gray ordinates, cortical and
+# subcorticals aligned to atlases).
 # Start with the column headings.
 # No values needed.
-ATLAS_SECTION_START = """
-<section id="Atlas">
+ANAT_SECTION_START = """
+<section id="Anat">
     <div class="w3-container">
+        <div class="w3-row">
+            <div class="w3-left label1">Anatomical Data</div>
+        <div>
         <div class="w3-row">
             <div class="w3-half w3-center label1">Resting State Grayordinates Plots</div>
             <div class="w3-half w3-center label1"></div>
@@ -133,7 +137,7 @@ ATLAS_SECTION_START = """
 # Add the actual row of images.
 # Needs the following values:
 #    gray_id, regs_id, pre_reg_gray, post_reg_gray, atlas_in_t1, t1_in_atlas.
-ATLAS_ROW = """
+ANAT_ROW = """
             <div class="w3-quarter"><img src="{concat_pre_reg_gray}" onclick="open_{gray_id}_to_index({concat_pre_reg_gray_idx})"></div>
             <div class="w3-quarter"><img src="{concat_post_reg_gray}" onclick="open_{gray_id}_to_index({concat_post_reg_gray_idx})"></div>
             <div class="w3-quarter"><img src="{atlas_in_t1}" onclick="open_{regs_id}_to_index({atlas_in_t1_idx})"></div>
@@ -142,7 +146,7 @@ ATLAS_ROW = """
 
 # End the atlas section by closing up the divisions and the section.
 # No values needed.
-ATLAS_SECTION_END = """
+ANAT_SECTION_END = """
         </div>
     </div>
 </section>
@@ -152,6 +156,9 @@ ATLAS_SECTION_END = """
 TASKS_SECTION_START = """
 <section id="Tasks">
     <div class="w3-container">
+        <div class="w3-row">
+            <div class="w3-left label1">Functional Data</div>
+        <div>
         <div  class="w3-row">
             <div class="w3-col s1 label1">Task</div>
             <div class="w3-col s2 label1">Pre-Reg Gray Plot</div>
