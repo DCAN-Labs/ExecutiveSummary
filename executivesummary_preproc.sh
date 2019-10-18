@@ -96,6 +96,9 @@ echo End of args.
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source ${scriptdir}/setup_env.sh
 templatedir=${scriptdir}/templates
+if [ -z "${GROUP}" ] ; then
+    GROUP=fnl_lab
+fi
 
 # Use the command line args to setup the requied paths
 processed_files=${output_dir}
@@ -130,7 +133,7 @@ if [ -d ${dcan_summary} ]; then
     echo Path to summary : ${dcan_summary}
 else
     mkdir -p ${dcan_summary}
-    chown :fnl_lab ${dcan_summary} || true
+    chown :${GROUP} ${dcan_summary} || true
     chmod 770 ${dcan_summary} || true
 fi
 
@@ -158,7 +161,7 @@ if ! [ -d ${images_path} ] ; then
     exit 1
 fi
 
-chown -R :fnl_lab ${exsum_path} || true
+chown -R :${GROUP} ${exsum_path} || true
 chmod -R 770 ${exsum_path} || true
 
 
@@ -336,10 +339,10 @@ elif [[ ! -e ${templatedir}/parasagittal_Tx_169_template.scene ]] ; then
 elif [[ ${has_t2} -eq 1 ]] ; then
     #create brain sprite images for T1 and T2
     mkdir -p ${dcan_summary}/T1_pngs/
-    chown :fnl_lab ${dcan_summary}/T1_pngs/ || true
+    chown :${GROUP} ${dcan_summary}/T1_pngs/ || true
     chmod 770 ${dcan_summary}/T1_pngs/ || true
     mkdir -p ${dcan_summary}/T2_pngs/
-    chown :fnl_lab ${dcan_summary}/T2_pngs/ || true
+    chown :${GROUP} ${dcan_summary}/T2_pngs/ || true
     chmod 770 ${dcan_summary}/T2_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
@@ -348,7 +351,7 @@ elif [[ ${has_t2} -eq 1 ]] ; then
 else
     #create brain sprite images for T1 only
     mkdir -p ${dcan_summary}/T1_pngs/
-    chown :fnl_lab ${dcan_summary}/T1_pngs/ || true
+    chown :${GROUP} ${dcan_summary}/T1_pngs/ || true
     chmod 770 ${dcan_summary}/T1_pngs/ || true
     build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
     create_image_from_template_169 1
