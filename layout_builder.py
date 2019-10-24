@@ -248,30 +248,46 @@ class AnatSection(Section):
     def __init__ (self, img_path='./img', **kwargs):
         Section.__init__(self, **kwargs)
 
-        # Super simple section: just one row of images.
-        atlas_data = {}
-        atlas_data['regs_id'] = self.regs_slider.get_modal_id()
-        atlas_data['gray_id'] = self.img_modal.get_modal_id()
+        # Make a row for t1-atlas registrations and a row for subcortical-atlas
+        # registrations
+        t1_atlas_data = {}
+        t1_atlas_data['regs_slider_id'] = self.regs_slider.get_modal_id()
+        t1_atlas_data['gray_modal_id'] = self.img_modal.get_modal_id()
+        sb_atlas_data = {}
+        sb_atlas_data['regs_slider_id'] = self.regs_slider.get_modal_id()
+        sb_atlas_data['gray_modal_id'] = self.img_modal.get_modal_id()
 
-        for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
+        for key in [ 'concat_pre_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
             values = IMAGE_INFO[key]
             img_file = find_one_file(img_path, values['pattern'])
             if img_file is not None:
-                atlas_data[key] = img_file
+                t1_atlas_data[key] = img_file
             else:
-                atlas_data[key] = values['placeholder']
+                t1_atlas_data[key] = values['placeholder']
 
-        # Add registration images to slider.
-        atlas_data['atlas_in_t1_idx'] = self.regs_slider.add_image(atlas_data['atlas_in_t1'])
-        atlas_data['t1_in_atlas_idx'] = self.regs_slider.add_image(atlas_data['t1_in_atlas'])
+        for key in [ 'concat_post_reg_gray', 'atlas_in_subcort', 'subcort_in_atlas' ]:
+            values = IMAGE_INFO[key]
+            img_file = find_one_file(img_path, values['pattern'])
+            if img_file is not None:
+                sb_atlas_data[key] = img_file
+            else:
+                sb_atlas_data[key] = values['placeholder']
 
         # Add the gray ords to the 'generic' images container.
-        atlas_data['concat_pre_reg_gray_idx'] = self.img_modal.add_image(atlas_data['concat_pre_reg_gray'])
-        atlas_data['concat_post_reg_gray_idx'] = self.img_modal.add_image(atlas_data['concat_post_reg_gray'])
+        t1_atlas_data['concat_pre_reg_gray_idx'] = self.img_modal.add_image(t1_atlas_data['concat_pre_reg_gray'])
+        sb_atlas_data['concat_post_reg_gray_idx'] = self.img_modal.add_image(sb_atlas_data['concat_post_reg_gray'])
+
+        # Add registration images to slider.
+        t1_atlas_data['atlas_in_t1_idx'] = self.regs_slider.add_image(t1_atlas_data['atlas_in_t1'])
+        t1_atlas_data['t1_in_atlas_idx'] = self.regs_slider.add_image(t1_atlas_data['t1_in_atlas'])
+
+        sb_atlas_data['atlas_in_subcort_idx'] = self.regs_slider.add_image(sb_atlas_data['atlas_in_subcort'])
+        sb_atlas_data['subcort_in_atlas_idx'] = self.regs_slider.add_image(sb_atlas_data['subcort_in_atlas'])
 
         # Write the HTML for the section.
         self.section += ANAT_SECTION_START
-        self.section += ANAT_ROW.format(**atlas_data)
+        self.section += T1_ROW.format(**t1_atlas_data)
+        self.section += SUBCORT_ROW.format(**sb_atlas_data)
         self.section += ANAT_SECTION_END
 
 class TasksSection(Section):
@@ -482,16 +498,25 @@ class layout_builder(object):
                    'regs_slider'  : regs_slider,
                    'img_modal'    : img_modal }
 
+        #######################
+        ### Anatomical images
+        #######################
+
         # Make sections for 'T1' and 'T2' images. Include pngs slider and
         # BrainSprite for each.
         t1_section = TxSection(tx='T1', **kwargs)
         t2_section = TxSection(tx='T2', **kwargs)
         body += t1_section.get_section() + t2_section.get_section()
 
-        # Data for this subject/session: i.e., concatenated gray plots and atlas
-        # images. (The atlas images will be added to the Registrations slider.)
+        # Data for this subject/session: i.e., concatenated gray plots and
+        # atlas-registerd images. (The atlas-registered images will be added to
+        # the Registrations slider.)
         anat_section = AnatSection(**kwargs)
         body += anat_section.get_section()
+
+        #######################
+        ### Functional images
+        #######################
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to
