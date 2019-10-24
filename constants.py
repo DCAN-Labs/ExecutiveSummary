@@ -67,16 +67,16 @@ HTML_START = """
     h1, h2, h3, h4, body, button, p, w3-btn { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif; }
     h1 { text-align: center; font-size: 2.5em; }
     h2{ text-align: center; font-size: 2.00em; }
-    h3{ text-align: center; font-size: 1.75em; }
+    h3{ text-align: left; font-size: 1.75em; }
     h4{ text-align: left; font-size: 1.25em; }
     p{ font-size: 1.0em; }
     body{ font-size: 1.0em; }
     img{ width: 100%; padding: 2px; }
-    .label1, .label2, .label3 { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif }
+    .label1, .label2, .label3, .label4{ font-family: Verdana, Helvetica, Arial, Bookman, sans-serif }
     .label1 { font-size: 1.25em; text-align: center; }
-    .label2 { font-size: 1.00em; text-align: center; }
+    .label2 { font-size: 1.25em; text-align: right; }
     .label3 { font-size: 1.25em; text-align: left; }
-    .label4 { font-size: 1.25em; text-align: right; }
+    .label4 { font-size: 1.00em; text-align: center; }
     .grid-container { grid-gap: 2px; padding: 2px; }
     .T1pngs, .T2pngs, .Registrations, .Images { display: none; }
     .modal { vertical-align: top; margin-top:0; border-top-style:none; padding-top:0; top:0; height: 100%; width: auto; }
@@ -119,57 +119,53 @@ TX_SECTION = """
 </section>
 """
 
-# Make a section for anatomical data (combined gray ordinates, cortical and
-# subcorticals aligned to atlases).
-# Start with the major column headings.
+# Make a section for anatomical data (cortical and
+# subcorticals aligned to atlases, combined gray ordinates).
+# Start with the column headings.
 # No values needed.
 ANAT_SECTION_START = """
 <section id="Anat">
     <div class="w3-container">
-        <div class="w3-row">
+        <div class="w3-row-padding">
             <div class="w3-center"><h2>Anatomical Data</h2></div>
-        <div>
+        </div>
             """
 
-# Add the 2 rows of images with their headings.
-# Needs the following values:
-#    gray_modal_id, regs_slider_id,
-#    concat_pre_reg_gray, atlas_in_t1, atlas_in_subcort,
-#    concat_post_reg_gray, t1_in_atlas, subcort_in_atlas
-T1_ROW = """
-        <div class="w3-row">
-            <div class="w3-threequarter">
-                <div class="w3-half">
-                    <div class="w3-row label1">Atlas in T1</div>
-                    <div class="w3-row"><img src="{atlas_in_t1}" onclick="open_{regs_slider_id}_to_index({atlas_in_t1_idx})"></div>
-                </div>
-                <div class="w3-half">
-                    <div class="w3-row label1">T1 in Atlas</div>
-                    <div class="w3-row"><img src="{t1_in_atlas}" onclick="open_{regs_slider_id}_to_index({t1_in_atlas_idx})"></div>
-                </div>
-            </div>
-            <div class="w3-quarter">
-                <div class="row label1">Post-Reg Gray Plot</iv>
-                <div class="row"><img src="{concat_pre_reg_gray}" onclick="open_{gray_modal_id}_to_index({concat_pre_reg_gray_idx})"></div>
-            </div>
+# Layout the rows of atlas-registered images.
+# Needs the following values and corresponding indices:
+#    regs_id, atlas_in_t1, t1_in_atlas, atlas_in_subcort, subcort_in_atlas
+ATLAS_ROWS = """
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">Atlas in T1</div>
+            <div class="w3-col l11"><img src="{atlas_in_t1}" onclick="open_{regs_id}_to_index({atlas_in_t1_idx})"></div>
         </div>
-         """
-SUBCORT_ROW = """
-        <div class="w3-row">
-            <div class="w3-threequarter">
-                <div class="w3-half">
-                    <div class="w3-row label1">Atlas in Subcorticals</div>
-                    <div class="w3-row"><img src="{atlas_in_subcort}" onclick="open_{regs_slider_id}_to_index({atlas_in_subcort_idx})"></div>
-                </div>
-                <div class="w3-half">
-                    <div class="w3-row label1">Subcorticals in Atlas</div>
-                    <div class="w3-row"><img src="{subcort_in_atlas}" onclick="open_{regs_slider_id}_to_index({subcort_in_atlas_idx})"></div>
-                </div>
-            </div>
-            <div class="w3-quarter">
-                <div class="w3-row label1">Post-Reg Gray Plot</iv>
-                <div class="w3-row"><img src="{concat_post_reg_gray}" onclick="open_{gray_modal_id}_to_index({concat_post_reg_gray_idx})"></div>
-            </div>
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">T1 in Atlas</div>
+            <div class="w3-col l11"><img src="{t1_in_atlas}" onclick="open_{regs_id}_to_index({t1_in_atlas_idx})"></div>
+        </div>
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">Atlas in Subcorticals</div>
+            <div class="w3-col l11"><img src="{atlas_in_subcort}" onclick="open_{regs_id}_to_index({atlas_in_subcort_idx})"></div>
+        </div>
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">Subcorticals in Atlas</div>
+            <div class="w3-col l11"><img src="{subcort_in_atlas}" onclick="open_{regs_id}_to_index({subcort_in_atlas_idx})"></div>
+        </div>
+            """
+
+# Layout the row of gray-ordinates images.
+# Needs the following values and corresponding indices:
+#    gray_id, pre_reg_gray, post_reg_gray
+GRAY_ROW = """
+        <div class="w3-row-padding">
+            <div class="w3-col l1 label2"><br></div>
+            <div class="w3-col l3 w3-center label1">Pre-Regression</div>
+            <div class="w3-col l3 w3-center label1">Post-Regression</div>
+        </div>
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">Combined Resting State Data</div>
+            <div class="w3-col l3"><img src="{concat_pre_reg_gray}" onclick="open_{gray_id}_to_index({concat_pre_reg_gray_idx})"></div>
+            <div class="w3-col l3"><img src="{concat_post_reg_gray}" onclick="open_{gray_id}_to_index({concat_post_reg_gray_idx})"></div>
         </div>
             """
 
@@ -180,43 +176,53 @@ ANAT_SECTION_END = """
 </section>
 """
 
-# Start the tasks section.
+# Start the tasks section and  put in the column headings for the task-specific data.
 TASKS_SECTION_START = """
 <section id="Tasks">
     <div class="w3-container">
-        <div class="w3-row">
+        <div class="w3-row-padding">
             <div class="w3-center"><h2>Functional Data</h2></div>
         <div>
 """
 
-# Puts in the column headings for the task-specific data and lays out the
-# single row of 6 images for the task/run.
-# Needs the following values:
-#    row_label, image_class, misc_id, regs_id, task_pre_reg_gray, task_post_reg_gray, task_in_t1, t1_in_task, ref, bold.
-TASK_ROW = """
-        <div class="w3-row">
-            <div class="w3-center"><h3>{row_label}</h3></div>
-        <div>
-        <div class="w3-row">
-            <div class="w3-threequarter">
-                <div class="w3-half">
-                    <div class="w3-row label1">Task in T1</div>
-                    <div class="w3-row"><img src="{task_in_t1}" onclick="open_{regs_id}_to_index({task_in_t1_idx})"></div>
-                    <div class="w3-row label1">BOLD</div>
-                    <div class="w3-row"><img src="{bold}" onclick="open_{misc_id}_to_index({bold_idx})"></div>
+# Layout the rows of T1-registered images.
+# Needs the following values and corresponding indices:
+#    row_label, regs_id, task_in_t1, t1_in_task, ref, bold.
+T1_REG_ROWS = """
+        <div  class="w3-row">
+            <div class="w3-left label1">{row_label}:</div>
+        <div  class="w3-row">
+            <div class="w3-col l1 label1">Task in T1</div>
+            <div class="w3-col l11"><img src="{task_in_t1}" onclick="open_{regs_id}_to_index({task_in_t1_idx})"></div>
+        </div>
+        <div  class="w3-row">
+            <div class="w3-col l1 label1">T1 in Task</div>
+            <div class="w3-col l11"><img src="{t1_in_task}" onclick="open_{regs_id}_to_index({t1_in_task_idx})"></div>
+        </div>
+        """
+
+# Layout the row of bold, reference and gray-ordinates images for the task.
+# Needs the following values and corresponding indices:
+#    modal_id, bold, ref, task_pre_reg_gray, task_post_reg_gray
+BOLD_GRAY_ROW="""
+        <div class="w3-row-padding">
+            <div class="w3-half">
+                <div class="w3-row">
+                    <div class="w3-col l2 label1">BOLD</div>
+                    <div class="w3-col l9"><img src="{bold}" onclick="open_{modal_id}_to_index({bold_idx})"></div>
                 </div>
-                <div class="w3-half">
-                    <div class="w3-row label1">T1 in Task</div>
-                    <div class="w3-row"><img src="{t1_in_task}" onclick="open_{regs_id}_to_index({t1_in_task_idx})"></div>
-                    <div class="w3-row label1">Reference</div>
-                    <div class="w3-row"><img src="{ref}" onclick="open_{misc_id}_to_index({ref_idx})"></div>
+                <div class="w3-row">
+                    <div class="w3-col l2 label1">Reference</div>
+                    <div class="w3-col l9"><img src="{ref}" onclick="open_{modal_id}_to_index({ref_idx})"></div>
                 </div>
             </div>
             <div class="w3-quarter">
-                <div class="w3-row label1">Pre-Reg Gray Plot</div>
-                <div class="w3-row"><img src="{task_pre_reg_gray}" onclick="open_{misc_id}_to_index({task_pre_reg_gray_idx})"></div>
-                <div class="w3-row label1">Post-Reg Gray Plot</div>
-                <div class="w3-row"><img src="{task_post_reg_gray}" onclick="open_{misc_id}_to_index({task_post_reg_gray_idx})"></div>
+                <div class="w3-row w3-center label1">Pre-Regression</div>
+                <div class="w3-row"><img src="{task_pre_reg_gray}" onclick="open_{modal_id}_to_index({task_pre_reg_gray_idx})"></div>
+            </div>
+            <div class="w3-quarter">
+                <div class="w3-row w3-center label1">Post-Regression</div>
+                <div class="w3-row"><img src="{task_post_reg_gray}" onclick="open_{modal_id}_to_index({task_post_reg_gray_idx})"></div>
             </div>
         </div>
         """

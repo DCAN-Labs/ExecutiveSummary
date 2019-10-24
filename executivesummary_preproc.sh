@@ -149,10 +149,18 @@ fi
 images_path=${exsum_path}/img
 if [ -d ${images_path} ] ; then
     echo Remove images from prior runs.
-    for FILE in $( ls ${images_path}/* ) ; do
-        echo rm -f ${FILE}
-        rm -f ${FILE}
-    done
+    if [ -n "${skip_sprite}" ] ; then
+        # Cheat - keep the mosaics. Debug only.
+        # Don't bother to log each file removed.
+        mv ${images_path}/*mosaic* ${images_path}/..
+        rm -f ${images_path}/*
+        mv ${images_path}/../*mosaic* .
+    else
+        for FILE in $( ls ${images_path}/* ) ; do
+            echo rm -f ${FILE}
+            rm -f ${FILE}
+        done
+    fi
 fi
 mkdir -p ${images_path}
 if ! [ -d ${images_path} ] ; then
@@ -259,6 +267,34 @@ chmod -R 770 ${exsum_path} || true
         done
     }
 
+    make_horizontal_slices() {
+        # slicesdir is useful, but stupid. It creates a subdirectory
+        # whereever it is run called slicesdir. It names the output
+        # png file with the same name as the input path (with png
+        # nii.gz). If the input image is a path, the name will have
+        # the entire path in it (with _ instead of /). So...
+        # We will go to the directory containing the image, so that
+        # its entire relative path will be it's basename. That way
+        # we can grab the png when we're done.
+        base_img=$1
+        out_png=$2
+        red_img=$3 # optional
+
+        img_dir=$( dirname ${base_img} )
+        img_file=$( basename ${base_img} )
+        img_png=${img_file/.nii.gz/.png}
+
+        pushd ${img_dir}
+        if [ -n "${red_img}" ] ; then
+            slicesdir -p ${red_img} ${img_file}
+        else
+            slicesdir ${img_file}
+        fi
+        mv slicesdir/${img_png} ${out_png}
+
+        rm -rf slicesdir
+        popd
+    }
 
 ################## BEGIN #########################
 
@@ -281,14 +317,14 @@ output_pre=${images_path}/sub-${subject_id}
 if [ -n "${session_id}" ] ; then
     output_pre=${output_pre}_ses-${session_id}
 fi
-t1_mask="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
+t1_mask=${AtlasSpacePath}/T1w_restore_brain.nii.gz
 
 if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create atlas-in-t1 or t1-in-atlas"
 else
-    slices ${t1_mask} ${atlas} -o "${output_pre}_desc-AtlasInT1w.gif"
-    slices ${atlas} ${t1_mask} -o "${output_pre}_desc-T1wInAtlas.gif"
+    make_horizontal_slices ${t1_mask} ${output_pre}_desc-AtlasInT1w.gif ${atlas}
+    make_horizontal_slices ${atlas} ${output_pre}_desc-T1wInAtlas.gif ${t1_mask}
 fi
 
 # From here on, use the whole T1 file rather than the mask (used above).
@@ -307,8 +343,6 @@ lw="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
 lp="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
 t1_brain="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
 t2_brain="${AtlasSpacePath}/T2w_restore_brain.nii.gz"
-t1_2_brain="${AtlasSpacePath}/T1w_restore_brain.2.nii.gz"
-t2_2_brain="${AtlasSpacePath}/T2w_restore_brain.2.nii.gz"
 
 #create summary images
 build_scene_from_template $t2 $t1 $rp $lp $rw $lw
@@ -357,29 +391,20 @@ else
     create_image_from_template_169 1
 fi
 
-if [[ -e ${t1_2_brain} ]] ; then
-    echo "removing old resampled t1 brain"
-    rm ${t1_2_brain}
-fi
-if [[ -e ${t2_2_brain} ]] ; then
-    echo "removing old resampled t2 brain"
-    rm ${t2_2_brain}
-fi
-
 # Subcorticals
 # Would be nice if the 3 axial slices were all "lower" so that the 3rd one
 # would include some data, but then we'd have to figure out which slices to use
-# Might do that someday. For now, cheat.
+# Might do that someday. For now, cheat. KJS
 subcort=${ROIs}/sub2atl_ROI.2.nii.gz
 subcort_atlas=${ROIs}/Atlas_ROIs.2.nii.gz
 if [ -e ${subcort} ] ; then
     if [ -e ${subcort_atlas} ] ; then
         echo Create subcorticals images.
-        slices ${subcort} ${subcort_atlas} -o "${output_pre}_desc-AtlasInSubcort.gif"
-        slices ${subcort_atlas} ${subcort} -o "${output_pre}_desc-SubcortInAtlas.gif"
+        make_horizontal_slices ${subcort} ${output_pre}_desc-AtlasInSubcort.gif ${subcort_atlas}
+        make_horizontal_slices ${subcort_atlas} ${output_pre}_desc-SubcortInAtlas.gif ${subcort}
     else
         echo Missing ${subcort_atlas}.
-        echo Cannot create atlas_in_subcort or subcort_in_atlas.
+        echo Cannot create atlas-in-subcort or subcort-in-atlas.
     fi
 else
     echo Missing ${subcort}.
@@ -390,25 +415,37 @@ fi
 ############
 ### Tasks
 ############
+
+t1_2_brain=${AtlasSpacePath}/T1w_restore_brain.2.nii.gz
+t2_2_brain=${AtlasSpacePath}/T2w_restore_brain.2.nii.gz
+
+if [[ -e ${t1_2_brain_img} ]] ; then
+    echo "removing old resampled t1 brain"
+    rm ${t1_2_brain_img}
+fi
+if [[ -e ${t2_2_brain_img} ]] ; then
+    echo "removing old resampled t2 brain"
+    rm ${t2_2_brain_img}
+fi
+
 # Make T1w and T2w task images.
 for TASK in `ls -d ${processed_files}/*task-*` ; do
     fMRIName=$( basename ${TASK} )
     echo Make images for ${fMRIName}.
     task_img="${Results}/${fMRIName}/${fMRIName}.nii.gz"
+    task_png="${fMRIName}.png"
+
     # Use the first task image to make the resampled brain.
-    if [[ ! -e ${t1_2_brain} ]] ; then
-        flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
-        echo result of flirt is in ${t1_2_brain}
-    fi
-    if [[ ! -e ${t2_2_brain} ]] ; then
-        flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
-        echo result of flirt is in ${t2_2_brain}
-    fi
+    flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
+    echo result of flirt is in ${t1_2_brain}
+    flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
+    echo result of flirt is in ${t2_2_brain}
+
     fMRI_pre=${images_path}/sub-${subject_id}_${fMRIName}
-    slices ${t1_2_brain} ${task_img} -s 2 -o "${fMRI_pre}_desc-TaskInT1.gif"
-    slices ${task_img} ${t1_2_brain} -s 2 -o "${fMRI_pre}_desc-T1InTask.gif"
-    slices ${t2_2_brain} ${task_img} -s 2 -o "${fMRI_pre}_desc-TaskInT2.gif"
-    slices ${task_img} ${t2_2_brain} -s 2 -o "${fMRI_pre}_desc-T2InTask.gif"
+    make_horizontal_slices ${task_img} ${fMRI_pre}_desc-T1InTask.gif ${t1_2_brain}
+    make_horizontal_slices ${t1_2_brain} ${fMRI_pre}_desc-TaskInT1.gif ${task_img}
+    make_horizontal_slices ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
+    make_horizontal_slices ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
 done
 
         set -x
