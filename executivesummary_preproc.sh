@@ -367,16 +367,21 @@ if [[ -e ${t2_2_brain} ]] ; then
 fi
 
 # Subcorticals
-# Would be nice if the 3 axial slices were all "lower" so that the 3rd one
-# would include some data, but then we'd have to figure out which slices to use
-# Might do that someday. For now, cheat.
 subcort=${ROIs}/sub2atl_ROI.2.nii.gz
 subcort_atlas=${ROIs}/Atlas_ROIs.2.nii.gz
 if [ -e ${subcort} ] ; then
     if [ -e ${subcort_atlas} ] ; then
+        # slices/slicer does not do well trying to make the red outline when it
+        # cannot find the edges, so cannot use the ROI files with some low
+        # intensities. Make a binarized copy of each of the subcortical ROI
+        # files (subject and atlas) just for the outlines.
+        subcort_red=${images_path}/sub2atl_ROI.2.bin.nii.gz
+        fslmaths ${subcort} -bin ${subcort_red}
+        subcort_atlas_red=${images_path}/Atlas_ROIs.2.bin.nii.gz
+        fslmaths ${subcort_atlas} -bin ${subcort_atlas_red}
         echo Create subcorticals images.
-        slices ${subcort} ${subcort_atlas} -o "${output_pre}_desc-AtlasInSubcort.gif"
-        slices ${subcort_atlas} ${subcort} -o "${output_pre}_desc-SubcortInAtlas.gif"
+        slices ${subcort} ${subcort_atlas_red} -o ${output_pre}_desc-AtlasInSubcort.gif
+        slices ${subcort_atlas} ${subcort_red} -o ${output_pre}_desc-SubcortInAtlas.gif
     else
         echo Missing ${subcort_atlas}.
         echo Cannot create atlas_in_subcort or subcort_in_atlas.
