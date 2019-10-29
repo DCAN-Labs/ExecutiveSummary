@@ -246,6 +246,8 @@ def interface(files_path, summary_dir, subject_id, func_path=None, session_id=No
         preproc_cmd += '--output-dir %s ' % files_path
         preproc_cmd += '--dcan-summary %s ' % summary_path
         preproc_cmd += '--subject-id %s ' % subject_id
+        if session_id is not None:
+            preproc_cmd += '--session-id %s ' % session_id
         if func_path is not None:
             preproc_cmd += '--bids-input %s ' % func_path
         if atlas is not None:

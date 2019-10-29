@@ -2,11 +2,27 @@
 
 # We should have lots of paths from the BIDS environment. If we are
 # run from the command line, setup the one(s) we actually need.
-if [ -z "${CARET7DIR}" ] ; then
-    export CARET7DIR="/home/exacloud/lustre1/fnl_lab/code/external/utilities/workbench-1.3.2/bin_rh_linux64"
-fi
+case $( hostname ) in
+    rushmore)
+        GROUP=fnl
+        if [ -z "${CARET7DIR}" ] ; then
+            export CARET7DIR="/mnt/max/software/workbench/bin_linux64"
+        fi
+        export FSLDIR=/mnt/max/software/fsl-5.0.10
+        export FSL_DIR=/mnt/max/software/fsl-5.0.10
+        source ${FSLDIR}/etc/fslconf/fsl.sh > /dev/null 2>&1
+        ;;
+    *)
+        GROUP=fnl_lab
+        if [ -z "${CARET7DIR}" ] ; then
+            export CARET7DIR="/home/exacloud/lustre1/fnl_lab/code/external/utilities/workbench-1.3.2/bin_rh_linux64"
+        fi
+        ;;
+esac
 export wb_command=${CARET7DIR}/wb_command
+export AtlasSpaceFolder="MNINonLinear"
 
+# Not sure any of this is used anymore. Need to check this someday....
 motion_filename="motion_numbers.txt"
 skip_seconds=5
 brain_radius_in_mm=50
