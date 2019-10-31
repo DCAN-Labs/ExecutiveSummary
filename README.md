@@ -24,7 +24,7 @@ the `img` directory so it can find its images. Best to move the entire
 
 ### Requirements:
 - Imaging Software Packages Required:
-  - fsl v4.1.9 or later
+  - fsl v5.10 or later
   - workbench v1.3.2 or later
 - Environment:
   - python 3.7.x
@@ -97,6 +97,7 @@ optional arguments:
   - Carousels (aka sliders) to view T1 pngs, T2 pngs, and registered images.
 
 ## Recent Updates
+- v2.1.0: Rearranged layout to add subcorticals.
 - v2.0.0: Complete rewrite and new API. Handles task- data with different naming
   conventions. New features include carousels.
   NOTE: API has changed. This version is NOT backward compatible.
