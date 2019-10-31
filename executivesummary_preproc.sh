@@ -148,11 +148,14 @@ fi
 # Lose old images.
 images_path=${exsum_path}/img
 if [ -d ${images_path} ] ; then
-    echo Remove images from prior runs.
-    for FILE in $( ls ${images_path}/* ) ; do
-        echo rm -f ${FILE}
-        rm -f ${FILE}
-    done
+    if [ -z "${skip_sprite}" ] ; then
+        echo Remove images from prior runs.
+        rm -rf ${images_path}/temp*
+        for FILE in $( ls ${images_path}/* ) ; do
+            echo rm -f ${FILE}
+            rm -f ${FILE}
+        done
+    fi
 fi
 mkdir -p ${images_path}
 if ! [ -d ${images_path} ] ; then
@@ -367,21 +370,84 @@ if [[ -e ${t2_2_brain} ]] ; then
 fi
 
 # Subcorticals
-subcort=${ROIs}/sub2atl_ROI.2.nii.gz
-subcort_atlas=${ROIs}/Atlas_ROIs.2.nii.gz
-if [ -e ${subcort} ] ; then
-    if [ -e ${subcort_atlas} ] ; then
+subcort_sub=${ROIs}/sub2atl_ROI.2.nii.gz
+subcort_atl=${ROIs}/Atlas_ROIs.2.nii.gz
+set -x
+if [ -e ${subcort_sub} ] ; then
+    if [ -e ${subcort_atl} ] ; then
+        echo Create subcorticals images.
+
+        # The default slices are not as nice for subcorticals as they are for
+        # a whole brain. Pick out slices using slicer.
+
+        intermed=${images_path}/temp_files
+        mkdir -p ${intermed}
+        pushd ${intermed} > /dev/null
+        imcp ${subcort_sub} ./subcort_sub.nii.gz
+        imcp ${subcort_atl} ./subcort_atl.nii.gz
+
+        prefix="slice_"
+
         # slices/slicer does not do well trying to make the red outline when it
         # cannot find the edges, so cannot use the ROI files with some low
-        # intensities. Make a binarized copy of each of the subcortical ROI
-        # files (subject and atlas) just for the outlines.
-        subcort_red=${images_path}/sub2atl_ROI.2.bin.nii.gz
-        fslmaths ${subcort} -bin ${subcort_red}
-        subcort_atlas_red=${images_path}/Atlas_ROIs.2.bin.nii.gz
-        fslmaths ${subcort_atlas} -bin ${subcort_atlas_red}
-        echo Create subcorticals images.
-        slices ${subcort} ${subcort_atlas_red} -o ${output_pre}_desc-AtlasInSubcort.gif
-        slices ${subcort_atlas} ${subcort_red} -o ${output_pre}_desc-SubcortInAtlas.gif
+        # intensities.
+        # Make a binarized copy of the subcortical atlas to be used for the
+        # outline.
+        bin_atl=bin_subcort_atl.nii.gz
+        fslmaths subcort_atl.nii.gz -bin ${bin_atl}
+
+        # Sagittal slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -x -36 ${prefix}a.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -x -45 ${prefix}b.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -x -52 ${prefix}c.png -u -L
+        # Coronal slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -y -43 ${prefix}d.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -y -54 ${prefix}e.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -y -65 ${prefix}f.png -u -L
+        # Axial slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -z -23 ${prefix}g.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -z -33 ${prefix}h.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -z -39 ${prefix}i.png -u -L
+
+        /mnt/max/software/fsl-5.0.10/bin/pngappend \
+                   ${prefix}a.png + ${prefix}b.png + ${prefix}c.png - \
+                   ${prefix}d.png + ${prefix}e.png + ${prefix}f.png - \
+                   ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
+                   ${output_pre}_desc-AtlasInSubcort.gif
+
+        # Make a binarized copy of the subject's subcorticals to be used
+        # for the outline.
+        bin_sub=bin_subcort_sub.nii.gz
+        fslmaths subcort_sub.nii.gz -bin ${bin_sub}
+
+        # Sagittal slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -x -36 ${prefix}a.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -x -45 ${prefix}b.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -x -52 ${prefix}c.png -u -L
+        # Coronal slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -y -43 ${prefix}d.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -y -54 ${prefix}e.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -y -65 ${prefix}f.png -u -L
+        # Axial slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -z -23 ${prefix}g.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -z -33 ${prefix}h.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -z -39 ${prefix}i.png -u -L
+
+        pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png - \
+                   ${prefix}d.png + ${prefix}e.png + ${prefix}f.png - \
+                   ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
+                   ${output_pre}_desc-SubcortInAtlas.gif
+
+        # NOTE: pngappend \
+        #           ${prefix}a.png + ${prefix}b.png + ${prefix}c.png - \
+        #           ${prefix}d.png + ${prefix}e.png + ${prefix}f.png - \
+        #           ${prefix}g.png + ${prefix}h.png + ${prefix}i.png
+        # makes a "block".
+        # Replace each - with + to make a row.
+
+        popd > /dev/null
+        rm -rf ${intermed}
+
     else
         echo Missing ${subcort_atlas}.
         echo Cannot create atlas_in_subcort or subcort_in_atlas.
@@ -390,6 +456,7 @@ else
     echo Missing ${subcort}.
     echo No subcorticals will be included.
 fi
+set +x
 
 
 ############
