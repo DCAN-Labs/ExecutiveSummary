@@ -409,8 +409,7 @@ if [ -e ${subcort_sub} ] ; then
         slicer subcort_sub.nii.gz ${bin_atl} -z -33 ${prefix}h.png -u -L
         slicer subcort_sub.nii.gz ${bin_atl} -z -39 ${prefix}i.png -u -L
 
-        /mnt/max/software/fsl-5.0.10/bin/pngappend \
-                   ${prefix}a.png + ${prefix}b.png + ${prefix}c.png - \
+        pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png - \
                    ${prefix}d.png + ${prefix}e.png + ${prefix}f.png - \
                    ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
                    ${output_pre}_desc-AtlasInSubcort.gif
