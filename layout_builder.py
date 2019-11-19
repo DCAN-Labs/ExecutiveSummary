@@ -248,47 +248,54 @@ class AnatSection(Section):
     def __init__ (self, img_path='./img', **kwargs):
         Section.__init__(self, **kwargs)
 
-        # Make a row for t1-atlas registrations and a row for subcortical-atlas
-        # registrations
-        t1_atlas_data = {}
-        t1_atlas_data['regs_slider_id'] = self.regs_slider.get_modal_id()
-        t1_atlas_data['gray_modal_id'] = self.img_modal.get_modal_id()
-        sb_atlas_data = {}
-        sb_atlas_data['regs_slider_id'] = self.regs_slider.get_modal_id()
-        sb_atlas_data['gray_modal_id'] = self.img_modal.get_modal_id()
+        self.img_path = img_path
 
-        for key in [ 'concat_pre_reg_gray', 'atlas_in_t1', 't1_in_atlas' ]:
+        self.run()
+
+    def write_atlas_rows(self):
+        # Get images aligned with the atlas.
+        atlas_data = {}
+        atlas_data['regs_id'] = self.regs_slider.get_modal_id()
+
+        for key in [ 'atlas_in_t1', 't1_in_atlas', 'atlas_in_subcort', 'subcort_in_atlas' ]:
             values = IMAGE_INFO[key]
-            img_file = find_one_file(img_path, values['pattern'])
+            pattern = values['pattern']
+            img_file = find_one_file(self.img_path, pattern)
             if img_file is not None:
-                t1_atlas_data[key] = img_file
+                # Add image to data and to slider.
+                atlas_data[key] = img_file
+                atlas_data[key + '_idx'] = self.regs_slider.add_image(atlas_data[key])
             else:
-                t1_atlas_data[key] = values['placeholder']
+                atlas_data[key] = values['placeholder']
+                atlas_data[key + '_idx'] =  -1
 
-        for key in [ 'concat_post_reg_gray', 'atlas_in_subcort', 'subcort_in_atlas' ]:
+        self.section += ATLAS_ROWS.format(**atlas_data)
+
+    def write_gray_row(self):
+        # Get gray-ordinates images.
+        gray_data = {}
+        gray_data['gray_id'] = self.img_modal.get_modal_id()
+
+        for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray' ]:
             values = IMAGE_INFO[key]
-            img_file = find_one_file(img_path, values['pattern'])
+            img_file = find_one_file(self.img_path, values['pattern'])
             if img_file is not None:
-                sb_atlas_data[key] = img_file
+                gray_data[key] = img_file
+                gray_data[key + '_idx'] = self.img_modal.add_image(gray_data[key])
+                # Add image to data, and to the 'generic' images container.
             else:
-                sb_atlas_data[key] = values['placeholder']
+                gray_data[key] = values['placeholder']
+                gray_data[key + '_idx'] =  -1
 
-        # Add the gray ords to the 'generic' images container.
-        t1_atlas_data['concat_pre_reg_gray_idx'] = self.img_modal.add_image(t1_atlas_data['concat_pre_reg_gray'])
-        sb_atlas_data['concat_post_reg_gray_idx'] = self.img_modal.add_image(sb_atlas_data['concat_post_reg_gray'])
+        self.section += GRAY_ROW.format(**gray_data)
 
-        # Add registration images to slider.
-        t1_atlas_data['atlas_in_t1_idx'] = self.regs_slider.add_image(t1_atlas_data['atlas_in_t1'])
-        t1_atlas_data['t1_in_atlas_idx'] = self.regs_slider.add_image(t1_atlas_data['t1_in_atlas'])
-
-        sb_atlas_data['atlas_in_subcort_idx'] = self.regs_slider.add_image(sb_atlas_data['atlas_in_subcort'])
-        sb_atlas_data['subcort_in_atlas_idx'] = self.regs_slider.add_image(sb_atlas_data['subcort_in_atlas'])
-
+    def run(self):
         # Write the HTML for the section.
         self.section += ANAT_SECTION_START
-        self.section += T1_ROW.format(**t1_atlas_data)
-        self.section += SUBCORT_ROW.format(**sb_atlas_data)
+        self.write_atlas_rows()
+        self.write_gray_row()
         self.section += ANAT_SECTION_END
+
 
 class TasksSection(Section):
 
@@ -299,12 +306,10 @@ class TasksSection(Section):
 
         self.run(tasks)
 
-    def get_task_row_data(self, task_name, task_num):
-
-        task_data = {}
-        task_data['row_label'] = 'task-%s run-%s' % (task_name, task_num)
-        task_data['regs_id'] = self.regs_slider.get_modal_id()
-        task_data['misc_id'] = self.img_modal.get_modal_id()
+    def write_T1_reg_rows(self, task_name, task_num):
+        t1_reg_data = {}
+        t1_reg_data['row_label'] = 'task-%s run-%s' % (task_name, task_num)
+        t1_reg_data['regs_id'] = self.regs_slider.get_modal_id()
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
@@ -313,43 +318,61 @@ class TasksSection(Section):
         # For the processed files, it's as simple as looking for the pattern in
         # the source-directory. When found and copied to the directory of images,
         # add the file's path to the dictionary.
-        for key in [ 'task_pre_reg_gray', 'task_post_reg_gray', 'task_in_t1', 't1_in_task' ]:
+        for key in [ 'task_in_t1', 't1_in_task' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
             task_file = find_one_file(self.img_path, pattern)
             if task_file:
-                task_data[key] = task_file
+                t1_reg_data[key] = task_file
+                t1_reg_data[key + '_idx'] = self.regs_slider.add_image(t1_reg_data[key])
             else:
-                task_data[key] = values['placeholder']
+                t1_reg_data[key] = values['placeholder']
+                t1_reg_data[key + '_idx'] =  -1
 
-        # Add the gray ords to the 'generic' images container.
-        task_data['task_pre_reg_gray_idx'] = self.img_modal.add_image(task_data['task_pre_reg_gray'])
-        task_data['task_post_reg_gray_idx'] = self.img_modal.add_image(task_data['task_post_reg_gray'])
+        self.section += T1_REG_ROWS.format(**t1_reg_data)
 
-        # Add registration images to slider.
-        task_data['task_in_t1_idx'] = self.regs_slider.add_image(task_data['task_in_t1'])
-        task_data['t1_in_task_idx'] = self.regs_slider.add_image(task_data['t1_in_task'])
+    def write_bold_gray_row(self, task_name, task_num):
+        bold_data = {}
+        bold_data['modal_id'] = self.img_modal.get_modal_id()
 
-        # These files should already be in the directory of images.
-        # Also, there may or may not be a run number in the file's name.
-        for key in [ 'ref', 'bold' ]:
+        # Using glob patterns to find the files for this task; start
+        # with a pattern for the task/run itself.
+        task_pattern = task_name + '*' + task_num
+
+        # For gray files, there is only one name to look for.
+        for key in [ 'task_pre_reg_gray', 'task_post_reg_gray' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
             task_file = find_one_file(self.img_path, pattern)
-            if task_file is None:
-                # Try again, with no run number.
+            if task_file:
+                bold_data[key] = task_file
+                bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
+            else:
+                bold_data[key] = values['placeholder']
+                bold_data[key + '_idx'] =  -1
+
+        # For bold and ref files, may include run number or not.
+        for key in [ 'bold', 'ref' ]:
+            values = IMAGE_INFO[key]
+            pattern = values['pattern'] % task_pattern
+            task_file = find_one_file(self.img_path, pattern)
+            if task_file:
+                bold_data[key] = task_file
+                bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
+            else:
+                # File was not found with both task name and run number.
+                # Try again with task name only (no run number).
                 pattern = values['pattern'] % task_name
                 task_file = find_one_file(self.img_path, pattern)
+                if task_file:
+                    bold_data[key] = task_file
+                    bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
+                else:
+                    bold_data[key] = values['placeholder']
+                    bold_data[key + '_idx'] =  -1
 
-            if task_file:
-                task_data[key] = task_file
-                # Add to 'generic' images.
-                task_data[key + '_idx'] = self.img_modal.add_image(task_file)
-            else:
-                task_data[key] = values['placeholder']
-                task_data[key + '_idx'] = -1
+        self.section += BOLD_GRAY_ROW.format(**bold_data)
 
-        return task_data
 
 
     def run(self, tasks):
@@ -363,9 +386,8 @@ class TasksSection(Section):
         # Each entry in task_entries is a tuple of the task-name (without
         # task-) and run number (without run-).
         for task_name, task_num in tasks:
-            task_data = self.get_task_row_data(task_name, task_num)
-            if task_data is not None:
-                self.section += TASK_ROW.format(**task_data)
+            self.write_T1_reg_rows(task_name, task_num)
+            self.write_bold_gray_row(task_name, task_num)
 
         # Add the end of the tasks section.
         self.section += TASKS_SECTION_END
@@ -498,25 +520,16 @@ class layout_builder(object):
                    'regs_slider'  : regs_slider,
                    'img_modal'    : img_modal }
 
-        #######################
-        ### Anatomical images
-        #######################
-
         # Make sections for 'T1' and 'T2' images. Include pngs slider and
         # BrainSprite for each.
         t1_section = TxSection(tx='T1', **kwargs)
         t2_section = TxSection(tx='T2', **kwargs)
         body += t1_section.get_section() + t2_section.get_section()
 
-        # Data for this subject/session: i.e., concatenated gray plots and
-        # atlas-registerd images. (The atlas-registered images will be added to
-        # the Registrations slider.)
+        # Data for this subject/session: i.e., concatenated gray plots and atlas
+        # images. (The atlas images will be added to the Registrations slider.)
         anat_section = AnatSection(**kwargs)
         body += anat_section.get_section()
-
-        #######################
-        ### Functional images
-        #######################
 
         # Tasks section: data specific to each task/run. Get a list of tasks processed
         # for this subject. (The <task>-in-T1 and T1-in-<task> images will be added to
