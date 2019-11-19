@@ -267,15 +267,12 @@ chmod -R 770 ${exsum_path} || true
         done
     }
 
-    make_horizontal_slices() {
-        # slicesdir is useful, but stupid. It creates a subdirectory
-        # whereever it is run called slicesdir. It names the output
-        # png file with the same name as the input path (with png
-        # nii.gz). If the input image is a path, the name will have
-        # the entire path in it (with _ instead of /). So...
-        # We will go to the directory containing the image, so that
-        # its entire relative path will be it's basename. That way
-        # we can grab the png when we're done.
+
+    make_default_slices_row() {
+        # This function uses the default slices made by slicesdir (.4, .5, and
+        # .6). It calls slicesdir, grabs the output png, and cleans up the
+        # subdirectory left by slicesdir (also called slicesdir).
+
         base_img=$1
         out_png=$2
         red_img=$3 # optional
@@ -323,8 +320,8 @@ if [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create atlas-in-t1 or t1-in-atlas"
 else
-    make_horizontal_slices ${t1_mask} ${output_pre}_desc-AtlasInT1w.gif ${atlas}
-    make_horizontal_slices ${atlas} ${output_pre}_desc-T1wInAtlas.gif ${t1_mask}
+    make_default_slices_row ${t1_mask} ${output_pre}_desc-AtlasInT1w.gif ${atlas}
+    make_default_slices_row ${atlas} ${output_pre}_desc-T1wInAtlas.gif ${t1_mask}
 fi
 
 # From here on, use the whole T1 file rather than the mask (used above).
@@ -392,16 +389,76 @@ else
 fi
 
 # Subcorticals
-# Would be nice if the 3 axial slices were all "lower" so that the 3rd one
-# would include some data, but then we'd have to figure out which slices to use
-# Might do that someday. For now, cheat. KJS
-subcort=${ROIs}/sub2atl_ROI.2.nii.gz
-subcort_atlas=${ROIs}/Atlas_ROIs.2.nii.gz
-if [ -e ${subcort} ] ; then
-    if [ -e ${subcort_atlas} ] ; then
+subcort_sub=${ROIs}/sub2atl_ROI.2.nii.gz
+subcort_atl=${ROIs}/Atlas_ROIs.2.nii.gz
+set -x
+if [ -e ${subcort_sub} ] ; then
+    if [ -e ${subcort_atl} ] ; then
         echo Create subcorticals images.
-        make_horizontal_slices ${subcort} ${output_pre}_desc-AtlasInSubcort.gif ${subcort_atlas}
-        make_horizontal_slices ${subcort_atlas} ${output_pre}_desc-SubcortInAtlas.gif ${subcort}
+
+        # The default slices are not as nice for subcorticals as they are for
+        # a whole brain. Pick out slices using slicer.
+
+        intermed=${images_path}/temp_files
+        mkdir -p ${intermed}
+        pushd ${intermed} > /dev/null
+        imcp ${subcort_sub} ./subcort_sub.nii.gz
+        imcp ${subcort_atl} ./subcort_atl.nii.gz
+
+        prefix="slice_"
+
+        # slices/slicer does not do well trying to make the red outline when it
+        # cannot find the edges, so cannot use the ROI files with some low
+        # intensities.
+        # Make a binarized copy of the subcortical atlas to be used for the
+        # outline.
+        bin_atl=bin_subcort_atl.nii.gz
+        fslmaths subcort_atl.nii.gz -bin ${bin_atl}
+
+        # Sagittal slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -x -36 ${prefix}a.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -x -45 ${prefix}b.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -x -52 ${prefix}c.png -u -L
+        # Coronal slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -y -43 ${prefix}d.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -y -54 ${prefix}e.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -y -65 ${prefix}f.png -u -L
+        # Axial slices:
+        slicer subcort_sub.nii.gz ${bin_atl} -z -23 ${prefix}g.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -z -33 ${prefix}h.png -u -L
+        slicer subcort_sub.nii.gz ${bin_atl} -z -39 ${prefix}i.png -u -L
+
+        pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png + \
+                   ${prefix}d.png + ${prefix}e.png + ${prefix}f.png + \
+                   ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
+                   ${output_pre}_desc-AtlasInSubcort.gif
+
+        # Make a binarized copy of the subject's subcorticals to be used
+        # for the outline.
+        bin_sub=bin_subcort_sub.nii.gz
+        fslmaths subcort_sub.nii.gz -bin ${bin_sub}
+
+        # Sagittal slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -x -36 ${prefix}a.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -x -45 ${prefix}b.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -x -52 ${prefix}c.png -u -L
+        # Coronal slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -y -43 ${prefix}d.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -y -54 ${prefix}e.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -y -65 ${prefix}f.png -u -L
+        # Axial slices:
+        slicer subcort_atl.nii.gz ${bin_sub} -z -23 ${prefix}g.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -z -33 ${prefix}h.png -u -L
+        slicer subcort_atl.nii.gz ${bin_sub} -z -39 ${prefix}i.png -u -L
+
+        pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png + \
+                   ${prefix}d.png + ${prefix}e.png + ${prefix}f.png + \
+                   ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
+                   ${output_pre}_desc-SubcortInAtlas.gif
+
+        popd > /dev/null
+        rm -rf ${intermed}
+
     else
         echo Missing ${subcort_atlas}.
         echo Cannot create atlas-in-subcort or subcort-in-atlas.
@@ -410,6 +467,7 @@ else
     echo Missing ${subcort}.
     echo No subcorticals will be included.
 fi
+set +x
 
 
 ############
@@ -442,10 +500,10 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
     echo result of flirt is in ${t2_2_brain}
 
     fMRI_pre=${images_path}/sub-${subject_id}_${fMRIName}
-    make_horizontal_slices ${task_img} ${fMRI_pre}_desc-T1InTask.gif ${t1_2_brain}
-    make_horizontal_slices ${t1_2_brain} ${fMRI_pre}_desc-TaskInT1.gif ${task_img}
-    make_horizontal_slices ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
-    make_horizontal_slices ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
+    make_default_slices_row ${task_img} ${fMRI_pre}_desc-T1InTask.gif ${t1_2_brain}
+    make_default_slices_row ${t1_2_brain} ${fMRI_pre}_desc-TaskInT1.gif ${task_img}
+    make_default_slices_row ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
+    make_default_slices_row ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
 done
 
         set -x
