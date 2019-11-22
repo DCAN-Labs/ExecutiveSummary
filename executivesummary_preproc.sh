@@ -491,7 +491,6 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
     fMRIName=$( basename ${TASK} )
     echo Make images for ${fMRIName}.
     task_img="${Results}/${fMRIName}/${fMRIName}.nii.gz"
-    task_png="${fMRIName}.png"
 
     # Use the first task image to make the resampled brain.
     flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
