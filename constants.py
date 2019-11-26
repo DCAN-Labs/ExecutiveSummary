@@ -1,55 +1,52 @@
 
-SQUARE = './img/square_placeholder_text.png'
-RECTANGLE = './img/rectangular_placeholder_text.png'
-
 IMAGE_INFO = {
     'concat_pre_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCA_*task-rest*.png',
-        'placeholder': SQUARE
+        'title': 'Pre-Regression'
         },
     'concat_post_reg_gray': {
         'pattern': 'DVARS_and_FD_CONCP_*task-rest*.png',
-        'placeholder': SQUARE
+        'title': 'Post-Regression'
         },
     'atlas_in_t1': {
         'pattern': '*_desc-AtlasInT1w.gif',
-        'placeholder': SQUARE
+        'title': 'Atlas in T1'
         },
     't1_in_atlas': {
         'pattern': '*_desc-T1wInAtlas.gif',
-        'placeholder': SQUARE
+        'title': 'T1 in Atlas'
         },
     'atlas_in_subcort': {
         'pattern': '*_desc-AtlasInSubcort.gif',
-        'placeholder': SQUARE
+        'title': 'Atlas in Subcorticals'
         },
     'subcort_in_atlas': {
         'pattern': '*_desc-SubcortInAtlas.gif',
-        'placeholder': SQUARE
+        'title': 'Subcorticals in Atlas'
         },
     'task_pre_reg_gray': {
         'pattern': 'DVARS_and_FD*%s*.png',
-        'placeholder': SQUARE
+        'title': 'Pre-Regression'
         },
     'task_post_reg_gray': {
         'pattern': 'postreg_DVARS_and_FD*%s*.png',
-        'placeholder': SQUARE
+        'title': 'Post-Regression'
         },
     'task_in_t1': {
         'pattern': '*%s*_desc-TaskInT1.gif',
-        'placeholder': SQUARE
+        'title': 'Task in T1'
         },
     't1_in_task': {
         'pattern': '*%s*_desc-T1InTask.gif',
-        'placeholder': SQUARE
+        'title': 'T1 in Task'
         },
     'ref': {
         'pattern': '*%s*ref.png',
-        'placeholder': RECTANGLE
+        'title': 'Reference'
         },
     'bold': {
         'pattern': '*%s*bold.png',
-        'placeholder': RECTANGLE
+        'title': 'BOLD'
         }
     }
 
@@ -64,11 +61,10 @@ HTML_START = """
     integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
 <style type="text/css">
     header, footer, section, article, nav, aside { display: block; }
-    h1, h2, h3, h4, body, button, p, w3-btn { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif; }
+    h1, h2, h3, body, button, p, w3-btn { font-family: Verdana, Helvetica, Arial, Bookman, sans-serif; }
     h1 { text-align: center; font-size: 2.5em; }
     h2{ text-align: center; font-size: 2.00em; }
-    h3{ text-align: left; font-size: 1.75em; }
-    h4{ text-align: left; font-size: 1.25em; }
+    h3{ text-align: left; font-size: 2.5em; }
     p{ font-size: 1.0em; }
     body{ font-size: 1.0em; }
     img{ width: 100%; padding: 2px; }
@@ -119,6 +115,67 @@ TX_SECTION = """
 </section>
 """
 
+
+# Layout images in different formats - row, half, quarter.
+# Needs the following values:
+#    row_label, row_img, row_modal, row_idx
+# Modal and idx are the slider and the index into the slider (or other modal
+# container) to which the image was added. If the user clicks on the image, html
+# will open the modal container to the index.
+LAYOUT_ROW = """
+        <div  class="w3-row-padding">
+            <div class="w3-col l1 label2">{row_label}</div>
+            <div class="w3-col l11"><img src="{row_img}" onclick="open_{row_modal}_to_index({row_idx})"></div>
+        </div>
+        """
+
+LAYOUT_HALF_ROW = """
+        <div  class="w3-row-padding">
+            <div class="w3-col l2 label2">{row_label}</div>
+            <div class="w3-col l9"><img src="{row_img}" onclick="open_{row_modal}_to_index({row_idx})"></div>
+        </div>
+        """
+
+LAYOUT_QUARTER_ROW = """
+            <div class="w3-quarter">
+                <div class="w3-row w3-center label1">{row_label}</div>
+                <div class="w3-row"><img src="{row_img}" onclick="open_{row_modal}_to_index({row_idx})"></div>
+            </div>
+            """
+
+# Placeholders for rows of images.
+# Needs the following value:
+#    row_label
+PLACEHOLDER_ROW = """
+        <div class="w3-row-padding">
+            <div class="w3-col l1 label2">{row_label}</div>
+            <div class="w3-col l11">
+                <div class="w3-container w3-pale-red label3">Image Not Available</div>
+                <div class="w3-container w3-pale-red label3"><br></div>
+            </div>
+            <div class="w3-container"><br></div>
+        </div>
+        """
+
+PLACEHOLDER_HALF_ROW = """
+                 <div class="w3-row">
+                     <div class="w3-col l2 label2">{row_label}</div>
+                     <div class="w3-col l9">
+                         <div class="w3-container w3-pale-red label3">Image Not Available</div>
+                         <div class="w3-container w3-pale-red label3"><br></div>
+                     </div>
+                     <div class="w3-container"><br></div>
+                 </div>
+                 """
+
+PLACEHOLDER_QUARTER_ROW = """
+            <div class="w3-quarter">
+                <div class="w3-row w3-center label1">{row_label}</div>
+                <div class="w3-container w3-pale-red label3">Image Not Available</div>
+                <div class="w3-container w3-pale-red label3"><br></div>
+            </div>
+            """
+
 # Make a section for anatomical data (cortical and
 # subcorticals aligned to atlases, combined gray ordinates).
 # Start with the column headings.
@@ -131,43 +188,15 @@ ANAT_SECTION_START = """
         </div>
             """
 
-# Layout the rows of atlas-registered images.
-# Needs the following values and corresponding indices:
-#    regs_id, atlas_in_t1, t1_in_atlas, atlas_in_subcort, subcort_in_atlas
-ATLAS_ROWS = """
-        <div  class="w3-row-padding">
-            <div class="w3-col l1 label2">Atlas in T1</div>
-            <div class="w3-col l11"><img src="{atlas_in_t1}" onclick="open_{regs_id}_to_index({atlas_in_t1_idx})"></div>
-        </div>
-        <div  class="w3-row-padding">
-            <div class="w3-col l1 label2">T1 in Atlas</div>
-            <div class="w3-col l11"><img src="{t1_in_atlas}" onclick="open_{regs_id}_to_index({t1_in_atlas_idx})"></div>
-        </div>
-        <div  class="w3-row-padding">
-            <div class="w3-col l1 label2">Atlas in Subcorticals</div>
-            <div class="w3-col l11"><img src="{atlas_in_subcort}" onclick="open_{regs_id}_to_index({atlas_in_subcort_idx})"></div>
-        </div>
-        <div  class="w3-row-padding">
-            <div class="w3-col l1 label2">Subcorticals in Atlas</div>
-            <div class="w3-col l11"><img src="{subcort_in_atlas}" onclick="open_{regs_id}_to_index({subcort_in_atlas_idx})"></div>
-        </div>
-            """
-
 # Layout the row of gray-ordinates images.
-# Needs the following values and corresponding indices:
-#    gray_id, pre_reg_gray, post_reg_gray
-GRAY_ROW = """
-        <div class="w3-row-padding">
-            <div class="w3-col l1 label2"><br></div>
-            <div class="w3-col l3 w3-center label1">Pre-Regression</div>
-            <div class="w3-col l3 w3-center label1">Post-Regression</div>
+GRAY_ROW_START = """
+    <div class="w3-row-padding">
+        <div class="w3-col l1 label2"><br>Combined Resting State Data</div>
+"""
+GRAY_ROW_END = """
         </div>
-        <div  class="w3-row-padding">
-            <div class="w3-col l1 label2">Combined Resting State Data</div>
-            <div class="w3-col l3"><img src="{concat_pre_reg_gray}" onclick="open_{gray_id}_to_index({concat_pre_reg_gray_idx})"></div>
-            <div class="w3-col l3"><img src="{concat_post_reg_gray}" onclick="open_{gray_id}_to_index({concat_post_reg_gray_idx})"></div>
-        </div>
-            """
+    </div>
+"""
 
 # End the atlas section by closing up the divisions and the section.
 # No values needed.
@@ -183,49 +212,41 @@ TASKS_SECTION_START = """
         <div class="w3-row-padding">
             <div class="w3-center"><h2>Functional Data</h2></div>
         <div>
-"""
+        """
 
-# Layout the rows of T1-registered images.
-# Needs the following values and corresponding indices:
-#    row_label, regs_id, task_in_t1, t1_in_task, ref, bold.
-T1_REG_ROWS = """
+# Add the task name for the next few rows.
+TASK_LABEL_ROW = """
         <div  class="w3-row">
-            <div class="w3-left label1">{row_label}:</div>
+            <div class="w3-left label2">task-{task_name} run-{task_num}:</div>
         <div  class="w3-row">
-            <div class="w3-col l1 label1">Task in T1</div>
-            <div class="w3-col l11"><img src="{task_in_t1}" onclick="open_{regs_id}_to_index({task_in_t1_idx})"></div>
-        </div>
-        <div  class="w3-row">
-            <div class="w3-col l1 label1">T1 in Task</div>
-            <div class="w3-col l11"><img src="{t1_in_task}" onclick="open_{regs_id}_to_index({t1_in_task_idx})"></div>
+        """
+
+BOLD_GRAY_START = """
+        <div class="w3-row-padding">
+            <div class="w3-half">
+        """
+
+BOLD_GRAY_SPLIT = """
+            </div>
+            """
+
+BOLD_GRAY_END = """
         </div>
         """
 
 # Layout the row of bold, reference and gray-ordinates images for the task.
 # Needs the following values and corresponding indices:
 #    modal_id, bold, ref, task_pre_reg_gray, task_post_reg_gray
-BOLD_GRAY_ROW="""
-        <div class="w3-row-padding">
-            <div class="w3-half">
-                <div class="w3-row">
-                    <div class="w3-col l2 label1">BOLD</div>
-                    <div class="w3-col l9"><img src="{bold}" onclick="open_{modal_id}_to_index({bold_idx})"></div>
-                </div>
-                <div class="w3-row">
-                    <div class="w3-col l2 label1">Reference</div>
-                    <div class="w3-col l9"><img src="{ref}" onclick="open_{modal_id}_to_index({ref_idx})"></div>
-                </div>
-            </div>
-            <div class="w3-quarter">
-                <div class="w3-row w3-center label1">Pre-Regression</div>
-                <div class="w3-row"><img src="{task_pre_reg_gray}" onclick="open_{modal_id}_to_index({task_pre_reg_gray_idx})"></div>
-            </div>
-            <div class="w3-quarter">
-                <div class="w3-row w3-center label1">Post-Regression</div>
-                <div class="w3-row"><img src="{task_post_reg_gray}" onclick="open_{modal_id}_to_index({task_post_reg_gray_idx})"></div>
-            </div>
-        </div>
-        """
+#BOLD_GRAY_ROW2="""
+            #<div class="w3-quarter">
+                #<div class="w3-row w3-center label1">Pre-Regression</div>
+                #<div class="w3-row"><img src="{task_pre_reg_gray}" onclick="open_{modal_id}_to_index({task_pre_reg_gray_idx})"></div>
+            #</div>
+            #<div class="w3-quarter">
+                #<div class="w3-row w3-center label1">Post-Regression</div>
+                #<div class="w3-row"><img src="{task_post_reg_gray}" onclick="open_{modal_id}_to_index({task_post_reg_gray_idx})"></div>
+            #</div>
+        #"""
 
 # Close up the divisions and section.
 TASKS_SECTION_END = """

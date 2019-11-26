@@ -253,41 +253,45 @@ class AnatSection(Section):
         self.run()
 
     def write_atlas_rows(self):
-        # Get images aligned with the atlas.
-        atlas_data = {}
-        atlas_data['regs_id'] = self.regs_slider.get_modal_id()
 
+        row_data = {}
+        row_data['row_modal'] = self.regs_slider.get_modal_id()
+
+        # Add a row for each atlas-registered image.
         for key in [ 'atlas_in_t1', 't1_in_atlas', 'atlas_in_subcort', 'subcort_in_atlas' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern']
             img_file = find_one_file(self.img_path, pattern)
             if img_file is not None:
                 # Add image to data and to slider.
-                atlas_data[key] = img_file
-                atlas_data[key + '_idx'] = self.regs_slider.add_image(atlas_data[key])
+                row_data['row_label'] = values['title']
+                row_data['row_img'] = img_file
+                row_data['row_idx'] = self.regs_slider.add_image(img_file)
+                self.section += LAYOUT_ROW.format(**row_data)
             else:
-                atlas_data[key] = values['placeholder']
-                atlas_data[key + '_idx'] =  -1
+                self.section += PLACEHOLDER_ROW.format( row_label = values['title'] )
 
-        self.section += ATLAS_ROWS.format(**atlas_data)
 
     def write_gray_row(self):
-        # Get gray-ordinates images.
+        self.section += GRAY_ROW_START
+
+        # Get gray-ordinates plots.
         gray_data = {}
-        gray_data['gray_id'] = self.img_modal.get_modal_id()
+        gray_data['row_modal'] = self.img_modal.get_modal_id()
 
         for key in [ 'concat_pre_reg_gray', 'concat_post_reg_gray' ]:
             values = IMAGE_INFO[key]
             img_file = find_one_file(self.img_path, values['pattern'])
             if img_file is not None:
-                gray_data[key] = img_file
-                gray_data[key + '_idx'] = self.img_modal.add_image(gray_data[key])
                 # Add image to data, and to the 'generic' images container.
+                gray_data['row_label'] = values['title']
+                gray_data['row_img'] = img_file
+                gray_data['row_idx'] = self.img_modal.add_image(img_file)
+                self.section += LAYOUT_QUARTER_ROW.format(**gray_data)
             else:
-                gray_data[key] = values['placeholder']
-                gray_data[key + '_idx'] =  -1
+                self.section += PLACEHOLDER_QUARTER_ROW.format( row_label = values['title'] )
 
-        self.section += GRAY_ROW.format(**gray_data)
+        self.section += GRAY_ROW_END
 
     def run(self):
         # Write the HTML for the section.
@@ -307,9 +311,12 @@ class TasksSection(Section):
         self.run(tasks)
 
     def write_T1_reg_rows(self, task_name, task_num):
-        t1_reg_data = {}
-        t1_reg_data['row_label'] = 'task-%s run-%s' % (task_name, task_num)
-        t1_reg_data['regs_id'] = self.regs_slider.get_modal_id()
+
+        # Write the header for the next few rows.
+        self.section += TASK_LABEL_ROW.format( task_name = task_name, task_num = task_num )
+
+        row_data = {}
+        row_data['row_modal'] = self.regs_slider.get_modal_id()
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
@@ -317,39 +324,31 @@ class TasksSection(Section):
 
         # For the processed files, it's as simple as looking for the pattern in
         # the source-directory. When found and copied to the directory of images,
-        # add the file's path to the dictionary.
+        # add the row.
         for key in [ 'task_in_t1', 't1_in_task' ]:
             values = IMAGE_INFO[key]
             pattern = values['pattern'] % task_pattern
             task_file = find_one_file(self.img_path, pattern)
             if task_file:
-                t1_reg_data[key] = task_file
-                t1_reg_data[key + '_idx'] = self.regs_slider.add_image(t1_reg_data[key])
+                # Add image to data and to slider.
+                row_data['row_label'] = values['title']
+                row_data['row_img'] = task_file
+                row_data['row_idx'] = self.regs_slider.add_image(task_file)
+                self.section += LAYOUT_ROW.format(**row_data)
             else:
-                t1_reg_data[key] = values['placeholder']
-                t1_reg_data[key + '_idx'] =  -1
+                self.section += PLACEHOLDER_ROW.format( row_label=values['title'] )
 
-        self.section += T1_REG_ROWS.format(**t1_reg_data)
 
     def write_bold_gray_row(self, task_name, task_num):
         bold_data = {}
-        bold_data['modal_id'] = self.img_modal.get_modal_id()
+        bold_data['row_modal'] = self.img_modal.get_modal_id()
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
         task_pattern = task_name + '*' + task_num
 
-        # For gray files, there is only one name to look for.
-        for key in [ 'task_pre_reg_gray', 'task_post_reg_gray' ]:
-            values = IMAGE_INFO[key]
-            pattern = values['pattern'] % task_pattern
-            task_file = find_one_file(self.img_path, pattern)
-            if task_file:
-                bold_data[key] = task_file
-                bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
-            else:
-                bold_data[key] = values['placeholder']
-                bold_data[key + '_idx'] =  -1
+        # Make the first half of the row - bold and ref data.
+        self.section += BOLD_GRAY_START
 
         # For bold and ref files, may include run number or not.
         for key in [ 'bold', 'ref' ]:
@@ -357,22 +356,42 @@ class TasksSection(Section):
             pattern = values['pattern'] % task_pattern
             task_file = find_one_file(self.img_path, pattern)
             if task_file:
-                bold_data[key] = task_file
-                bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
+                # Add image to data, and to the 'generic' images container.
+                bold_data['row_label'] = values['title']
+                bold_data['row_img'] = task_file
+                bold_data['row_idx'] = self.img_modal.add_image(task_file)
+                self.section += LAYOUT_HALF_ROW.format(**bold_data)
             else:
                 # File was not found with both task name and run number.
                 # Try again with task name only (no run number).
                 pattern = values['pattern'] % task_name
                 task_file = find_one_file(self.img_path, pattern)
                 if task_file:
-                    bold_data[key] = task_file
-                    bold_data[key + '_idx'] = self.img_modal.add_image(bold_data[key])
+                    # Add image to data, and to the 'generic' images container.
+                    bold_data['row_label'] = values['title']
+                    bold_data['row_img'] = task_file
+                    bold_data['row_idx'] = self.img_modal.add_image(task_file)
+                    self.section += LAYOUT_HALF_ROW.format(**bold_data)
                 else:
-                    bold_data[key] = values['placeholder']
-                    bold_data[key + '_idx'] =  -1
+                    self.section += PLACEHOLDER_HALF_ROW.format( row_label = values['title'] )
 
-        self.section += BOLD_GRAY_ROW.format(**bold_data)
+        self.section += BOLD_GRAY_SPLIT
 
+        # For each gray-plot, there is only one name to look for.
+        for key in [ 'task_pre_reg_gray', 'task_post_reg_gray' ]:
+            values = IMAGE_INFO[key]
+            pattern = values['pattern'] % task_pattern
+            task_file = find_one_file(self.img_path, pattern)
+            if task_file:
+                # Add image to data, and to the 'generic' images container.
+                bold_data['row_label'] = values['title']
+                bold_data['row_img'] = task_file
+                bold_data['row_idx'] = self.img_modal.add_image(task_file)
+                self.section += LAYOUT_QUARTER_ROW.format(**bold_data)
+            else:
+                self.section += PLACEHOLDER_QUARTER_ROW.format( row_label = values['title'] )
+
+        self.section += BOLD_GRAY_END
 
 
     def run(self, tasks):

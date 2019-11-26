@@ -120,15 +120,7 @@ def init_summary(proc_files, summary_dir, layout_only):
                 html_path = None
                 images_path = None
 
-        # TODO: do this in the script!
-        # Copy the placeholders to be used if we cannot find a file.
-        #script_dir = os.path.dirname(os.path.realpath(__file__))
-        #program_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
-
         program_dir = os.path.dirname(os.path.realpath(__file__))
-        placeholder_dir = os.path.join(program_dir, 'placeholder_pictures')
-        square = find_and_copy_file(placeholder_dir, 'square_placeholder_text.png', images_path)
-        rectangle = find_and_copy_file(placeholder_dir, 'rectangular_placeholder_text.png', images_path)
 
     return summary_path, html_path, images_path
 
