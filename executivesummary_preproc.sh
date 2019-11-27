@@ -3,24 +3,26 @@
 # Note: This file was copied from FNL_preproc_preproc.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o i:o:d:s:v:a:hx -l bids-input:,output-dir:,dcan-summary:,subject-id:,session-id:,atlas:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
+options=`getopt -o i:o:d:s:v:a:b:p:hx -l bids-input:,output-dir:,dcan-summary:,subject-id:,session-id:,atlas:,brainsprite-template:,pngs-template:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
 eval set -- "$options"
 function display_help() {
-    echo "Usage: `basename $0` [options...]                                                                           "
-    echo "      Assumes BIDS & DCAN file structure, as follows:                                                       "
-    echo "           <bids-input>/sub-<subject_id>/ses-<visit>/func                                                   "
-    echo "           <output-dir>/sub-<subject_id>/ses-<visit>/files/<dcan-summary>                                   "
-    echo "                                                                                                            "
-    echo "      Required:                                                                                             "
-    echo "      -o|--output-dir         Path to processed files, ending at files.                                     "
-    echo "      -d|--dcan-summary       Path to DCAN BOLD proc output, e.g. path to summary_DCANBOLDProc_v4.0.0.      "
-    echo "      -s|--subject-id         Subject ID without sub- prefix.                                               "
-    echo "                                                                                                            "
-    echo "      Optional:                                                                                             "
-    echo "      -i|--bids-input         Path to unprocessed data set, ending at func.                                 "
-    echo "      -v|--session-id         Session (visit) ID without ses- prefix.                                       "
-    echo "      -a|--atlas              Atlas file for generation of rest image. Overrides adult MNI 1mm atlas.       "
-    echo "      -h|--help               Display this message.                                                         "
+    echo "Usage: `basename $0` [options...]                                                                             "
+    echo "      Assumes BIDS & DCAN file structure, as follows:                                                         "
+    echo "           <bids-input>/sub-<subject_id>/ses-<visit>/func                                                     "
+    echo "           <output-dir>/sub-<subject_id>/ses-<visit>/files/<dcan-summary>                                     "
+    echo "                                                                                                              "
+    echo "      Required:                                                                                               "
+    echo "      -o|--output-dir           Path to processed files, ending at files.                                     "
+    echo "      -d|--dcan-summary         Path to DCAN BOLD proc output, e.g. path to summary_DCANBOLDProc_v4.0.0.      "
+    echo "      -s|--subject-id           Subject ID without sub- prefix.                                               "
+    echo "                                                                                                              "
+    echo "      Optional:                                                                                               "
+    echo "      -i|--bids-input           Path to unprocessed data set, ending at func.                                 "
+    echo "      -v|--session-id           Session (visit) ID without ses- prefix.                                       "
+    echo "      -a|--atlas                Atlas file for generation of rest image. Overrides adult MNI 1mm atlas.       "
+    echo "      -b|--brainsprite-template Path to template that has all of the scenes for the brainsprite (usually 169)."
+    echo "      -p|--pngs-template        Path to template with scenes for Tx pngs (these are named, so should agree).  "
+    echo "      -h|--help                 Display this message.                                                         "
     exit $1
 }
 
@@ -52,6 +54,14 @@ while true ; do
             ;;
         -a|--atlas)
             atlas="$2"
+            shift 2
+            ;;
+        -b|--brainsprite-template)
+            brainsprite_template="$2"
+            shift 2
+            ;;
+        -p|--pngs-template)
+            pngs_template="$2"
             shift 2
             ;;
         -x|--skip_sprite) # Stealth arg used only for debug.
@@ -191,79 +201,56 @@ chmod -R 770 ${exsum_path} || true
     trap 'print_error' ERR
 
     #takes the following arguments: t2_path t1_path rp_path lp_path rw_path lw_path
-    build_scene_from_template(){
-        temp_scene=${processed_files}/image_template_temp.scene
-        cp ${templatedir}/image_template_temp.scene $temp_scene
+    build_scene_from_pngs_template(){
+        # Make a copy of the scene template as we will be making modifications.
+        cp ${pngs_template} ${pngs_scene}
 
         declare -a templates=('T2_IMG' 'T1_IMG' 'RPIAL' 'LPIAL' 'RWHITE' 'LWHITE')
         declare -a paths=($1 $2 $3 $4 $5 $6)
 
         for i in `seq 0 5`;
         do
-            #replace templated pathnames and filenames in scene
-            sed -i "s!${templates[$i]}_PATH!${paths[$i]}!g" $temp_scene
+            # Replace templated pathnames and filenames in local copy.
+            sed -i "s!${templates[$i]}_PATH!${paths[$i]}!g" ${pngs_scene}
             filename=$(basename "${paths[$i]}")
-            sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
+            sed -i "s!${templates[$i]}_NAME!${filename}!g" ${pngs_scene}
         done
     }
 
-    build_txw_scene_from_template_169(){
-        if [ "$6" -eq 1 ] ; then
-        	temp_scene=${processed_files}/t1_169_scene.scene
-            cp ${templatedir}/parasagittal_Tx_169_template.scene $temp_scene
+    build_scene_from_brainsprite_template(){
+        # Make a copy of the brainsprite_scene template as we will be making modifications.
+        cp ${brainsprite_template} ${brainsprite_scene}
 
-            declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
-            declare -a paths=($1 $2 $3 $4 $5)
+        declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
+        declare -a paths=($1 $2 $3 $4 $5)
 
-            for i in `seq 0 4`; do
-            	#replace templated pathnames and filenames in scene
-                echo sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" $temp_scene
-            	sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" $temp_scene
-                filename=$(basename "${paths[$i]}")
-                echo sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
-                sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
-           	done
-
-        elif [ "$6" -eq 2 ] ; then
-			temp_scene=${processed_files}/t2_169_scene.scene
-            cp ${templatedir}/parasagittal_Tx_169_template.scene $temp_scene
-
-            declare -a templates=('TX_IMG' 'R_PIAL' 'L_PIAL' 'R_WHITE' 'L_WHITE')
-            declare -a paths=($1 $2 $3 $4 $5)
-
-            for i in `seq 0 4`; do
-            	#replace templated pathnames and filenames in scene
-            	sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" $temp_scene
-            	filename=$(basename "${paths[$i]}")
-            	sed -i "s!${templates[$i]}_NAME!${filename}!g" $temp_scene
-        	done
-	fi
+        for i in `seq 0 4`; do
+            # Replace templated pathnames and filenames in local copy.
+            echo sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" ${brainsprite_scene}
+            sed -i "s!${templates[$i]}_NAME_and_PATH!${paths[$i]}!g" ${brainsprite_scene}
+            filename=$(basename "${paths[$i]}")
+            echo sed -i "s!${templates[$i]}_NAME!${filename}!g" ${brainsprite_scene}
+            sed -i "s!${templates[$i]}_NAME!${filename}!g" ${brainsprite_scene}
+        done
     }
 
     #takes the following arguments: out_path scenenum
-    create_image_from_template() {
+    create_image_from_pngs_scene() {
         out=$1
         scenenum=$2
-        temp_scene=${processed_files}/image_template_temp.scene
-        ${wb_command} -show-scene ${temp_scene} ${scenenum} ${out} 900 800
+        ${wb_command} -show-scene ${pngs_scene} ${scenenum} ${out} 900 800
 
     }
 
-    create_image_from_template_169() {
+    create_images_from_brainsprite_scene() {
+        Tx=${1}
+        total_frames=$( grep "SceneInfo Index=" ${brainsprite_scene} | wc -l )
 
- 		total_frames=169
-		for ((i=1 ; i<=${total_frames} ;  i++)); do
-            if [ "$1" -eq 1 ] ; then
-                scene_file=${processed_files}/t1_169_scene.scene
-                out=${dcan_summary}/T1_pngs/P_T1_frame_${i}.png
-            elif [ "$1" -eq 2 ]; then
-                scene_file=${processed_files}/t2_169_scene.scene
-			    out=${dcan_summary}/T2_pngs/P_T2_frame_${i}.png
-            fi
+        for ((i=1 ; i<=${total_frames} ;  i++)); do
+            out=${dcan_summary}/${Tx}_pngs/P_${Tx}_frame_${i}.png
             echo $i
-   			echo ${wb_command} -show-scene ${scene_file} ${i} ${out} 900 800
-            ${wb_command} -show-scene ${scene_file} ${i} ${out} 900 800
-
+            echo ${wb_command} -show-scene ${brainsprite_scene} ${i} ${out} 900 800
+            ${wb_command} -show-scene ${brainsprite_scene} ${i} ${out} 900 800
         done
     }
 
@@ -341,8 +328,14 @@ lp="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
 t1_brain="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
 t2_brain="${AtlasSpacePath}/T2w_restore_brain.nii.gz"
 
-#create summary images
-build_scene_from_template $t2 $t1 $rp $lp $rw $lw
+# Make named pngs to show specific anatomical areas.
+if [ -z "${pngs_template}" ]; then
+    # Use default.
+    pngs_template=${templatedir}/image_template_temp.scene
+fi
+
+pngs_scene=${processed_files}/pngs_scene.scene
+build_scene_from_pngs_template $t2 $t1 $rp $lp $rw $lw
 declare -a image_names=('T1-Axial-InferiorTemporal-Cerebellum' 'T2-Axial-InferiorTemporal-Cerebellum' 'T1-Axial-BasalGangila-Putamen' 'T2-Axial-BasalGangila-Putamen' 'T1-Axial-SuperiorFrontal' 'T2-Axial-SuperiorFrontal' 'T1-Coronal-PosteriorParietal-Lingual' 'T2-Coronal-PosteriorParietal-Lingual' 'T1-Coronal-Caudate-Amygdala' 'T2-Coronal-Caudate-Amygdala' 'T1-Coronal-OrbitoFrontal' 'T2-Coronal-OrbitoFrontal' 'T1-Sagittal-Insula-FrontoTemporal' 'T2-Sagittal-Insula-FrontoTemporal' 'T1-Sagittal-CorpusCallosum' 'T2-Sagittal-CorpusCallosum' 'T1-Sagittal-Insula-Temporal-HippocampalSulcus' 'T2-Sagittal-Insula-Temporal-HippocampalSulcus')
 ((num_wb_scenes=${#image_names[@]}-1))
 
@@ -353,39 +346,46 @@ do
     if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
         echo "skip t2 image"
     else
-        echo create_image_from_template "${output_pre}_${image_names[$i]}.png" $scenenum
-        create_image_from_template "${output_pre}_${image_names[$i]}.png" $scenenum
+        echo create_image_from_pngs_scene "${output_pre}_${image_names[$i]}.png" $scenenum
+        create_image_from_pngs_scene "${output_pre}_${image_names[$i]}.png" $scenenum
     fi
 done
 
-rm -rf ${processed_files}/image_template_temp.scene
+rm -rf ${pngs_scene}
 
-# Cannot do brain sprite processing if there is no template
+
+# Make pngs to be used for the brainsprite.
+if [ -z "${brainsprite_template}" ]; then
+    # Use default.
+    brainsprite_template=${templatedir}/parasagittal_Tx_169_template.scene
+fi
 if [ -n "${skip_sprite}" ] ; then
-    #skip brain sprite processing.
-    echo Skip brain sprite processing per user request.
-elif [[ ! -e ${templatedir}/parasagittal_Tx_169_template.scene ]] ; then
-    echo Missing ${templatedir}/parasagittal_Tx_169_template.scene
+    # Skip brainsprite processing.
+    echo Skip brainsprite processing per user request.
+elif [[ ! -e ${brainsprite_template} ]] ; then
+    # Cannot do brainsprite processing if there is no template
+    echo Missing ${brainsprite_template}
     echo Cannot perform processing needed for brainsprite.
-elif [[ ${has_t2} -eq 1 ]] ; then
-    #create brain sprite images for T1 and T2
-    mkdir -p ${dcan_summary}/T1_pngs/
-    chown :${GROUP} ${dcan_summary}/T1_pngs/ || true
-    chmod 770 ${dcan_summary}/T1_pngs/ || true
-    mkdir -p ${dcan_summary}/T2_pngs/
-    chown :${GROUP} ${dcan_summary}/T2_pngs/ || true
-    chmod 770 ${dcan_summary}/T2_pngs/ || true
-    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
-    create_image_from_template_169 1
-    build_txw_scene_from_template_169 $t2 $rp $lp $rw $lw 2
-    create_image_from_template_169 2
 else
-    #create brain sprite images for T1 only
     mkdir -p ${dcan_summary}/T1_pngs/
     chown :${GROUP} ${dcan_summary}/T1_pngs/ || true
     chmod 770 ${dcan_summary}/T1_pngs/ || true
-    build_txw_scene_from_template_169 $t1 $rp $lp $rw $lw 1
-    create_image_from_template_169 1
+
+    # Create brainsprite images for T1
+    brainsprite_scene=${processed_files}/t1_bs_scene.scene
+    build_scene_from_brainsprite_template $t1 $rp $lp $rw $lw
+    create_images_from_brainsprite_scene T1
+
+    if [[ ${has_t2} -eq 1 ]] ; then
+        mkdir -p ${dcan_summary}/T2_pngs/
+        chown :${GROUP} ${dcan_summary}/T2_pngs/ || true
+        chmod 770 ${dcan_summary}/T2_pngs/ || true
+
+        # Create brainsprite images for T2
+        brainsprite_scene=${processed_files}/t2_bs_scene.scene
+        build_scene_from_brainsprite_template $t2 $rp $lp $rw $lw
+        create_images_from_brainsprite_scene T2
+    fi
 fi
 
 # Subcorticals
