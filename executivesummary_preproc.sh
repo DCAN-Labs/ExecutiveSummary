@@ -150,10 +150,7 @@ fi
 # Make the directory where we will store the HTML, and
 # the directory to store its images.
 exsum_path=${dcan_summary}/executivesummary
-
-if ! [ -d ${exsum_path} ] ; then
-    rm -rf ${exsum_path}
-fi
+mkdir -p ${exsum_path}
 
 # Lose old images.
 images_path=${exsum_path}/img
@@ -162,9 +159,9 @@ if [ -d ${images_path} ] ; then
     if [ -n "${skip_sprite}" ] ; then
         # Cheat - keep the mosaics. Debug only.
         # Don't bother to log each file removed.
-        mv ${images_path}/*mosaic* ${images_path}/..
+        mv ${images_path}/*mosaic* ${exsum_path}
         rm -f ${images_path}/*
-        mv ${images_path}/../*mosaic* .
+        mv ${exsum_path}/*mosaic* .
     else
         for FILE in $( ls ${images_path}/* ) ; do
             echo rm -f ${FILE}
@@ -175,6 +172,15 @@ fi
 mkdir -p ${images_path}
 if ! [ -d ${images_path} ] ; then
     echo Unable to write ${images_path}. Permissions?
+    echo Exiting.
+    exit 1
+fi
+
+# Sometimes need a "working directory"
+working=${exsum_path}/temp_files
+mkdir -p ${working}
+if ! [ -d ${working} ] ; then
+    echo Unable to write ${working}. Permissions?
     echo Exiting.
     exit 1
 fi
@@ -259,18 +265,23 @@ chmod -R 770 ${exsum_path} || true
         # This function uses the default slices made by slicesdir (.4, .5, and
         # .6). It calls slicesdir, grabs the output png, and cleans up the
         # subdirectory left by slicesdir (also called slicesdir).
+        # Note: everything must be "local" or we get horrible filenames. Also,
+        # this whole process makes a mess. So use the working directory.
 
         base_img=$1
         out_png=$2
         red_img=$3 # optional
 
-        img_dir=$( dirname ${base_img} )
         img_file=$( basename ${base_img} )
         img_png=${img_file/.nii.gz/.png}
 
-        pushd ${img_dir}
+        pushd ${working}
+        imcp ${base_img} ./${img_file}
+
         if [ -n "${red_img}" ] ; then
-            slicesdir -p ${red_img} ${img_file}
+            red_file=$( basename ${red_img} )
+            imcp ${red_img} ./${red_file}
+            slicesdir -p ${red_file} ${img_file}
         else
             slicesdir ${img_file}
         fi
@@ -294,6 +305,8 @@ vent_mask_eroded="vent_2mm_${subject_id}_mask_eroded.nii.gz"
 echo
 echo "START: executive summary image preprocessing"
 
+set -e
+
 ############
 ### Anat
 ############
@@ -303,12 +316,17 @@ if [ -n "${session_id}" ] ; then
 fi
 t1_mask=${AtlasSpacePath}/T1w_restore_brain.nii.gz
 
-if [[ ! -e ${atlas} ]] ; then
+if [ -z "${atlas}" ] ; then
+    echo The atlas argument was not supplied. Cannot create atlas-in-t1 or t1-in-atlas
+elif [[ ! -e ${atlas} ]] ; then
     echo "Missing ${atlas}"
     echo "Cannot create atlas-in-t1 or t1-in-atlas"
 else
+    echo Registering $( basename ${t1_mask} ) and atlas file: ${atlas}
+    set -x
     make_default_slices_row ${t1_mask} ${output_pre}_desc-AtlasInT1w.gif ${atlas}
     make_default_slices_row ${atlas} ${output_pre}_desc-T1wInAtlas.gif ${t1_mask}
+    set +x
 fi
 
 # From here on, use the whole T1 file rather than the mask (used above).
@@ -399,9 +417,7 @@ if [ -e ${subcort_sub} ] ; then
         # The default slices are not as nice for subcorticals as they are for
         # a whole brain. Pick out slices using slicer.
 
-        intermed=${images_path}/temp_files
-        mkdir -p ${intermed}
-        pushd ${intermed} > /dev/null
+        pushd ${working}
         imcp ${subcort_sub} ./subcort_sub.nii.gz
         imcp ${subcort_atl} ./subcort_atl.nii.gz
 
@@ -456,8 +472,7 @@ if [ -e ${subcort_sub} ] ; then
                    ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
                    ${output_pre}_desc-SubcortInAtlas.gif
 
-        popd > /dev/null
-        rm -rf ${intermed}
+        popd
 
     else
         echo Missing ${subcort_atlas}.
@@ -499,13 +514,15 @@ for TASK in `ls -d ${processed_files}/*task-*` ; do
     echo result of flirt is in ${t2_2_brain}
 
     fMRI_pre=${images_path}/sub-${subject_id}_${fMRIName}
+    set -x
     make_default_slices_row ${task_img} ${fMRI_pre}_desc-T1InTask.gif ${t1_2_brain}
     make_default_slices_row ${t1_2_brain} ${fMRI_pre}_desc-TaskInT1.gif ${task_img}
     make_default_slices_row ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
     make_default_slices_row ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
+    set +x
 done
 
-        set -x
+set -x
 # If the bids-input was supplied and there are func files, slice
 # the bold and sbrefs into pngs so we can display them.
 shopt -s nullglob
@@ -546,7 +563,10 @@ else
 fi
 shopt -u nullglob
 
-        set +x
+set +x
+
+# cleanup working dir
+rm -rf ${working}
 
 echo "DONE: executive summary prep"
 
