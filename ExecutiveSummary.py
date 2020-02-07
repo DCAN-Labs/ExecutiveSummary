@@ -202,8 +202,8 @@ def _cli():
     # bids_dir is not required for Executive Summary. If not there, will just not
     # have any raw data (SBRef or BOLD) in the output for each task. If supplied,
     # just make sure it's a real directory.
-    if args.bids_dir is not None:
-        assert os.path.isdir(args.bids_dir), args.bids_dir + ' is not a directory!'
+    #if args.bids_dir is not None:
+    #   assert os.path.isdir(args.bids_dir), args.bids_dir + ' is not a directory!'
 
     # If the user specified an atlas, make sure it exists.
     if args.atlas is not None:
