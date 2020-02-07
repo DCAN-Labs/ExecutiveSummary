@@ -54,9 +54,11 @@ def generate_parser():
     )
     parser.add_argument(
             '--dcan-summary', '-d', dest='summary_dir',
-            metavar='DCAN_SUMMARY', default='summary_DCANBOLDProc_v4.0.0',
+            metavar='DCAN_SUMMARY',
             help='Optional. Expects the name of the subdirectory used for the summary data. '
-            'Default: summary_DCANBOLDProc_v4.0.0'
+            'Directory should be relative to "files" and whatever directory is specified '
+            'will be used as the root of the output for executive summary. '
+            'Example: summary_DCANBOLDProc_v4.0.0'
             )
     parser.add_argument(
             '--atlas', '-a', dest='atlas',
@@ -77,13 +79,17 @@ def generate_parser():
     return parser
 
 
-def init_summary(proc_files, summary_dir, layout_only):
+def init_summary(proc_files, summary_dir=None, layout_only=False):
 
     summary_path = None
     html_path = None
     images_path = None
 
-    summary_path = os.path.join(proc_files, summary_dir)
+    if summary_dir is None:
+        summary_path = proc_files
+    else:
+        summary_path = os.path.join(proc_files, summary_dir)
+
     if os.path.isdir(summary_path):
         # Build the directory tree for the output.
         # This also ensures we can write to the path.
@@ -199,12 +205,6 @@ def _cli():
     # not a value for output_dir. Just make sure it's a real directory.
     assert os.path.isdir(args.output_dir), args.output_dir + ' is not a directory!'
 
-    # bids_dir is not required for Executive Summary. If not there, will just not
-    # have any raw data (SBRef or BOLD) in the output for each task. If supplied,
-    # just make sure it's a real directory.
-    #if args.bids_dir is not None:
-    #   assert os.path.isdir(args.bids_dir), args.bids_dir + ' is not a directory!'
-
     # If the user specified an atlas, make sure it exists.
     if args.atlas is not None:
         assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
@@ -212,8 +212,8 @@ def _cli():
     # Args check out. Call the interface.
     kwargs = {
         'files_path'   : args.output_dir,
-        'summary_dir'  : args.summary_dir,
         'subject_id'   : args.subject_id,
+        'summary_dir'  : args.summary_dir,
         'func_path'    : args.bids_dir,
         'session_id'   : args.session_id,
         'atlas'        : args.atlas,
@@ -222,11 +222,11 @@ def _cli():
 
     interface(**kwargs)
 
-def interface(files_path, summary_dir, subject_id, func_path=None, session_id=None, atlas=None, layout_only=False):
+def interface(files_path, subject_id, summary_dir=None, func_path=None, session_id=None, atlas=None, layout_only=False):
 
     # Most of the data needed is in the summary directory. Also, it is where the
     # preprocessor will make the images and where the layout_builder will write
-    # the HTML. We must be able to read and write to the path.
+    # the HTML. We must be able to write to the path.
     summary_path, html_path, images_path = init_summary(files_path, summary_dir, layout_only)
     if summary_path is None:
         # We were not able to find and/or write to the path.
