@@ -13,10 +13,11 @@ function display_help() {
     echo "                                                                                                              "
     echo "      Required:                                                                                               "
     echo "      -o|--output-dir           Path to processed files, ending at files.                                     "
-    echo "      -d|--dcan-summary         Path to DCAN BOLD proc output, e.g. path to summary_DCANBOLDProc_v4.0.0.      "
     echo "      -s|--subject-id           Subject ID without sub- prefix.                                               "
     echo "                                                                                                              "
     echo "      Optional:                                                                                               "
+    echo "      -d|--dcan-summary         Path to summary output. (If func data, then path to DCANBOLDProc output.)     "
+    echo "                                Default is to use output-dir.                                                 "
     echo "      -i|--bids-input           Path to unprocessed data set, ending at func.                                 "
     echo "      -v|--session-id           Session (visit) ID without ses- prefix.                                       "
     echo "      -a|--atlas                Atlas file for generation of rest image. Overrides adult MNI 1mm atlas.       "
@@ -76,8 +77,8 @@ while true ; do
 done
 
 # Check for required args.
-if [ -z "${output_dir}" ] || [ -z "${dcan_summary}" ] || [ -z "${subject_id}" ] ; then
-    echo output-dir, dcan-summary, and subject-id are required.
+if [ -z "${output_dir}" ] || [ -z "${subject_id}" ] ; then
+    echo output-dir and subject-id are required.
     display_help
 fi
 
@@ -85,20 +86,17 @@ fi
 echo
 echo COMMAND LINE ARGUMENTS to $0:
 echo output-dir=${output_dir}
-echo dcan-summary=${dcan_summary}
 echo subject-id=${subject_id}
-if [ -n "${bids_input}" ] ; then
-    echo bids-input=${bids_input}
-fi
-if [ -n "${session_id}" ] ; then
-    echo session-id=${session_id}
-fi
-if [ -n "${atlas}" ] ; then
-    echo atlas=${atlas}
-fi
+echo dcan-summary=${dcan_summary}
+echo bids-input=${bids_input}
+echo session-id=${session_id}
+echo atlas=${atlas}
+
 if [ -n "${skip_sprite}" ] ; then
+    # This is a 'stealth' arg.
     echo Skip sprite processing.
 fi
+
 echo End of args.
 
 
@@ -134,14 +132,15 @@ fi
 echo
 
 
-# Note: we no longer *insist* that the summary file already exist, because if the subject is 'anatomy-only'
-# there will be no files from DCAN_BOLD_proc. However, if there *are* any task files (including task-rest),
-# this script will look for the .png files in the directory specified. Therefore, dcan_summary will
-# *normally* be summary_DCANBOLDProc_v4.0.0.
+# Note: we no longer *insist* that a summary file already exist, because if the
+# subject is run with 'anat-only' there will be no files from DCAN_BOLD_proc.
+# Just take what we get and work with it.
+if [ -z "${dcan_summary}" ] || [[ "NONE" == "${dcan_summary}" ]] ; then
+    # The summary directory was not supplied, write to the output-dir ('files').
+    dcan_summary=${output_dir}
 
-if [ -d ${dcan_summary} ]; then
-    echo Path to summary : ${dcan_summary}
-else
+elif ! [ -d ${dcan_summary} ]; then
+    # The summary directory was supplied, but does not yet exist.
     mkdir -p ${dcan_summary}
     chown :${GROUP} ${dcan_summary} || true
     chmod 770 ${dcan_summary} || true
