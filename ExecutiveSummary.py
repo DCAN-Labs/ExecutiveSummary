@@ -237,7 +237,7 @@ def interface(files_path, subject_id, summary_dir=None, func_path=None, session_
     if not layout_only:
         preproc_cmd = os.path.dirname(os.path.abspath(__file__)) + '/executivesummary_preproc.sh '
         preproc_cmd += '--output-dir %s ' % files_path
-        preproc_cmd += '--dcan-summary %s ' % summary_path
+        preproc_cmd += '--html-path %s ' % html_path
         preproc_cmd += '--subject-id %s ' % subject_id
         if session_id is not None:
             preproc_cmd += '--session-id %s ' % session_id

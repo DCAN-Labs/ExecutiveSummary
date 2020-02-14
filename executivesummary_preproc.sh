@@ -3,22 +3,20 @@
 # Note: This file was copied from FNL_preproc_preproc.sh.
 # It performs the steps needed to prep for exec summary. It does NOT call FNL_preproc.sh.
 
-options=`getopt -o i:o:d:s:v:a:b:p:hx -l bids-input:,output-dir:,dcan-summary:,subject-id:,session-id:,atlas:,brainsprite-template:,pngs-template:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
+options=`getopt -o i:o:d:s:v:a:b:p:hx -l bids-input:,output-dir:,html-path:,subject-id:,session-id:,atlas:,brainsprite-template:,pngs-template:,help,skip_sprite -n 'executivesummary_preproc.sh' -- $@`
 eval set -- "$options"
 function display_help() {
     echo "Usage: `basename $0` [options...]                                                                             "
-    echo "      Assumes BIDS & DCAN file structure, as follows:                                                         "
-    echo "           <bids-input>/sub-<subject_id>/ses-<visit>/func                                                     "
-    echo "           <output-dir>/sub-<subject_id>/ses-<visit>/files/<dcan-summary>                                     "
     echo "                                                                                                              "
     echo "      Required:                                                                                               "
     echo "      -o|--output-dir           Path to processed files, ending at files.                                     "
     echo "      -s|--subject-id           Subject ID without sub- prefix.                                               "
     echo "                                                                                                              "
     echo "      Optional:                                                                                               "
-    echo "      -d|--dcan-summary         Path to summary output. (If func data, then path to DCANBOLDProc output.)     "
-    echo "                                Default is to use output-dir.                                                 "
-    echo "      -i|--bids-input           Path to unprocessed data set, ending at func.                                 "
+    echo "      -w|--html-path            Path to which to write executive summary. Default is                          "
+    echo "                                <output-dir>/executivesummary.                                                "
+    echo "      -i|--bids-input           Path to unprocessed data set, ending at func. If not supplied, no task data   "
+    echo "                                will be processed.                                                            "
     echo "      -v|--session-id           Session (visit) ID without ses- prefix.                                       "
     echo "      -a|--atlas                Atlas file for generation of rest image. Overrides adult MNI 1mm atlas.       "
     echo "      -b|--brainsprite-template Path to template that has all of the scenes for the brainsprite (usually 169)."
@@ -41,12 +39,12 @@ while true ; do
             output_dir="$2"
             shift 2
             ;;
-        -d|--dcan-summary)
-            dcan_summary="$2"
-            shift 2
-            ;;
         -s|--subject-id)
             subject_id="$2"
+            shift 2
+            ;;
+        -w|--html-path)
+            html_path="$2"
             shift 2
             ;;
         -v|--session-id)
@@ -87,7 +85,7 @@ echo
 echo COMMAND LINE ARGUMENTS to $0:
 echo output-dir=${output_dir}
 echo subject-id=${subject_id}
-echo dcan-summary=${dcan_summary}
+echo html-path=${html_path}
 echo bids-input=${bids_input}
 echo session-id=${session_id}
 echo atlas=${atlas}
@@ -132,32 +130,27 @@ fi
 echo
 
 
-# Note: we no longer *insist* that a summary file already exist, because if the
-# subject is run with 'anat-only' there will be no files from DCAN_BOLD_proc.
-# Just take what we get and work with it.
-if [ -z "${dcan_summary}" ] || [[ "NONE" == "${dcan_summary}" ]] ; then
+if [ -z "${html_path}" ] || [[ "NONE" == "${html_path}" ]] ; then
     # The summary directory was not supplied, write to the output-dir ('files').
-    dcan_summary=${output_dir}
-
-elif ! [ -d ${dcan_summary} ]; then
+    html_path=${processed_files}/executivesummary
+fi
+if ! [ -d ${html_path} ]; then
     # The summary directory was supplied, but does not yet exist.
-    mkdir -p ${dcan_summary}
-    chown :${GROUP} ${dcan_summary} || true
-    chmod 770 ${dcan_summary} || true
+    mkdir -p ${html_path}
+    chown :${GROUP} ${html_path} || true
+    chmod 770 ${html_path} || true
 fi
 
-# Make the directory where we will store the HTML, and
-# the directory to store its images.
-exsum_path=${dcan_summary}/executivesummary
-mkdir -p ${exsum_path}
+# Make the subfolder for the images. All paths in the html are relative to
+# the html folder, so must img must remain a subfolder to the html folder.
 
 # Lose old images.
 images_path=${exsum_path}/img
 if [ -d ${images_path} ] ; then
     echo Remove images from prior runs.
     if [ -n "${skip_sprite}" ] ; then
-        # Cheat - keep the mosaics. Debug only.
-        # Don't bother to log each file removed.
+        # Cheat - keep the mosaics, and don't bother to log each file removed.
+        # (For debug only.)
         mv ${images_path}/*mosaic* ${exsum_path}
         rm -f ${images_path}/*
         mv ${exsum_path}/*mosaic* .
@@ -252,7 +245,7 @@ chmod -R 770 ${exsum_path} || true
         total_frames=$( grep "SceneInfo Index=" ${brainsprite_scene} | wc -l )
 
         for ((i=1 ; i<=${total_frames} ;  i++)); do
-            out=${dcan_summary}/${Tx}_pngs/P_${Tx}_frame_${i}.png
+            out=${processed_files}/${Tx}_pngs/P_${Tx}_frame_${i}.png
             echo $i
             echo ${wb_command} -show-scene ${brainsprite_scene} ${i} ${out} 900 800
             ${wb_command} -show-scene ${brainsprite_scene} ${i} ${out} 900 800
@@ -309,9 +302,9 @@ set -e
 ############
 ### Anat
 ############
-output_pre=${images_path}/sub-${subject_id}
+images_pre=${images_path}/sub-${subject_id}
 if [ -n "${session_id}" ] ; then
-    output_pre=${output_pre}_ses-${session_id}
+    images_pre=${images_pre}_ses-${session_id}
 fi
 t1_mask=${AtlasSpacePath}/T1w_restore_brain.nii.gz
 
@@ -323,8 +316,8 @@ elif [[ ! -e ${atlas} ]] ; then
 else
     echo Registering $( basename ${t1_mask} ) and atlas file: ${atlas}
     set -x
-    make_default_slices_row ${t1_mask} ${output_pre}_desc-AtlasInT1w.gif ${atlas}
-    make_default_slices_row ${atlas} ${output_pre}_desc-T1wInAtlas.gif ${t1_mask}
+    make_default_slices_row ${t1_mask} ${images_pre}_desc-AtlasInT1w.gif ${atlas}
+    make_default_slices_row ${atlas} ${images_pre}_desc-T1wInAtlas.gif ${t1_mask}
     set +x
 fi
 
@@ -363,8 +356,8 @@ do
     if [[ ${has_t2} -eq 0 && $(( $scenenum % 2 )) -eq 0 ]] ; then
         echo "skip t2 image"
     else
-        echo create_image_from_pngs_scene "${output_pre}_${image_names[$i]}.png" $scenenum
-        create_image_from_pngs_scene "${output_pre}_${image_names[$i]}.png" $scenenum
+        echo create_image_from_pngs_scene "${images_pre}_${image_names[$i]}.png" $scenenum
+        create_image_from_pngs_scene "${images_pre}_${image_names[$i]}.png" $scenenum
     fi
 done
 
@@ -384,9 +377,9 @@ elif [[ ! -e ${brainsprite_template} ]] ; then
     echo Missing ${brainsprite_template}
     echo Cannot perform processing needed for brainsprite.
 else
-    mkdir -p ${dcan_summary}/T1_pngs/
-    chown :${GROUP} ${dcan_summary}/T1_pngs/ || true
-    chmod 770 ${dcan_summary}/T1_pngs/ || true
+    mkdir -p ${processed_files}/T1_pngs/
+    chown :${GROUP} ${processed_files}/T1_pngs/ || true
+    chmod 770 ${processed_files}/T1_pngs/ || true
 
     # Create brainsprite images for T1
     brainsprite_scene=${processed_files}/t1_bs_scene.scene
@@ -394,9 +387,9 @@ else
     create_images_from_brainsprite_scene T1
 
     if [[ ${has_t2} -eq 1 ]] ; then
-        mkdir -p ${dcan_summary}/T2_pngs/
-        chown :${GROUP} ${dcan_summary}/T2_pngs/ || true
-        chmod 770 ${dcan_summary}/T2_pngs/ || true
+        mkdir -p ${processed_files}/T2_pngs/
+        chown :${GROUP} ${processed_files}/T2_pngs/ || true
+        chmod 770 ${processed_files}/T2_pngs/ || true
 
         # Create brainsprite images for T2
         brainsprite_scene=${processed_files}/t2_bs_scene.scene
@@ -446,7 +439,7 @@ if [ -e ${subcort_sub} ] ; then
         pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png + \
                    ${prefix}d.png + ${prefix}e.png + ${prefix}f.png + \
                    ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
-                   ${output_pre}_desc-AtlasInSubcort.gif
+                   ${images_pre}_desc-AtlasInSubcort.gif
 
         # Make a binarized copy of the subject's subcorticals to be used
         # for the outline.
@@ -469,7 +462,7 @@ if [ -e ${subcort_sub} ] ; then
         pngappend ${prefix}a.png + ${prefix}b.png + ${prefix}c.png + \
                    ${prefix}d.png + ${prefix}e.png + ${prefix}f.png + \
                    ${prefix}g.png + ${prefix}h.png + ${prefix}i.png \
-                   ${output_pre}_desc-SubcortInAtlas.gif
+                   ${images_pre}_desc-SubcortInAtlas.gif
 
         popd
 
