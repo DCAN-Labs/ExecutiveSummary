@@ -85,9 +85,8 @@ def init_summary(proc_files, summary_dir=None, layout_only=False):
     html_path = None
     images_path = None
 
-    if summary_dir is None:
-        summary_path = proc_files
-    else:
+    summary_path = proc_files
+    if summary_dir is not None:
         summary_path = os.path.join(proc_files, summary_dir)
 
     if os.path.isdir(summary_path):
@@ -227,6 +226,8 @@ def interface(files_path, subject_id, summary_dir=None, func_path=None, session_
     # Most of the data needed is in the summary directory. Also, it is where the
     # preprocessor will make the images and where the layout_builder will write
     # the HTML. We must be able to write to the path.
+    if summary_dir is not None:
+        print ('summary_dir is %s' % summary_dir)
     summary_path, html_path, images_path = init_summary(files_path, summary_dir, layout_only)
     if summary_path is None:
         # We were not able to find and/or write to the path.
