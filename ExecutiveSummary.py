@@ -204,20 +204,22 @@ def _cli():
     # not a value for output_dir. Just make sure it's a real directory.
     assert os.path.isdir(args.output_dir), args.output_dir + ' is not a directory!'
 
-    # If the user specified an atlas, make sure it exists.
-    if args.atlas is not None:
-        assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
-
     # Args check out. Call the interface.
     kwargs = {
         'files_path'   : args.output_dir,
         'subject_id'   : args.subject_id,
-        'summary_dir'  : args.summary_dir,
-        'func_path'    : args.bids_dir,
-        'session_id'   : args.session_id,
-        'atlas'        : args.atlas,
         'layout_only'  : args.layout_only
         }
+
+    # If the caller passes in None to an arg, python is treating it as a string.
+    # So, do some checking before passing the values to the interface.
+    if args.summary_dir is not None and args.summary_dir.upper() is not "NONE": kwargs['summary_dir'] = args.summary_dir
+    if args.bids_dir is not None and args.bids_dir.upper() is not "NONE": kwargs['func_path'] = args.bids_dir
+    if args.session_id is not None and args.session_id.upper() is not "NONE": kwargs['session_id'] = args.session_id
+    # If the user specified an atlas, make sure it exists.
+    if args.atlas is not None and args.bids_dir.upper() is not "NONE":
+        assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
+        kwargs['atlas'] = args.atlas
 
     interface(**kwargs)
 
