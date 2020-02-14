@@ -145,15 +145,15 @@ fi
 # the html folder, so must img must remain a subfolder to the html folder.
 
 # Lose old images.
-images_path=${exsum_path}/img
+images_path=${html_path}/img
 if [ -d ${images_path} ] ; then
     echo Remove images from prior runs.
     if [ -n "${skip_sprite}" ] ; then
         # Cheat - keep the mosaics, and don't bother to log each file removed.
         # (For debug only.)
-        mv ${images_path}/*mosaic* ${exsum_path}
+        mv ${images_path}/*mosaic* ${html_path}
         rm -f ${images_path}/*
-        mv ${exsum_path}/*mosaic* .
+        mv ${html_path}/*mosaic* .
     else
         for FILE in $( ls ${images_path}/* ) ; do
             echo rm -f ${FILE}
@@ -169,7 +169,7 @@ if ! [ -d ${images_path} ] ; then
 fi
 
 # Sometimes need a "working directory"
-working=${exsum_path}/temp_files
+working=${html_path}/temp_files
 mkdir -p ${working}
 if ! [ -d ${working} ] ; then
     echo Unable to write ${working}. Permissions?
@@ -177,8 +177,8 @@ if ! [ -d ${working} ] ; then
     exit 1
 fi
 
-chown -R :${GROUP} ${exsum_path} || true
-chmod -R 770 ${exsum_path} || true
+chown -R :${GROUP} ${html_path} || true
+chmod -R 770 ${html_path} || true
 
 
 
