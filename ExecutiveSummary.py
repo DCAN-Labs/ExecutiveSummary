@@ -193,32 +193,48 @@ def _cli():
     date_stamp = "{:%Y%m%d %H:%M}".format(datetime.now())
 
     print('Executive Summary was called at %s with:' % date_stamp)
-    print('\tBIDS input files:      %s' % args.bids_dir)
     print('\tOutput directory:      %s' % args.output_dir)
     print('\tSubject:               %s' % args.subject_id)
-    print('\tSession:               %s' % args.session_id)
-    print('\tSummary directory:     %s' % args.summary_dir)
-    print('\tAtlas:                 %s' % args.atlas)
 
     # output_dir is required, and the parser would have squawked if there was
     # not a value for output_dir. Just make sure it's a real directory.
     assert os.path.isdir(args.output_dir), args.output_dir + ' is not a directory!'
 
-    # If the user specified an atlas, make sure it exists.
-    if args.atlas is not None:
-        assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
-
-    # Args check out. Call the interface.
     kwargs = {
         'files_path'   : args.output_dir,
         'subject_id'   : args.subject_id,
-        'summary_dir'  : args.summary_dir,
-        'func_path'    : args.bids_dir,
-        'session_id'   : args.session_id,
-        'atlas'        : args.atlas,
         'layout_only'  : args.layout_only
         }
 
+    # If the caller specifies an arg is None, python is treating it as a string.
+    # So, do some extra checking before passing the values to the interface.
+    if args.bids_dir is None or args.bids_dir.upper() == "NONE":
+        pass
+    else:
+        print('\tBIDS input files:      %s' % args.bids_dir)
+        kwargs['func_path'] = args.bids_dir
+
+    if args.summary_dir is None or args.summary_dir.upper() == "NONE":
+        pass
+    else:
+        print('\tSummary directory:     %s' % args.summary_dir)
+        kwargs['summary_dir'] = args.summary_dir
+
+    if args.session_id is None or args.session_id.upper() == "NONE":
+        pass
+    else:
+        print('\tSession:               %s' % args.session_id)
+        kwargs['session_id'] = args.session_id
+
+    # If the user specified an atlas, make sure it exists.
+    if args.atlas is None or args.bids_dir.upper() == "NONE":
+        pass
+    else:
+        print('\tAtlas:                 %s' % args.atlas)
+        assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
+        kwargs['atlas'] = args.atlas
+
+    # Call the interface.
     interface(**kwargs)
 
 def interface(files_path, subject_id, summary_dir=None, func_path=None, session_id=None, atlas=None, layout_only=False):
@@ -237,7 +253,7 @@ def interface(files_path, subject_id, summary_dir=None, func_path=None, session_
     if not layout_only:
         preproc_cmd = os.path.dirname(os.path.abspath(__file__)) + '/executivesummary_preproc.sh '
         preproc_cmd += '--output-dir %s ' % files_path
-        preproc_cmd += '--dcan-summary %s ' % summary_path
+        preproc_cmd += '--html-path %s ' % html_path
         preproc_cmd += '--subject-id %s ' % subject_id
         if session_id is not None:
             preproc_cmd += '--session-id %s ' % session_id
