@@ -220,11 +220,9 @@ def _cli():
         print('\tSummary directory:     %s' % args.summary_dir)
         kwargs['summary_dir'] = args.summary_dir
 
-    if args.session_id is None or args.session_id.upper() == "NONE":
-        pass
-    else:
-        print('\tSession:               %s' % args.session_id)
-        kwargs['session_id'] = args.session_id
+    # For Session id, None *can* be a valid string. Leave as is.
+    print('\tSession:               %s' % args.session_id)
+    kwargs['session_id'] = args.session_id
 
     # If the user specified an atlas, make sure it exists.
     if args.atlas is None or args.bids_dir.upper() == "NONE":
