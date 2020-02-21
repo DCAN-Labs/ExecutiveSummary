@@ -57,7 +57,7 @@ def generate_parser():
             metavar='DCAN_SUMMARY',
             help='Optional. Expects the name of the subdirectory used for the summary data. '
             'Directory should be relative to "files" and whatever directory is specified '
-            'will be used as the root of the output for executive summary. '
+            'will be used to find needed data from dcan bold processing. '
             'Example: summary_DCANBOLDProc_v4.0.0'
             )
     parser.add_argument(
@@ -264,9 +264,9 @@ def interface(files_path, subject_id, summary_dir=None, func_path=None, session_
 
         # Make mosaic(s) for brainsprite(s).
         print('Making mosaic for T1 BrainSprite.')
-        preprocess_tx('T1', summary_path, images_path)
+        preprocess_tx('T1', files_path, images_path)
         print('Making mosaic for T2 BrainSprite.')
-        preprocess_tx('T2', summary_path, images_path)
+        preprocess_tx('T2', files_path, images_path)
         print('Finished with preprocessing.')
 
     # Done with preproc (or skipped it). Call the page layout to make the page.
