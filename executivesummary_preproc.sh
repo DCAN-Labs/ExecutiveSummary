@@ -494,7 +494,7 @@ if [[ -e ${t2_2_brain_img} ]] ; then
 fi
 
 # Make T1w and T2w task images.
-for TASK in `ls -d ${processed_files}/*task-*` ; do
+for TASK in `ls -d ${Results}/*task-*` ; do
     fMRIName=$( basename ${TASK} )
     echo Make images for ${fMRIName}.
     task_img="${Results}/${fMRIName}/${fMRIName}.nii.gz"
@@ -534,7 +534,7 @@ if [ -n "${bids_input}" ] && [ -d ${bids_input} ] ; then
     count=${#sbrefs[@]}
     if (( 0 == count )) ; then
         # There are no SBRefs; use scout files for references.
-        scouts=( ${processed_files}/*task-*/Scout_orig.nii.gz ) 
+        scouts=( ${processed_files}/*task-*/Scout_orig.nii.gz )
         for SCOUT in ${scouts[@]} ; do
             # Get the task name and number from the parent.
             task_name=$( basename  $( dirname ${SCOUT} ) )
