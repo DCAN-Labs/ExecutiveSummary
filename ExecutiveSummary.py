@@ -225,12 +225,12 @@ def _cli():
     kwargs['session_id'] = args.session_id
 
     # If the user specified an atlas, make sure it exists.
-    if args.atlas is None or args.bids_dir.upper() == "NONE":
+    print('\tAtlas:                 %s' % args.atlas)
+    if args.atlas is None or args.atlas.upper() == "NONE":
         pass
-    else:
-        print('\tAtlas:                 %s' % args.atlas)
+    else:        
         assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
-        kwargs['atlas'] = args.atlas
+    kwargs['atlas'] = args.atlas
 
     # Call the interface.
     interface(**kwargs)
