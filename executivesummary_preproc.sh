@@ -337,6 +337,9 @@ lw="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.white.32k_fs_LR.surf.gii"
 lp="${AtlasSpacePath}/fsaverage_LR32k/${subject_id}.L.pial.32k_fs_LR.surf.gii"
 t1_brain="${AtlasSpacePath}/T1w_restore_brain.nii.gz"
 t2_brain="${AtlasSpacePath}/T2w_restore_brain.nii.gz"
+if [[ ! -e ${t2_brain} ]] ; then
+    echo "t2_brain not found"
+fi
 
 # Make named pngs to show specific anatomical areas.
 if [ -z "${pngs_template}" ]; then
@@ -483,6 +486,9 @@ set +x
 
 t1_2_brain=${AtlasSpacePath}/T1w_restore_brain.2.nii.gz
 t2_2_brain=${AtlasSpacePath}/T2w_restore_brain.2.nii.gz
+if [[ ! -e ${t2_2_brain} ]] ; then
+    echo "t2_2_brain not found"
+fi
 
 if [[ -e ${t1_2_brain_img} ]] ; then
     echo "removing old resampled t1 brain"
@@ -502,15 +508,19 @@ for TASK in `ls -d ${Results}/*task-*` ; do
     # Use the first task image to make the resampled brain.
     flirt -in ${t1_brain} -ref ${task_img} -applyxfm -out ${t1_2_brain}
     echo result of flirt is in ${t1_2_brain}
-    flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
-    echo result of flirt is in ${t2_2_brain}
+    if [[ ${has_t2} -eq 1 ]] ; then
+        flirt -in ${t2_brain} -ref ${task_img} -applyxfm -out ${t2_2_brain}
+        echo result of flirt is in ${t2_2_brain}
+    fi
 
     fMRI_pre=${images_path}/sub-${subject_id}_${fMRIName}
     set -x
     make_default_slices_row ${task_img} ${fMRI_pre}_desc-T1InTask.gif ${t1_2_brain}
     make_default_slices_row ${t1_2_brain} ${fMRI_pre}_desc-TaskInT1.gif ${task_img}
-    make_default_slices_row ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
-    make_default_slices_row ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
+    if [[ ${has_t2} -eq 1 ]] ; then
+        make_default_slices_row ${task_img} ${fMRI_pre}_desc-T2InTask.gif ${t2_2_brain}
+        make_default_slices_row ${t2_2_brain} ${fMRI_pre}_desc-TaskInT2.gif ${task_img}
+    fi
     set +x
 done
 
