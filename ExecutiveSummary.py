@@ -228,9 +228,9 @@ def _cli():
     print('\tAtlas:                 %s' % args.atlas)
     if args.atlas is None or args.atlas.upper() == "NONE":
         pass
-    else:        
+    else:
         assert os.path.exists(args.atlas), args.atlas + ' does not exist!'
-    kwargs['atlas'] = args.atlas
+        kwargs['atlas'] = args.atlas
 
     # Call the interface.
     interface(**kwargs)
