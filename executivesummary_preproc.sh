@@ -500,7 +500,9 @@ if [[ -e ${t2_2_brain_img} ]] ; then
 fi
 
 # Make T1w and T2w task images.
-for TASK in `ls -d ${Results}/*task-*` ; do
+
+# ending slash in "*task-*/" is required to ensure ls -d gets only dirnames
+for TASK in `ls -d ${Results}/*task-*/` ; do
     fMRIName=$( basename ${TASK} )
     echo Make images for ${fMRIName}.
     task_img="${Results}/${fMRIName}/${fMRIName}.nii.gz"
