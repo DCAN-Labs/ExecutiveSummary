@@ -5,7 +5,7 @@ Builds the layout for the Executive Summary of the bids-formatted output from
 the DCAN-Labs fMRI pipelines.
 """
 
-__version__ = "2.0.1"
+__version__ = "2.2.11"
 
 import os
 from os import path
