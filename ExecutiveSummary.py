@@ -17,6 +17,7 @@ from layout_builder import layout_builder
 from datetime import datetime
 from helpers import find_and_copy_file
 from PIL import Image                      # for BrainSprite
+from packaging.version import Version
 from re import split
 from math import sqrt
 
@@ -157,7 +158,10 @@ def make_mosaic(png_path, mosaic_path):
         path = os.path.expanduser(file)
         img = Image.open(path)
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
+        if Version(PIL.__version__) >= Version('10.0.0'):
+            img.thumbnail((image_dim, image_dim), resample=Image.Resampling.LANCZOS)
+        else:
+            img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
         x = index % images_per_side * image_dim
         y = index // images_per_side * image_dim
         w, h = img.size
