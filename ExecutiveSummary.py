@@ -158,7 +158,7 @@ def make_mosaic(png_path, mosaic_path):
         path = os.path.expanduser(file)
         img = Image.open(path)
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        if Version(PIL.__version__) >= Version('10.0.0'):
+        if Version(Image.__version__) >= Version('10.0.0'):
             img.thumbnail((image_dim, image_dim), resample=Image.Resampling.LANCZOS)
         else:
             img.thumbnail((image_dim, image_dim), resample=Image.ANTIALIAS)
