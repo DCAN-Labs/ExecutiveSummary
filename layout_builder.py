@@ -320,7 +320,7 @@ class TasksSection(Section):
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
-        task_pattern = task_name + '*' + task_num
+        task_pattern = task_name + '_*' + task_num
 
         # For the processed files, it's as simple as looking for the pattern in
         # the source-directory. When found and copied to the directory of images,
@@ -345,7 +345,7 @@ class TasksSection(Section):
 
         # Using glob patterns to find the files for this task; start
         # with a pattern for the task/run itself.
-        task_pattern = task_name + '*' + task_num
+        task_pattern = task_name + '_*' + task_num
 
         # Make the first half of the row - bold and ref data.
         self.section += BOLD_GRAY_START

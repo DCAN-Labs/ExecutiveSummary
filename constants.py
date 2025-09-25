@@ -1,11 +1,11 @@
 
 IMAGE_INFO = {
     'concat_pre_reg_gray': {
-        'pattern': 'DVARS_and_FD_CONCA_*task-rest*.png',
+        'pattern': 'DVARS_and_FD_CONCA_*task-rest.png',
         'title': 'Pre-Regression'
         },
     'concat_post_reg_gray': {
-        'pattern': 'DVARS_and_FD_CONCP_*task-rest*.png',
+        'pattern': 'DVARS_and_FD_CONCP_*task-rest.png',
         'title': 'Post-Regression'
         },
     'atlas_in_t1': {
